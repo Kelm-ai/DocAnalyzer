@@ -6,9 +6,15 @@ Run ISO 14971 compliance evaluation on indexed document
 import asyncio
 import json
 from datetime import datetime
-from iso_compliance_pipeline import CompliancePipeline
 import logging
 import sys
+
+try:
+    from iso_compliance_pipeline import CompliancePipeline  # type: ignore
+    PIPELINE_AVAILABLE = True
+except ImportError:
+    CompliancePipeline = None  # type: ignore
+    PIPELINE_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(
@@ -33,6 +39,12 @@ async def main():
     
     try:
         # Initialize pipeline
+        if not PIPELINE_AVAILABLE or CompliancePipeline is None:
+            raise RuntimeError(
+                "Azure CompliancePipeline has been archived. "
+                "Restore it from scripts/(archive) to use this script."
+            )
+
         pipeline = CompliancePipeline()
         
         # Run evaluation - using first 5 requirements only for quick test

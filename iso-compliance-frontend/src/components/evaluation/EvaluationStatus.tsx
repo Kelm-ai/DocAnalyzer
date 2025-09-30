@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react"
-import { FileSearch, Clock, CheckCircle, AlertCircle, Loader2, Eye } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { FileSearch, Clock, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { DataTable } from "@/components/data-table"
+import type { ColumnDef, Row } from "@tanstack/react-table"
 import { api } from "@/lib/api"
 import type { EvaluationStatus as EvaluationStatusType } from "@/lib/api"
 import { useNavigate } from "react-router-dom"
@@ -11,29 +13,50 @@ import { useNavigate } from "react-router-dom"
 export function EvaluationStatus() {
   const [evaluations, setEvaluations] = useState<EvaluationStatusType[]>([])
   const [loading, setLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const hasLoadedRef = useRef(false)
   const navigate = useNavigate()
 
   // Load evaluations from API
-  const loadEvaluations = async () => {
-    try {
+  const loadEvaluations = async (options: { forceLoading?: boolean; trackRefresh?: boolean } = {}) => {
+    const { forceLoading = false, trackRefresh = false } = options
+    const shouldShowLoading = forceLoading || !hasLoadedRef.current
+
+    if (shouldShowLoading) {
       setLoading(true)
+    }
+
+    if (trackRefresh) {
+      setIsRefreshing(true)
+    }
+
+    try {
       const data = await api.getEvaluations()
       setEvaluations(data)
       setError(null)
+      if (!hasLoadedRef.current) {
+        hasLoadedRef.current = true
+      }
     } catch (err) {
       console.error('Failed to load evaluations:', err)
       setError('Failed to load evaluations')
     } finally {
-      setLoading(false)
+      if (shouldShowLoading) {
+        setLoading(false)
+      }
+
+      if (trackRefresh) {
+        setIsRefreshing(false)
+      }
     }
   }
 
   useEffect(() => {
-    loadEvaluations()
-    
+    loadEvaluations({ forceLoading: true })
+
     // Refresh every 10 seconds
-    const interval = setInterval(loadEvaluations, 10000)
+    const interval = setInterval(() => loadEvaluations(), 10000)
     return () => clearInterval(interval)
   }, [])
 
@@ -45,6 +68,7 @@ export function EvaluationStatus() {
         return <Loader2 className="h-4 w-4 animate-spin" />
       case "completed":
         return <CheckCircle className="h-4 w-4" />
+      case "failed":
       case "error":
         return <AlertCircle className="h-4 w-4" />
       default:
@@ -60,19 +84,12 @@ export function EvaluationStatus() {
         return "warning"
       case "completed":
         return "success"
+      case "failed":
       case "error":
         return "destructive"
       default:
         return "default"
     }
-  }
-
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp)
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit"
-    })
   }
 
   const getTodayCompleted = () => {
@@ -83,6 +100,151 @@ export function EvaluationStatus() {
       new Date(e.completed_at).toDateString() === today
     ).length
   }
+
+  const formatDateTime = (timestamp?: string | null) => {
+    if (!timestamp) {
+      return "—"
+    }
+
+    const date = new Date(timestamp)
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  const columns: ColumnDef<EvaluationStatusType>[] = [
+      {
+        id: "title",
+        header: "Document",
+        accessorFn: (row) => row.document_name,
+        cell: ({ row }) => (
+          <div className="space-y-1">
+            <p className="font-medium text-gray-900">{row.original.document_name}</p>
+            <p className="text-xs text-muted-foreground">
+              Started {formatDateTime(row.original.created_at)}
+            </p>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        meta: {
+          headerClassName: "w-[130px]",
+          cellClassName: "w-[130px]",
+        },
+        cell: ({ row }) => (
+          <Badge
+            variant={getStatusVariant(row.original.status)}
+            className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold capitalize"
+          >
+            {getStatusIcon(row.original.status)}
+            <span>{row.original.status.replace(/_/g, " ")}</span>
+          </Badge>
+        ),
+      },
+      {
+        id: "progress",
+        header: "Progress",
+        meta: {
+          headerClassName: "w-[260px]",
+          cellClassName: "w-[260px]",
+        },
+        cell: ({ row }) => {
+          const evaluation = row.original
+          if (evaluation.status === "in_progress") {
+            const percent = evaluation.metadata?.progress_percent ?? 0
+            const completed = evaluation.metadata?.completed_requirements ?? 0
+            const total = evaluation.metadata?.total_requirements ?? 38
+            return (
+              <div className="space-y-1 min-w-[110px]">
+                <Progress value={percent} className="h-2" />
+                <p className="text-xs text-muted-foreground">
+                  {completed}/{total} requirements
+                </p>
+              </div>
+            )
+          }
+
+          if (evaluation.status === "pending") {
+            return <span className="text-sm text-muted-foreground">Queued</span>
+          }
+
+          if (evaluation.status === "completed") {
+            return <span className="text-sm text-muted-foreground">Complete</span>
+          }
+
+          if (evaluation.status === "error" || evaluation.status === "failed") {
+            return (
+              <span className="text-sm text-destructive">
+                {evaluation.error_message || "Failed"}
+              </span>
+            )
+          }
+
+          return <span className="text-sm text-muted-foreground">—</span>
+        },
+      },
+      {
+        id: "completed",
+        header: "Completed",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {formatDateTime(row.original.completed_at)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "overall_compliance_score",
+        header: "Score",
+        cell: ({ row }) => {
+          const score = row.original.overall_compliance_score
+          if (typeof score === "number") {
+            return (
+              <span className="text-sm font-medium">
+                {score.toFixed(1)}%
+              </span>
+            )
+          }
+          return <span className="text-sm text-muted-foreground">—</span>
+        },
+      },
+      {
+        id: "outcomes",
+        header: "Outcomes",
+        meta: {
+          headerClassName: "min-w-[220px]",
+          cellClassName: "min-w-[220px]",
+        },
+        cell: ({ row }) => {
+          const { requirements_passed, requirements_failed, requirements_na } = row.original
+          const flagged = row.original.requirements_flagged ?? row.original.requirements_partial ?? 0
+          return (
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-1 rounded-full border border-green-100 bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+                <span>Passed</span>
+                <span className="font-semibold">{requirements_passed ?? 0}</span>
+              </div>
+              <div className="flex items-center gap-1 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-xs font-medium text-red-700">
+                <span>Failed</span>
+                <span className="font-semibold">{requirements_failed ?? 0}</span>
+              </div>
+              <div className="flex items-center gap-1 rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                <span>Flagged</span>
+                <span className="font-semibold">{flagged}</span>
+              </div>
+              <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700">
+                <span>N/A</span>
+                <span className="font-semibold">{requirements_na ?? 0}</span>
+              </div>
+            </div>
+          )
+        },
+      },
+    ]
 
   if (loading) {
     return (
@@ -150,130 +312,38 @@ export function EvaluationStatus() {
         <CardHeader>
           <CardTitle>Evaluation Queue</CardTitle>
           <CardDescription>
-            Real-time status of document evaluations against ISO 14971 requirements
+            Real-time status of document evaluations. Click a completed row to view detailed results.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {evaluations.length === 0 ? (
-            <div className="text-center py-8">
-              <FileSearch className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-sm text-muted-foreground">No evaluations found</p>
-              <p className="text-xs text-muted-foreground">Upload a document to get started</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {evaluations.map(evaluation => (
-                <div key={evaluation.id} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="text-sm font-semibold">{evaluation.document_name}</h4>
-                        <Badge variant={getStatusVariant(evaluation.status)}>
-                          <span className="flex items-center space-x-1">
-                            {getStatusIcon(evaluation.status)}
-                            <span className="ml-1">{evaluation.status.replace("_", " ")}</span>
-                          </span>
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Started at {formatTime(evaluation.created_at)}
-                        {evaluation.completed_at && (
-                          <> • Completed at {formatTime(evaluation.completed_at)}</>
-                        )}
-                      </p>
-                    </div>
-                    {evaluation.status === "completed" && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => navigate(`/results/${evaluation.id}`)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Results
-                      </Button>
-                    )}
-                  </div>
-
-                  {evaluation.status === "in_progress" && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">
-                          {evaluation.metadata?.status_message || "Evaluating against 38 ISO 14971 requirements"}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {evaluation.metadata?.progress_percent !== undefined 
-                            ? `${evaluation.metadata.progress_percent}%` 
-                            : "Processing..."}
-                        </span>
-                      </div>
-                      <Progress 
-                        value={evaluation.metadata?.progress_percent || 0} 
-                        className="h-2" 
-                      />
-                      {evaluation.metadata?.completed_requirements !== undefined && (
-                        <p className="text-xs text-muted-foreground text-center">
-                          {evaluation.metadata.completed_requirements}/{evaluation.metadata.total_requirements} requirements evaluated
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {evaluation.status === "completed" && (
-                    <div className="grid grid-cols-4 gap-2 mt-3">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-green-600">
-                          {evaluation.requirements_passed || 0}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Passed</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-red-600">
-                          {evaluation.requirements_failed || 0}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Failed</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-yellow-600">
-                          {evaluation.requirements_partial || 0}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Partial</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-400">
-                          {evaluation.requirements_na || 0}
-                        </p>
-                        <p className="text-xs text-muted-foreground">N/A</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {evaluation.overall_compliance_score !== undefined && (
-                    <div className="mt-3 pt-3 border-t">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Overall Compliance Score</span>
-                        <Badge variant={evaluation.overall_compliance_score >= 75 ? "success" : 
-                                     evaluation.overall_compliance_score >= 50 ? "warning" : "destructive"}>
-                          {evaluation.overall_compliance_score.toFixed(1)}%
-                        </Badge>
-                      </div>
-                    </div>
-                  )}
-
-                  {(evaluation.status === "pending" || evaluation.status === "in_progress") && (
-                    <p className="text-sm text-muted-foreground">
-                      {evaluation.status === "pending" ? "Document uploaded, queued for evaluation" : "Document uploaded, ready for evaluation"}
-                    </p>
-                  )}
-
-                  {evaluation.status === "error" && evaluation.error_message && (
-                    <div className="mt-2 p-2 bg-destructive/10 rounded text-sm text-destructive">
-                      {evaluation.error_message}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          <DataTable
+            columns={columns}
+            data={evaluations}
+            filterPlaceholder="Search evaluations..."
+            toolbarSlot={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadEvaluations({ trackRefresh: true })}
+                disabled={isRefreshing}
+              >
+                {isRefreshing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Refresh
+              </Button>
+            }
+            onRowClick={(row: Row<EvaluationStatusType>) => {
+              const evaluation = row.original
+              if (evaluation.status === "completed") {
+                navigate(`/results/${evaluation.id}`)
+              }
+            }}
+            isRowClickable={(row) => row.original.status === "completed"}
+            rowClassName={(row) =>
+              row.original.status === "completed"
+                ? "hover:bg-muted/60"
+                : undefined
+            }
+          />
         </CardContent>
       </Card>
     </div>

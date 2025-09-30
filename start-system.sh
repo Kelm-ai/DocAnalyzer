@@ -2,6 +2,8 @@
 
 # ISO 14971 Compliance System Startup Script
 # This script starts all components of the compliance evaluation system
+# Override ports using environment variables before running, e.g.:
+#   API_PORT=5005 FRONTEND_PORT=3001 ./start-system.sh
 
 set -e  # Exit on any error
 
@@ -11,6 +13,10 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Allow overriding ports via environment variables
+API_PORT=${API_PORT:-5001}
+FRONTEND_PORT=${FRONTEND_PORT:-5173}
 
 # Function to print colored output
 print_status() {
@@ -159,19 +165,19 @@ print_success "Node.js $NODE_VERSION found"
 # Check if ports are available
 print_status "Checking port availability..."
 
-if check_port 8000; then
-    print_error "Port 8000 is already in use (API server port)"
-    print_warning "Please stop the service using port 8000 or change the API port"
+if check_port "$API_PORT"; then
+    print_error "Port $API_PORT is already in use (API server port)"
+    print_warning "Please stop the service using port $API_PORT or change the API port"
     exit 1
 fi
 
-if check_port 5173; then
-    print_error "Port 5173 is already in use (Frontend server port)"
-    print_warning "Please stop the service using port 5173 or change the frontend port"
+if check_port "$FRONTEND_PORT"; then
+    print_error "Port $FRONTEND_PORT is already in use (Frontend server port)"
+    print_warning "Please stop the service using port $FRONTEND_PORT or change the frontend port"
     exit 1
 fi
 
-print_success "Ports 8000 and 5173 are available"
+print_success "Ports $API_PORT and $FRONTEND_PORT are available"
 
 # Setup Python virtual environment for API
 print_status "Setting up Python environment for API..."
@@ -189,24 +195,31 @@ print_status "Upgrading pip..."
 pip install --upgrade pip >/dev/null 2>&1
 
 print_status "Installing Python dependencies..."
-if ! pip install -r requirements.txt >/dev/null 2>&1; then
+if ! pip install -r ../requirements.txt >/dev/null 2>&1; then
     print_error "Failed to install Python dependencies"
     print_status "Trying installation with verbose output..."
-    pip install -r requirements.txt
+    pip install -r ../requirements.txt
     exit 1
 fi
 
 print_success "Python environment ready"
 
+# Surface the OpenAI package version in use for easier debugging
+print_status "Verifying OpenAI SDK version..."
+python - <<'PY'
+import openai, sys
+print(f"Using openai=={openai.__version__} from {openai.__file__}")
+PY
+
 # Start API server
-print_status "Starting API server..."
-nohup uvicorn app:app --host 0.0.0.0 --port 8000 --reload > api.log 2>&1 &
+print_status "Starting API server on port $API_PORT..."
+nohup uvicorn app:app --host 0.0.0.0 --port "$API_PORT" --reload > api.log 2>&1 &
 API_PID=$!
 
 cd ..
 
 # Wait for API to be ready
-wait_for_service "http://localhost:8000/" "API server"
+wait_for_service "http://localhost:${API_PORT}/" "API server"
 
 # Setup and start frontend
 print_status "Setting up frontend..."
@@ -219,23 +232,23 @@ fi
 
 print_success "Frontend dependencies ready"
 
-print_status "Starting frontend development server..."
-nohup npm run dev -- --host 0.0.0.0 > frontend.log 2>&1 &
+print_status "Starting frontend development server on port $FRONTEND_PORT..."
+nohup npm run dev -- --host 0.0.0.0 --port "$FRONTEND_PORT" > frontend.log 2>&1 &
 FRONTEND_PID=$!
 
 cd ..
 
 # Wait for frontend to be ready
-wait_for_service "http://localhost:5173/" "Frontend server"
+wait_for_service "http://localhost:${FRONTEND_PORT}/" "Frontend server"
 
 echo
 echo "======================================================"
 echo "🎉 System Successfully Started!"
 echo "======================================================"
 echo
-echo -e "${GREEN}Frontend:${NC} http://localhost:5173"
-echo -e "${GREEN}API:${NC}      http://localhost:8000"
-echo -e "${GREEN}API Docs:${NC} http://localhost:8000/docs"
+echo -e "${GREEN}Frontend:${NC} http://localhost:${FRONTEND_PORT}"
+echo -e "${GREEN}API:${NC}      http://localhost:${API_PORT}"
+echo -e "${GREEN}API Docs:${NC} http://localhost:${API_PORT}/docs"
 echo
 echo "📋 Available Services:"
 echo "  • Document Upload & Processing"
@@ -255,10 +268,10 @@ echo "💡 To stop the system, press Ctrl+C or run:"
 echo "   ./stop-system.sh"
 echo
 echo "🔗 Quick Links:"
-echo "  • Upload Documents: http://localhost:5173/"
-echo "  • View Evaluations: http://localhost:5173/evaluations" 
-echo "  • API Documentation: http://localhost:8000/docs"
-echo "  • Simplified Upload: http://localhost:8000/api/upload/simple"
+echo "  • Upload Documents: http://localhost:${FRONTEND_PORT}/"
+echo "  • View Evaluations: http://localhost:${FRONTEND_PORT}/evaluations" 
+echo "  • API Documentation: http://localhost:${API_PORT}/docs"
+echo "  • Simplified Upload: http://localhost:${API_PORT}/api/upload/simple"
 echo
 print_success "System is ready for ISO 14971 compliance evaluation!"
 

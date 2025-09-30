@@ -41,6 +41,9 @@ Automated compliance evaluation pipeline for ISO 14971:2019 medical device risk 
   - Expected artifacts
   - Guidance notes
 
+> **Note:** The Azure-based `CompliancePipeline` implementation has been archived in `scripts/(archive)/iso_compliance_pipeline.py`.
+> Set `EVALUATION_PIPELINE=vision` (Responses API with PDF attachment) in `.env`. The legacy direct evaluator has been disabled.
+
 ## 🚀 How to Use
 
 ### Prerequisites
@@ -52,27 +55,13 @@ Automated compliance evaluation pipeline for ISO 14971:2019 medical device risk 
 
 2. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   pip install -r ../requirements.txt
    ```
 
 ### Running an Evaluation
 
 ```python
-from iso_compliance_pipeline import CompliancePipeline
-import asyncio
-
-async def evaluate():
-    pipeline = CompliancePipeline()
-    
-    # Evaluate a document already indexed in Azure Search
-    evaluation_id = await pipeline.evaluate_document(
-        document_name="Your_Document_Name.pdf"
-    )
-    
-    print(f"Evaluation ID: {evaluation_id}")
-
-# Run
-asyncio.run(evaluate())
+# The CompliancePipeline has been archived. Use vision_responses_evaluator.VisionResponsesEvaluator instead.
 ```
 
 ### Checking Results

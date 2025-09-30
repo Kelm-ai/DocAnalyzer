@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { mockDocumentEvaluation } from "@/lib/mockData"
+import type { RequirementEvaluation } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 export function ComplianceSummary() {
@@ -67,7 +68,7 @@ export function ComplianceSummary() {
                 {evaluation.document_name} • Evaluated on {new Date(evaluation.completed_at!).toLocaleDateString()}
               </CardDescription>
             </div>
-            <Badge variant={complianceLevel.color as any} className="text-lg px-3 py-1">
+            <Badge variant={complianceLevel.color as "default" | "secondary" | "destructive" | "outline"} className="text-lg px-3 py-1">
               {complianceLevel.level}
             </Badge>
           </div>
@@ -110,8 +111,8 @@ export function ComplianceSummary() {
               </div>
               <div className="flex flex-col items-center p-4 border rounded-lg">
                 <AlertCircle className="h-8 w-8 text-yellow-600 mb-2" />
-                <div className="text-2xl font-bold">{evaluation.requirements_partial}</div>
-                <div className="text-sm text-muted-foreground">Partial</div>
+                <div className="text-2xl font-bold">{evaluation.requirements_flagged ?? evaluation.requirements_partial ?? 0}</div>
+                <div className="text-sm text-muted-foreground">Flagged</div>
               </div>
               <div className="flex flex-col items-center p-4 border rounded-lg">
                 <FileText className="h-8 w-8 text-gray-400 mb-2" />
@@ -133,10 +134,12 @@ export function ComplianceSummary() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {["4.1", "4.2", "4.3", "5.1", "5.2", "6.1"].map(clause => {
-              const clauseReqs = evaluation.evaluations.filter(e => e.clause === clause)
-              const passed = clauseReqs.filter(e => e.status === "PASS").length
-              const total = clauseReqs.filter(e => e.status !== "NOT_APPLICABLE").length
+    {["4.1", "4.2", "4.3", "5.1", "5.2", "6.1"].map((clause) => {
+              const clauseReqs = evaluation.evaluations.filter(
+                (item: RequirementEvaluation) => item.clause === clause
+              )
+              const passed = clauseReqs.filter((item) => item.status === "PASS").length
+              const total = clauseReqs.filter((item) => item.status !== "NOT_APPLICABLE").length
               const percentage = total > 0 ? (passed / total) * 100 : 0
               
               return (

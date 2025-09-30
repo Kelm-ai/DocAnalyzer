@@ -3,7 +3,7 @@ import { Layout } from '@/components/layout/Layout'
 import { Upload } from '@/pages/Upload'
 import { Evaluations } from '@/pages/Evaluations'
 import { Results } from '@/pages/Results'
-import { Reports } from '@/pages/Reports'
+import { Requirements } from '@/pages/Requirements'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 function App() {
@@ -15,7 +15,7 @@ function App() {
             <Route path="/" element={<Upload />} />
             <Route path="/evaluations" element={<Evaluations />} />
             <Route path="/results/:evaluationId" element={<Results />} />
-            <Route path="/reports" element={<Reports />} />
+            <Route path="/requirements" element={<Requirements />} />
           </Routes>
         </Layout>
       </Router>

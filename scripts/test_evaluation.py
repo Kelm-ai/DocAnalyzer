@@ -6,8 +6,14 @@ Test evaluation of Altimmune Risk Management Procedure document
 import asyncio
 import json
 from datetime import datetime
-from iso_compliance_pipeline import CompliancePipeline
 import logging
+
+try:
+    from iso_compliance_pipeline import CompliancePipeline  # type: ignore
+    PIPELINE_AVAILABLE = True
+except ImportError:
+    CompliancePipeline = None  # type: ignore
+    PIPELINE_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(
@@ -70,6 +76,12 @@ async def run_evaluation():
     print(f"\n📋 Document: {document_name}")
     print(f"⏰ Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
+    if not PIPELINE_AVAILABLE or CompliancePipeline is None:
+        raise RuntimeError(
+            "Azure CompliancePipeline has been archived. "
+            "Use the direct evaluator workflow instead."
+        )
+
     try:
         # Initialize pipeline
         pipeline = CompliancePipeline()
@@ -113,7 +125,8 @@ async def run_evaluation():
         print(f"\nRequirement Results:")
         print(f"  ✅ Passed:         {data['requirements_passed']}")
         print(f"  ❌ Failed:         {data['requirements_failed']}")
-        print(f"  ⚠️  Partial:       {data['requirements_partial']}")
+        flagged = data.get('requirements_flagged', data.get('requirements_partial', 0))
+        print(f"  ⚠️  Flagged:       {flagged}")
         print(f"  ➖ Not Applicable: {data['requirements_na']}")
         
         # Get detailed results

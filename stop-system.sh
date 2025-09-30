@@ -72,9 +72,9 @@ kill_by_pattern "python.*iso_compliance_pipeline" "Pipeline Processes"
 # Check for any remaining processes on our ports
 print_status "Checking for processes on system ports..."
 
-api_port_pid=$(lsof -ti:8001 2>/dev/null || true)
+api_port_pid=$(lsof -ti:5001 2>/dev/null || true)
 if [ ! -z "$api_port_pid" ]; then
-    print_warning "Killing process on port 8001 (PID: $api_port_pid)"
+    print_warning "Killing process on port 5001 (PID: $api_port_pid)"
     kill -KILL $api_port_pid 2>/dev/null || true
 fi
 
@@ -112,7 +112,7 @@ echo
 echo "📋 Summary:"
 echo "  • API Server: Stopped"
 echo "  • Frontend Server: Stopped" 
-echo "  • Port 8001: Released"
+echo "  • Port 5001: Released"
 echo "  • Port 5173: Released"
 echo "  • Log files: Archived"
 echo

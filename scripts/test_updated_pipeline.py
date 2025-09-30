@@ -5,8 +5,14 @@ Test the updated pipeline with pre-generated search queries
 
 import asyncio
 import os
-from iso_compliance_pipeline import CompliancePipeline
 from dotenv import load_dotenv
+
+try:
+    from iso_compliance_pipeline import CompliancePipeline  # type: ignore
+    PIPELINE_AVAILABLE = True
+except ImportError:
+    CompliancePipeline = None  # type: ignore
+    PIPELINE_AVAILABLE = False
 
 load_dotenv()
 
@@ -14,6 +20,12 @@ async def test_search_queries():
     """Test that search queries are working with pre-generated queries"""
     print("Testing updated pipeline with pre-generated search queries...")
     
+    if not PIPELINE_AVAILABLE or CompliancePipeline is None:
+        raise RuntimeError(
+            "Azure CompliancePipeline has been archived. "
+            "Restore it from scripts/(archive) if you need to test it."
+        )
+
     pipeline = CompliancePipeline()
     
     # Get a sample requirement to test

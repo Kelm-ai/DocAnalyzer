@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
-import type { ColumnDef } from "@tanstack/react-table"
+import type { ColumnDef, Row } from "@tanstack/react-table"
 
 import { DataTable } from "@/components/data-table"
 import { Badge } from "@/components/ui/badge"
@@ -637,9 +637,9 @@ export function Results() {
             columns={columns}
             data={report.requirements}
             filterPlaceholder="Filter requirements..."
-            onRowClick={(row) => {
+            onRowClick={(row: Row<RequirementResult>) => {
               const clickedIndex = report.requirements.findIndex(
-                (item) => item.requirement_id === row.original.requirement_id
+                (item: RequirementResult) => item.requirement_id === row.original.requirement_id
               )
               if (clickedIndex >= 0) {
                 setSelectedRequirementIndex(clickedIndex)
@@ -823,7 +823,7 @@ export function Results() {
                   <ul className="space-y-2 text-sm text-slate-700">
                     {activeRequirement.evidence_snippets
                       .filter(Boolean)
-                      .map((item, index) => (
+                      .map((item: string, index: number) => (
                         <li
                           key={index}
                           className="rounded-md border border-slate-200 bg-slate-50 p-3"
@@ -843,7 +843,7 @@ export function Results() {
                   <ul className="space-y-2 text-sm text-slate-700">
                     {activeRequirement.gaps_identified
                       .filter(Boolean)
-                      .map((item, index) => (
+                      .map((item: string, index: number) => (
                         <li
                           key={index}
                           className="rounded-md border border-slate-200 bg-rose-50/80 p-3"
@@ -863,7 +863,7 @@ export function Results() {
                   <ul className="space-y-2 text-sm text-slate-700">
                     {activeRequirement.recommendations
                       .filter(Boolean)
-                      .map((item, index) => (
+                      .map((item: string, index: number) => (
                         <li
                           key={index}
                           className="rounded-md border border-slate-200 bg-blue-50 p-3"

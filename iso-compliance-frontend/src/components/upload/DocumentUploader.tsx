@@ -116,14 +116,14 @@ export function DocumentUploader() {
       )
 
     } catch (error) {
-      console.error('Upload error:', error)
-      const errorMessage = error instanceof APIError ? error.message : 'Upload failed'
-      
-      setFiles(prev => prev.map(f => 
-        f.id === fileId ? { 
-          ...f, 
-          status: "error", 
-          error: errorMessage 
+      console.error("Upload error:", error)
+      const errorMessage = error instanceof APIError ? error.message : "Upload failed"
+
+      setFiles((prev) => prev.map((f) =>
+        f.id === fileId ? {
+          ...f,
+          status: "error",
+          error: errorMessage,
         } : f
       ))
     }

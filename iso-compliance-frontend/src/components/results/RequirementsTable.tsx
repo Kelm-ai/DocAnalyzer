@@ -1,12 +1,11 @@
 import React, { useState, useMemo } from "react"
-import { ChevronDown, ChevronRight, Search, Filter, Download, ExternalLink } from "lucide-react"
+import { ChevronDown, ChevronRight, Search, Download, ExternalLink } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { RequirementEvaluation } from "@/lib/types"
+import type { RequirementEvaluation } from "@/lib/types"
 import { mockRequirements } from "@/lib/mockData"
-import { cn } from "@/lib/utils"
 
 export function RequirementsTable() {
   const [requirements] = useState<RequirementEvaluation[]>(mockRequirements)
@@ -21,8 +20,9 @@ export function RequirementsTable() {
         return <Badge variant="success">✅ Pass</Badge>
       case "FAIL":
         return <Badge variant="destructive">❌ Fail</Badge>
+      case "FLAGGED":
       case "PARTIAL":
-        return <Badge variant="warning">⚠️ Partial</Badge>
+        return <Badge variant="warning">⚠️ Flagged</Badge>
       case "NOT_APPLICABLE":
         return <Badge variant="secondary">➖ N/A</Badge>
       default:
@@ -30,12 +30,6 @@ export function RequirementsTable() {
     }
   }
 
-  const getConfidenceColor = (confidence?: number) => {
-    if (!confidence) return "bg-gray-200"
-    if (confidence >= 0.8) return "bg-green-500"
-    if (confidence >= 0.6) return "bg-yellow-500"
-    return "bg-red-500"
-  }
 
   const toggleRow = (id: string) => {
     const newExpanded = new Set(expandedRows)
@@ -48,12 +42,12 @@ export function RequirementsTable() {
   }
 
   const clauses = useMemo(() => {
-    const uniqueClauses = new Set(requirements.map(r => r.clause))
+    const uniqueClauses = new Set(requirements.map((requirement) => requirement.clause))
     return Array.from(uniqueClauses).sort()
   }, [requirements])
 
   const filteredRequirements = useMemo(() => {
-    return requirements.filter(req => {
+    return requirements.filter((req) => {
       const matchesSearch = searchTerm === "" || 
         req.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         req.requirement_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -68,7 +62,7 @@ export function RequirementsTable() {
 
   const groupedByClause = useMemo(() => {
     const grouped: Record<string, RequirementEvaluation[]> = {}
-    filteredRequirements.forEach(req => {
+    filteredRequirements.forEach((req) => {
       if (!grouped[req.clause]) {
         grouped[req.clause] = []
       }
@@ -106,7 +100,7 @@ export function RequirementsTable() {
                     placeholder="Search requirements..."
                     className="pl-8 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(event) => setSearchTerm(event.target.value)}
                   />
                 </div>
               </div>
@@ -114,18 +108,19 @@ export function RequirementsTable() {
                 <select
                   className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={(event) => setStatusFilter(event.target.value)}
                 >
                   <option value="all">All Status</option>
                   <option value="PASS">Pass</option>
                   <option value="FAIL">Fail</option>
+                  <option value="FLAGGED">Flagged</option>
                   <option value="PARTIAL">Partial</option>
                   <option value="NOT_APPLICABLE">N/A</option>
                 </select>
                 <select
                   className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
                   value={clauseFilter}
-                  onChange={(e) => setClauseFilter(e.target.value)}
+                  onChange={(event) => setClauseFilter(event.target.value)}
                 >
                   <option value="all">All Clauses</option>
                   {clauses.map(clause => (
@@ -214,9 +209,9 @@ export function RequirementsTable() {
                                       <div>
                                         <h5 className="font-semibold text-sm mb-1">Evidence Found</h5>
                                         <ul className="list-disc list-inside space-y-1">
-                                          {req.evidence_snippets.map((snippet, i) => (
-                                            <li key={i} className="text-sm text-muted-foreground">{snippet}</li>
-                                          ))}
+                                      {req.evidence_snippets.map((snippet: string, index: number) => (
+                                        <li key={index} className="text-sm text-muted-foreground">{snippet}</li>
+                                      ))}
                                         </ul>
                                       </div>
                                     )}
@@ -225,8 +220,8 @@ export function RequirementsTable() {
                                       <div>
                                         <h5 className="font-semibold text-sm mb-1 text-red-600">Gaps Identified</h5>
                                         <ul className="list-disc list-inside space-y-1">
-                                          {req.gaps.map((gap, i) => (
-                                            <li key={i} className="text-sm text-muted-foreground">{gap}</li>
+                                          {req.gaps.map((gap: string, index: number) => (
+                                            <li key={index} className="text-sm text-muted-foreground">{gap}</li>
                                           ))}
                                         </ul>
                                       </div>
@@ -236,8 +231,8 @@ export function RequirementsTable() {
                                       <div>
                                         <h5 className="font-semibold text-sm mb-1 text-blue-600">Recommendations</h5>
                                         <ul className="list-disc list-inside space-y-1">
-                                          {req.recommendations.map((rec, i) => (
-                                            <li key={i} className="text-sm text-muted-foreground">{rec}</li>
+                                          {req.recommendations.map((rec: string, index: number) => (
+                                            <li key={index} className="text-sm text-muted-foreground">{rec}</li>
                                           ))}
                                         </ul>
                                       </div>

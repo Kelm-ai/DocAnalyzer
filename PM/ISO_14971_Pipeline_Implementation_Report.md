@@ -88,6 +88,8 @@ Successfully loaded all 38 requirements covering:
 
 ## 🔧 Implementation Details
 
+> **Archive Notice:** The Azure-based `CompliancePipeline` implementation described below has been moved to `scripts/(archive)/iso_compliance_pipeline.py` and is no longer part of the active workflow.
+
 ### Core Services Built
 
 #### 1. **CompliancePipeline** (`iso_compliance_pipeline.py`)

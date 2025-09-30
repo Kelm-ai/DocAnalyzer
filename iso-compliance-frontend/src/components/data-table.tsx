@@ -6,6 +6,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  type Row,
 } from "@tanstack/react-table"
 import type {
   ColumnDef,
@@ -23,15 +24,36 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
+
+type ColumnMeta = {
+  headerClassName?: string
+  cellClassName?: string
+}
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  toolbarSlot?: React.ReactNode
+  filterColumn?: string
+  filterPlaceholder?: string
+  onRowClick?: (row: Row<TData>) => void
+  rowClassName?: (row: Row<TData>) => string | undefined
+  isRowClickable?: (row: Row<TData>) => boolean
+  tableContainerClassName?: string
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  toolbarSlot,
+  filterColumn = "title",
+  filterPlaceholder = "Filter...",
+  onRowClick,
+  rowClassName,
+  isRowClickable,
+  tableContainerClassName,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -53,30 +75,56 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter requirements..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
+      <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+        {table.getColumn(filterColumn) ? (
+          <Input
+            placeholder={filterPlaceholder}
+            value={(table.getColumn(filterColumn)?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn(filterColumn)?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+        ) : <div />}
+        {toolbarSlot ? <div className="sm:ml-auto">{toolbarSlot}</div> : null}
       </div>
-      <div className="rounded-md border">
+      <div className={cn("rounded-md border", tableContainerClassName)}>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
+                    <TableHead
+                      key={header.id}
+                      className={cn((header.column.columnDef.meta as ColumnMeta | undefined)?.headerClassName)}
+                    >
+                      {header.isPlaceholder ? null : (
+                        <div
+                          className={cn(
+                            "flex items-center text-left",
+                            header.column.getCanSort() ? "cursor-pointer select-none" : undefined
                           )}
+                          onClick={
+                            header.column.getCanSort()
+                              ? header.column.getToggleSortingHandler()
+                              : undefined
+                          }
+                        >
+                          <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {header.column.getCanSort() ? (
+                              header.column.getIsSorted() === "asc" ? (
+                                <ArrowUp className="h-3 w-3" />
+                              ) : header.column.getIsSorted() === "desc" ? (
+                                <ArrowDown className="h-3 w-3" />
+                              ) : (
+                                <ArrowUpDown className="h-3 w-3 text-slate-400" />
+                              )
+                            ) : null}
+                          </span>
+                        </div>
+                      )}
                     </TableHead>
                   )
                 })}
@@ -89,9 +137,23 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={
+                    onRowClick && (isRowClickable ? isRowClickable(row) : true)
+                      ? () => onRowClick(row)
+                      : undefined
+                  }
+                  className={cn(
+                    onRowClick && (isRowClickable ? isRowClickable(row) : true)
+                      ? "cursor-pointer"
+                      : undefined,
+                    rowClassName?.(row)
+                  )}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell
+                      key={cell.id}
+                      className={cn((cell.column.columnDef.meta as ColumnMeta | undefined)?.cellClassName)}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

@@ -22,7 +22,7 @@ This directory contains scripts to manage the complete ISO 14971 compliance eval
 
 **Features:**
 - Validates project structure and dependencies
-- Checks port availability (8001, 5173)
+- Checks port availability (defaults 8000/5173, override with `API_PORT` / `FRONTEND_PORT`)
 - Creates Python virtual environment for API
 - Installs all dependencies automatically
 - Starts API server (FastAPI + uvicorn)
@@ -34,12 +34,15 @@ This directory contains scripts to manage the complete ISO 14971 compliance eval
 **Usage:**
 ```bash
 ./start-system.sh
+
+# Custom ports
+API_PORT=8001 FRONTEND_PORT=3001 ./start-system.sh
 ```
 
 **Services Started:**
-- **API Server**: http://localhost:8001
-- **Frontend**: http://localhost:5173
-- **API Documentation**: http://localhost:8001/docs
+- **API Server**: http://localhost:8000 (override with `API_PORT`)
+- **Frontend**: http://localhost:5173 (override with `FRONTEND_PORT`)
+- **API Documentation**: http://localhost:8000/docs
 
 ### 🔍 `status.sh`
 **Comprehensive system status checker**
@@ -64,7 +67,7 @@ This directory contains scripts to manage the complete ISO 14971 compliance eval
 **Features:**
 - Gracefully stops all services
 - Force kills if necessary
-- Releases ports 8001 and 5173
+- Releases ports (default 8000 / 5173)
 - Archives log files with timestamps
 - Cleans up temporary files
 - Removes Python cache files
@@ -95,6 +98,11 @@ AZURE_SEARCH_ENDPOINT=https://your-search.search.windows.net
 AZURE_SEARCH_KEY=your-search-key
 AZURE_SEARCH_INDEX=iso-analysis
 
+# Azure Document Intelligence
+AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://your-docintance.cognitiveservices.azure.com
+AZURE_DOCUMENT_INTELLIGENCE_KEY=your-doc-intelligence-key
+AZURE_DOCUMENT_INTELLIGENCE_API_VERSION=2024-11-30
+
 # Azure Storage
 AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;...
 
@@ -103,13 +111,18 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 ```
 
+**Document Intelligence endpoint options**
+- Use `output_format=markdown|text` on `POST /api/document-intelligence/markdown` to pick Azure's markdown or plain-text rendering.
+- `sanitize`, `convert_tables`, and `strip_comments` let you control HTML cleanup (all `true` by default for cleaner markdown).
+- Add `store_in_supabase=true` to persist the processed output into the shared `processed_documents` table for pipeline reuse.
+
 ## System Architecture
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Frontend      │    │   API Server     │    │   Azure         │
 │   (React/Vite)  │───▶│   (FastAPI)      │───▶│   Services      │
-│   Port: 5173    │    │   Port: 8001     │    │                 │
+│   Port: 5173*   │    │   Port: 8000*    │    │                 │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
                                 │
                                 ▼
@@ -119,14 +132,16 @@ SUPABASE_ANON_KEY=your-anon-key
                        └──────────────────┘
 ```
 
+*Ports shown are defaults. Override with `FRONTEND_PORT` / `API_PORT` when starting the system.*
+
 ## Troubleshooting
 
 ### Port Conflicts
-If ports 8001 or 5173 are in use:
+If the default ports (8000 / 5173) or your overrides are in use:
 ```bash
 # Find process using port
-lsof -i :8001
-lsof -i :5173
+lsof -i :8000   # or :$API_PORT
+lsof -i :5173   # or :$FRONTEND_PORT
 
 # Kill process
 kill -9 <PID>

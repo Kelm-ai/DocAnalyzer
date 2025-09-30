@@ -1,6 +1,10 @@
 import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
-import { Upload, FileSearch, BarChart3, ClipboardCheck } from "lucide-react"
+import {
+  Upload,
+  FileSearch,
+  ListChecks,
+} from "lucide-react"
 
 const navItems = [
   {
@@ -10,22 +14,16 @@ const navItems = [
     description: "Upload documents for evaluation"
   },
   {
+    title: "Requirements",
+    href: "/requirements",
+    icon: ListChecks,
+    description: "Manage ISO requirements"
+  },
+  {
     title: "Evaluations",
     href: "/evaluations",
     icon: FileSearch,
     description: "View ongoing evaluations"
-  },
-  {
-    title: "Results",
-    href: "/results",
-    icon: ClipboardCheck,
-    description: "Review compliance results"
-  },
-  {
-    title: "Reports",
-    href: "/reports",
-    icon: BarChart3,
-    description: "Generate compliance reports"
   }
 ]
 
