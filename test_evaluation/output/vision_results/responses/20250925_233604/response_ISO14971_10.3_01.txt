@@ -1,0 +1,35 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.7,
+  "rationale": "Partial fulfillment of ISO 14971:2019 clause 10.3. The SOP defines processes to collect and review production and post‑production information, identifies explicit safety-related triggers, requires feedback into earlier RM phases, and mandates updates to RM documents. However, artifacts evidencing implementation (e.g., signal/safety review meeting minutes), a defined signal management or complaint handling SOP, and explicit linkage to CAPA are not present. Comments in the document acknowledge the complaint handling process is not yet defined, and no mechanism is specified to document signal reviews (minutes) or to open CAPA when thresholds are met.",
+  "evidence": [
+    "Page 28, Section 8.12.1: \"Information relevant to the combination product shall be actively collected and reviewed in the production and post-production phases... This information is collected in the Post Market Surveillance and Complaint Handling Process.\"",
+    "Page 28, Section 8.12.2: \"Information collected and reviewed about the combination product shall entail the following considerations, at a minimum.\" (lists production, user, installation/maintenance, supply chain, publicly available info, state of the art)",
+    "Page 28–29, Section 8.12.3: \"The information collected shall be reviewed for possible relevance to safety, especially with respect to the following: • Previously unrecognized hazards or hazardous situations are present • An estimated risk arising from a hazardous situation is present • The overall residual risk is no longer acceptable in relation to the benefits of the intended use • The generally acknowledged state of the art has changed\"",
+    "Page 29, Section 8.12.3.1: \"If any of these conditions occur, the following activities shall be performed. • The risk management file shall be reviewed to determine if reassessment of risks and/or assessment of new risks is necessary. • If a residual risk is no longer acceptable, the impact on previous implemented risk control measures shall be evaluated... • Consider the need for actions regarding combination products on the market • ...Provide the results of the evaluation as an input for the review of suitability of the risk management process by top management\"",
+    "Page 29, Section 8.12.4: \"The results of any production and post-production evaluation(s) shall be recorded in the affected documents in the risk management file which include the Risk Management Plan, Hazards Analysis, FMEAs, and Risk Management Report.\"",
+    "Page 12–13, Sections 8.2.8 and 8.2.8.1: \"Method(s) for obtaining and reviewing relevant product-specific production and post-production information... At a minimum, data from the complaint handling process, if applicable, shall be used as part of the residual risk analysis.\"",
+    "Page 27, Section 8.11.1: \"Appropriate methods to collect and review the information in the production and post-production phases have been determined and are in place\"",
+    "Page 10, Section 8.1.6: \"management shall regularly review the outputs of processes... in accordance with QA-026, Management Responsibility.\"",
+    "Page 10, Section 8.1.11: \"Major risks shall be communicated to Senior Product Development and Quality Assurance Management.\"",
+    "Page 30, Section 9.1: \"Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified... These events may be planned... or unplanned...\"",
+    "Page 11, Figure 1: The schematic includes a box labeled \"Production and post production activities\" feeding back into the risk management process (visual evidence).",
+    "Page 13, Comment [LS32]: \"We do not currently have a defined complaint handling process.\""
+  ],
+  "gaps": [
+    "No explicit signal management or complaint handling SOP is included; the document itself acknowledges the complaint handling process is not currently defined.",
+    "No defined safety review board or requirement to document signal review meetings (minutes) is specified.",
+    "No explicit linkage to CAPA or reference to a CAPA SOP when trends/thresholds indicate unacceptable risk; actions are described generically without CAPA initiation criteria.",
+    "Approval/signature fields and effective date are blank (document appears draft), and therefore implementation evidence (e.g., review minutes) is not provided.",
+    "Escalation governance beyond \"Major risks shall be communicated to Senior... Management\" is not fully defined (e.g., thresholds, timelines, quorum, agenda, and documentation of decisions)."
+  ],
+  "recommendations": [
+    "Establish and reference a formal Post-Market Surveillance/Complaint Handling and Signal Management SOP (define signal detection, triage, assessment, trending, escalation, thresholds, and governance).",
+    "Create a Safety Review Board charter and require meeting minutes (agenda, attendees, decisions, actions) for periodic signal reviews and ad hoc escalations; link these to the Risk Management File.",
+    "Integrate CAPA: reference the CAPA SOP and require CAPA initiation when safety triggers are met (e.g., unacceptable residual risk, new hazards, trend thresholds); ensure CAPA outputs feed into RM updates.",
+    "Define specific documentation requirements for signal reviews (minutes templates) and ensure outputs are filed in the RMF and linked to updated RMP, Hazard Analysis, FMEAs, and RM Report.",
+    "Clarify and finalize escalation thresholds, timelines, and responsible roles for safety reviews; include these in the Risk Management Plan and related governance documents.",
+    "Approve and issue the SOP (collect signatures/effective date) and train designated roles; implement the referenced PMS/complaints process to operationalize Section 8.12.",
+    "Ensure Change Control forms explicitly require assessment of impact on the Risk Management File and capture the update outcome."
+  ]
+}

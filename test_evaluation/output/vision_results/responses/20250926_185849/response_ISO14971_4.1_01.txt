@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "confidence": 0.80,
+  "rationale": "The document establishes a formal risk management program that covers lifecycle activities, includes risk analysis/evaluation/control and production/post-production activities, integrates with product realization, and references related QMS processes. The process map/flow (Figure 1) and sections detailing risk management elements confirm lifecycle coverage and controls. Cross-references to QMS processes (e.g., QAP012, QAP001) are explicit. Artifacts such as Risk Management SOP, Risk Management Plan, Hazard Analysis, and Risk Management File are described as deliverables.",
+  "evidence": [
+    "Section 1.1 Purpose: The purpose of this SOP is to establish, implement, document and maintain an ongoing process for risk management at Viking Therapeutics for combination products, including identifying hazards, estimating and evaluating risks, controlling these risks, and monitoring the effectiveness of controls (ISO 13485/14971 guidance).",
+    "Section 1.2 Scope: This SOP applies to the commercial and investigational combination products designed, manufactured, and distributed under cGMP conditions throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.",
+    "Section 5.1.4: The risk management process includes the following elements throughout the product life cycle: 5.1.4.1 Identifying hazards and hazardous situations; 5.1.4.2 Estimating and evaluating the associated risks; 5.1.4.3 Controlling risk and monitoring the effectiveness of the risk control measures; 5.1.4.4 Monitoring the effectiveness of the risk control measures; 5.1.4.5 Risk reviews driven by new information; 5.1.4.6 Periodic review of identified risks; and Figure 1 illustrates the systemic representation of the risk management process.",
+    "Section 5.2.3.2.2 Top management: Establish acceptable thresholds for residual risk acceptance within this procedure.",
+    "Section 5.3.4: The risk management file consists of hazard analysis, risk management plan, risk analyses (internal and external), benefit risk analysis (when applicable), risk management report(s), post-production risk management report(s) (when appropriate), and any supporting documents required by the risk management plan.",
+    "Section 5.11.1: Risk Management Report: Prior to release, ensure the risk management plan has been implemented, the process is appropriate, overall residual risk acceptability and benefit-risk analysis determined, and labeling/disclosure considerations in place.",
+    "Section 5.12: Production and Post-Production Activities: Information relevant to the product is collected and reviewed to comply with post-market surveillance and input to the risk management file.",
+    "Section 6: Appendices, Forms and Templates: Appendix A and Appendix B are included (Characteristics Related to Safety; Examples of Hazards)."
+  ],
+  "gaps": [
+    "No explicit gap identified. The document includes a formal Risk Management SOP, a process map/flow (Figure 1), lifecycle coverage, and cross-references to related QMS processes. The expected artifacts (Risk Management SOP, process flowchart, QMS cross-references) are described within the document."
+  ],
+  "recommendations": [
+    "Maintain and periodically update the process map/flow (Figure 1) to reflect any changes in the risk management process or lifecycle stages.",
+    "Continuously ensure cross-references to QMS processes (e.g., QAP012, QAP001) are current and include any new or revised internal standards or external guidance.",
+    "Encourage periodic internal audits of risk management artifacts (plan, analyses, reports) to sustain alignment with ISO 14971/TR 24971 guidance and regulatory expectations."
+  ]
+}

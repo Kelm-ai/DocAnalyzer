@@ -1,0 +1,25 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.62,
+  "rationale": "The PD-002 Risk Management Procedure includes clear evidence of top management involvement and defined roles, and references to management reviews and training requirements. However, it does not include documented management review minutes, an organizational chart, or a dedicated training plan within the document itself. Training is referenced to QA-019 (Training Program), and resource assignment is described, but explicit management minutes, org chart, and an internal RM-specific training plan are not present.",
+  "evidence": [
+    "Section 3.0 Role Responsibility: 'Assure adequate resources and support to carry out this process.'",
+    "8.1.6 'As a check on the effectiveness of the risk management processes defined, management shall regularly review the outputs of processes, products, services and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in QA-026, Management Responsibility.'",
+    "8.11.1 'Prior to release for clinical usage or commercial production of the combination product, the Applicant shall review the execution of the risk management plan. This review shall ensure the following, at a minimum... Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance from must approve the Risk Management Report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.'",
+    "9.3 'The risk management process shall be reviewed as part of the management review following requirements in QA-026, Management Responsibility.'",
+    "8.1.8 'Risk management tasks may be performed by representatives of several functions, each contributing their specialist knowledge. Appropriate competence and training program requirements are described in QA-019, Training Program.'",
+    "8.2.3.2 'Assignment of responsibilities and authorities for the execution of specific risk management activities throughout the product lifecycle shall include... Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.'"
+  ],
+  "gaps": [
+    "No embedded management review minutes or formal records of top-management decisioning within PD-002.",
+    "No organizational chart (org chart) provided in the document to illustrate top management roles and RM ownership.",
+    "No standalone RM-specific Training Plan appears in the SOP; training is only referenced to QA-019 (Training Program).",
+    "No explicit resource plan or resourcing allocation document included within this SOP (beyond general 'adequate resources' language)."
+  ],
+  "recommendations": [
+    "Add or attach management review minutes/templates and a record of management approvals relevant to RM activities as part of the RM file.",
+    "Include an org chart showing top management and RM ownership (e.g., QA, Product Development, Regulatory Affairs) to satisfy ‘defined roles’ visibility.",
+    "Incorporate a dedicated RM Training Plan or a confirmed cross-reference to QA-019 with a defined RM training scope, schedule, and responsible approvers.",
+    "Add a Resource Plan or capacity commitments for RM activities to document explicit allocation of personnel and other resources."
+  ]
+}

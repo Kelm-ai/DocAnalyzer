@@ -1,0 +1,32 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.62,
+  "rationale": "Partial evidence of top-management commitment is present in the SOP (policy-level commitments, assigned roles, and references to management review and training). However, required objective evidence such as actual management review minutes, resourcing decisions, org charts, resource plans, and training plans/records are not included. Defined roles are clearly documented; competence and training are referenced, but not evidenced with records.",
+  "evidence": [
+    "Section 2, Responsibilities: Functional Area Management – \"Assures adequate resources and support to carry out this process.\" and \"Ensures provision of adequate resources and assignment of competent personnel for risk management\"; \"Reviews suitability of the risk management process at planned intervals to ensure continuing effectiveness...\"",
+    "Section 2, Responsibilities: Quality Assurance Management – \"Overall responsibility for effective execution and oversight of risk management process...\" and \"Overall responsibility for the Quality Management System (QMS), including the risk management process\"",
+    "Section 5.1.6 – \"management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.\"",
+    "Section 5.1.8 – \"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\"",
+    "Section 5.2.3.2 – \"Assignment of responsibilities and authorities for the execution of specific risk management activities throughout the product lifecycle shall include...\"",
+    "Section 5.2.3.2.2 – \"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\"",
+    "Section 5.11.1.6 – \"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\"",
+    "Section 5.13.3 – \"The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility.\"",
+    "Section 4.28, Definitions – \"Top Management: A person or group of people who directs and controls an organization at the highest level, having the power to delegate authority and provide resources within the organization.\""
+  ],
+  "gaps": [
+    "No management review records/minutes demonstrating actual review of risk management and resourcing decisions",
+    "No organizational chart showing top-management roles and reporting lines for risk management",
+    "No resource plan or documented resourcing decisions specific to risk management activities",
+    "No training plan details or training/competency records for personnel performing risk management tasks",
+    "No explicit evidence of assignment letters or RACI beyond procedural statements",
+    "Referenced procedures (XX-YYY Management Responsibility; QAP011 GMP Training Program) not provided"
+  ],
+  "recommendations": [
+    "Provide recent Management Review minutes or report excerpts showing review of the risk management process and any resourcing decisions (cite dates, attendees, and actions).",
+    "Submit an organizational chart highlighting top management roles over Product Development, Clinical Development, Regulatory Affairs, and QA with respect to risk management.",
+    "Provide a resource plan or documented resourcing decisions for risk management activities (e.g., headcount allocation, budget, or approved project resourcing).",
+    "Provide the training plan (QAP011) and representative training/competency records for personnel performing risk management, showing completion and qualifications.",
+    "Include an approved Risk Management Plan for a product showing named or role-based assignment of responsibilities and authorities, and evidence of top management approval where applicable.",
+    "Provide job descriptions or RACI matrices that define competencies and responsibilities for risk management roles."
+  ]
+}

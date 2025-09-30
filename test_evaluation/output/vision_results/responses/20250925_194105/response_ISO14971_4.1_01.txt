@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "confidence": 0.91,
+  "rationale": "All acceptance criteria are explicitly addressed. A controlled SOP exists (with document number and effective date) and links to document control. The scope clearly covers the entire product lifecycle, including production and post‑production. A process flow/overview is provided in Figure 1 showing risk analysis, risk evaluation, risk control, evaluation of overall residual risk, and production/post‑production activities. The SOP is integrated with product realization/design control and references related QMS processes. Minor gaps exist (placeholder document numbers and a typographical error in references), but they do not prevent meeting the clause intent.",
+  "evidence": [
+    "Header: Document Number: QAP013.01; Title: RISK MANAGEMENT PROGRAM; Effective Date: 26Jun2024; Section: Quality Assurance; Subsection: Procedures",
+    "Section 1.1: \"establish, implement, document and maintain an ongoing process for risk management... in accordance with applicable subclauses of ISO 13485:2016, ISO 14971:2019, and... ISO/TR 24971:2020.\"",
+    "Section 1.2 (Scope): \"applies to the ... combination products ... throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.\"",
+    "Section 5.1.2: \"Risk management is integrated within QAP012, Design Control as part of product realization.\"",
+    "Section 5.1.4: \"The risk management process includes the following elements throughout the product life cycle: ... Identifying hazards... Estimating and evaluating the associated risks... Controlling risk and monitoring the effectiveness of the risk control measures... Risk reviews driven by new information... Periodic review of identified risks.\"",
+    "Section 5.1, Figure 1 (Risk Management Overview) [visual]: Boxes labeled \"Risk management plan\", \"Risk analysis\", \"Risk evaluation\", \"Risk control\", \"Evaluation of overall residual risk\", and \"Production and post‑production activities\" appear in the process flow.",
+    "Section 5.3.1–5.3.4: \"a risk management file shall be established and maintained throughout the product lifecycle\" and includes hazard analysis, risk management plan, risk analyses, benefit‑risk analysis, risk management report(s), and post‑production RM report(s).",
+    "Section 5.12 (Production and Post‑Production Activities): \"Information relevant to the combination product shall be actively collected and reviewed in the production and post‑production phases... Post Market Surveillance and Complaint Handling Process.\"",
+    "Section 5.13 (Periodic Reviews): \"Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis... The risk management process shall be reviewed as part of the management review... (XX‑YYY, Management Responsibility).\"",
+    "Section 5.3.5: \"controlled and maintained in the document management system in accordance with QAP001, Format, Content, Approval and Issuance of Controlled Documents.\"",
+    "Section 5.5.1 and 5.5.3: Verification of risk controls is performed per QAP012, Design Control.",
+    "Section 3 (References): lists 21CFR820.30, ISO 14971:2019, ISO 24971:2020 (noted as ISO 12971:2020), Viking QAP012 Design Control, and ISO 62366:2005."
+  ],
+  "gaps": [
+    "Two referenced QMS processes use placeholder identifiers (\"XX-XXX, Supplier Qualification and Management\" and \"XX-YYY, Management Responsibility\").",
+    "The reference list contains a typographical error: \"ISO 12971: 2020\" should be \"ISO/TR 24971:2020.\"",
+    "Post-market surveillance and complaint handling are referenced but not linked to a specific controlled procedure number."
+  ],
+  "recommendations": [
+    "Replace placeholder document numbers (XX-XXX and XX-YYY) with the actual controlled procedure identifiers.",
+    "Correct the reference list to read ISO/TR 24971:2020 (and consider updating ISO 62366 to the current edition, IEC 62366-1, if applicable).",
+    "Add explicit cross-references (document numbers/titles) to the Post Market Surveillance and Complaint Handling procedures to strengthen QMS linkage.",
+    "Consider adding page footers or a document control page showing approval signatures/approvers to further evidence control, aligning with QAP001."
+  ]
+}

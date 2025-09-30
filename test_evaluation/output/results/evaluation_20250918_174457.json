@@ -1,0 +1,77 @@
+{
+  "document_info": {
+    "file_name": "Example Altimmune Risk Management Procedure v2 11-30-2022.docx",
+    "file_type": ".docx",
+    "file_size_bytes": 492128,
+    "markdown_length": 59587,
+    "word_count": 8891,
+    "line_count": 870,
+    "conversion_timestamp": "2025-09-18T17:44:17.243200"
+  },
+  "evaluation_summary": {
+    "total_requirements": 3,
+    "compliance_score": 0,
+    "status_counts": {
+      "PASS": 0,
+      "FAIL": 0,
+      "FLAGGED": 0,
+      "NOT_APPLICABLE": 0,
+      "ERROR": 3,
+      "SKIPPED": 0
+    },
+    "total_tokens_used": 34516,
+    "total_duration_ms": 40507,
+    "estimated_cost_usd": 0.1726
+  },
+  "requirements_results": [
+    {
+      "requirement_id": "ISO14971-4.1-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "JSON parsing failed: Expecting value: line 1 column 1 (char 0)",
+      "evidence": [],
+      "gaps": [
+        "Invalid API response format"
+      ],
+      "recommendations": [
+        "Review prompt format"
+      ],
+      "tokens_used": 11585,
+      "evaluation_duration_ms": 13196,
+      "raw_response": "```json\n{\n    \"status\": \"PASS\",\n    \"confidence\": 0.9,\n    \"rationale\": \"The document provides comprehensive coverage of the risk management process as required by ISO 14971:2019 Clause 4.1. It includes detailed procedures for risk analysis, risk evaluation, risk control, and production & post-production activities. The document also integrates risk management with product realization and references related QMS processes.\",\n    \"evidence\": [\n        \"The purpose of this procedure is to establish, implement, document and maintain an ongoing process for risk management at Altimmune for combination products, including identifying hazards associated with a combination product, estimating and evaluating the associated risks, controlling these risks, and monitoring the effectiveness of the controls in accordance with applicable subclauses of ISO 13485:2016 [1], ISO 14971:2019, and taking into consideration the guidelines provided by ISO/TR 24971:2020.\",\n        \"The risk management process includes the following elements throughout the product life cycle: Identifying hazards and hazardous situations associated with the combination product, Estimating and evaluating the associated risks, Controlling risk and monitoring the effectiveness of the risk control measures, Monitoring the effectiveness of the risk control measures, Risk reviews driven by new information, Periodic review of identified risks.\"\n    ],\n    \"gaps\": [],\n    \"recommendations\": [\n        \"Ensure that all personnel involved in the risk management process are adequately trained and that their competencies are regularly reviewed.\",\n        \"Regularly update the risk management process to incorporate any changes in regulatory requirements or industry best practices.\"\n    ]\n}\n```"
+    },
+    {
+      "requirement_id": "ISO14971-4.2-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "JSON parsing failed: Expecting value: line 1 column 1 (char 0)",
+      "evidence": [],
+      "gaps": [
+        "Invalid API response format"
+      ],
+      "recommendations": [
+        "Review prompt format"
+      ],
+      "tokens_used": 11436,
+      "evaluation_duration_ms": 3239,
+      "raw_response": "```json\n{\n    \"status\": \"FLAGGED\",\n    \"confidence\": 0.6,\n    \"rationale\": \"The document provides some evidence of top management commitment through defined roles and responsibilities, particularly in the 'Responsibilities' section. However, there is no explicit mention of management review records, resource plans, or training plans that would fully satisfy the requirement for documented management commitment.\",\n    \"evidence\": [\n        \"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\",\n        \"Functional Area Management (Product Development, Clinical Development, Regulatory Affairs and Quality Assurance Management) is responsible for ensuring that the risk management process is followed within area of responsibility.\"\n    ],\n    \"gaps\": [\n        \"Lack of explicit management review records or minutes.\",\n        \"No specific mention of resource plans or training plans.\"\n    ],\n    \"recommendations\": [\n        \"Include management review records or minutes that demonstrate top management's commitment to providing adequate resources.\",\n        \"Provide documentation of resource plans and training plans to show assignment of competent personnel.\"\n    ]\n}\n```"
+    },
+    {
+      "requirement_id": "ISO14971-4.2-02",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "JSON parsing failed: Expecting value: line 1 column 1 (char 0)",
+      "evidence": [],
+      "gaps": [
+        "Invalid API response format"
+      ],
+      "recommendations": [
+        "Review prompt format"
+      ],
+      "tokens_used": 11495,
+      "evaluation_duration_ms": 24072,
+      "raw_response": "```json\n{\n    \"status\": \"FLAGGED\",\n    \"confidence\": 0.6,\n    \"rationale\": \"The document provides some elements related to risk acceptability, but it lacks a clearly defined and documented policy specifically for establishing criteria for risk acceptability. While there are references to criteria for risk acceptability within the Risk Management Plan and procedures, there is no standalone Risk Acceptability Policy document that aligns with the requirement.\",\n    \"evidence\": [\n        \"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\",\n        \"Categories of risk and criteria for risk acceptability, in accordance with this procedure, including criteria for accepting risks when the probability of occurrence of harm cannot be estimated.\"\n    ],\n    \"gaps\": [\n        \"No standalone Risk Acceptability Policy document is referenced or included.\",\n        \"Lack of explicit alignment with regulations, relevant standards, state of the art, and stakeholder concerns in a single policy document.\"\n    ],\n    \"recommendations\": [\n        \"Develop a standalone Risk Acceptability Policy document that clearly defines the criteria for risk acceptability.\",\n        \"Ensure the policy document explicitly cites regulatory and standard inputs and aligns with the state of the art and stakeholder concerns.\"\n    ]\n}\n```"
+    }
+  ],
+  "generated_at": "2025-09-18T17:44:57.754575"
+}

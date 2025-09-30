@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "confidence": 0.84,
+  "rationale": "Each acceptance criterion is satisfied: (1) Approved policy exists: The controlled SOP QAP013.01 (Effective Date 26Jun2024) defines and governs the risk acceptability framework, with roles for establishing criteria and management approval, indicating an approved, controlled policy document. (2) Cites regulatory/standard inputs: The SOP explicitly aligns with ISO 14971:2019, ISO/TR 24971:2020, ISO 13485:2016, and 21 CFR 820.30, and directs that acceptability criteria be based on regulations, relevant standards, state of the art, and stakeholder concerns. (3) Defines principles for specific device families: The SOP requires that risk acceptance criteria be defined in the Risk Management Plan for each product or product family and that those criteria be based on standard of care, health benefit, and state of the art. (4) Accessible to teams: Responsibilities assign compliance across functions; the SOP and risk files are controlled in the document management system and maintained in the DHF, ensuring access. (5) Includes guidance on overall residual risk: The SOP requires defining method and criteria for acceptability of the overall residual risk in the RMP and mandates evaluation and documentation of overall residual risk in the Risk Management Report. While there is a minor wording inconsistency about where criteria are documented (Procedure vs Plan), the core requirements of ISO 14971 clause 4.2 are met.",
+  "evidence": [
+    "Page 1 (Header): \"Document Number: QAP013.01 ... Effective Date: 26Jun2024\" (controlled, effective document indicating approval per QMS)",
+    "Page 3, Section 1.1: \"... in accordance with applicable subclauses of ISO 13485:2016, ISO 14971:2019, and taking into consideration the guidelines provided by ISO/TR 24971:2020.\"",
+    "Page 5, Section 3 References: \"21Cfr820.30; Iso 14971: 2019; Iso 12971 : 2020 [sic]; ... Iso 62366: 2005\"",
+    "Page 4, Role - Functional Area Management: \"Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and considers ... state of the art and known stakeholder concerns.\"",
+    "Page 5, Role - Quality Assurance: \"Defines and documents criteria for risk acceptability in the Risk Management Plan according to the process established in this Sop.\"",
+    "Page 9, Section 5.2.5: \"Categories of risk and criteria for risk acceptability, in accordance with this procedure, including criteria for accepting risks when the probability of occurrence of harm cannot be estimated. The risk acceptance criteria are based on ... (5.2.5.1) current standard of care; (5.2.5.2) potential health benefits; (5.2.5.3) generally acknowledged state of the art ...\"",
+    "Page 9, Section 5.2.6: \"The evaluation method and criteria for acceptability for the overall residual risk ... shall be clearly defined and documented in the risk management plan.\"",
+    "Page 10, Section 5.3.5: \"The contents of the risk management file ... shall be controlled and maintained in the document management system in accordance with QAP001 ...\"",
+    "Page 11, Section 5.6.1.5: \"Risk analyses shall be conducted with the support of a team composed of subject matter experts ...\" (supports accessibility to teams and defined process)",
+    "Page 16–18, Tables 5 & 6: Table 5 (Risk Index matrix) and Table 6 (Required Action Based on Residual Risk Evaluation) define action principles for Green/Yellow/Red indices, guiding acceptability decisions and required analyses/disclosures.",
+    "Page 18, Section 5.9.4.1–5.9.4.4: \"After the risk control measures are implemented, the applicant shall evaluate the residual risk using the criteria for risk acceptability defined in the risk management plan ...\" and required actions per Table 6.",
+    "Page 19, Section 5.10.1–5.10.4: \"The Applicant shall evaluate the overall residual risk ... using the method and the criteria for acceptability of the overall residual risk defined in the risk management plan.\" and document results in the Risk Management Report.",
+    "Page 19, Section 5.11.1.3: \"The overall residual risk acceptability and overall benefit risk analysis have been determined.\"",
+    "Page 9, Section 5.2.3 and 5.2.10: \"For the particular combination product (or product family) ... a risk management plan shall be documented ...\" and \"The risk management plan may be developed for a specific product or for a family of similar products, as appropriate.\"",
+    "Page 3, Section 1.3: \"This SOP does not define the threshold for acceptable risk (or risk index) since this threshold will change based on the intended use and expected benefit ...\" (policy sets process; criteria defined per product/family RMP)",
+    "Page 8, Section 5.1.10: \"Risk management activities shall be communicated during the product development phases ... and as part of the production and post-production process during the commercialization phase.\""
+  ],
+  "gaps": [
+    "Minor inconsistency: Page 4 says management defines criteria for risk acceptability \"in the Risk Management Procedure,\" while Page 5 assigns QA to define criteria \"in the Risk Management Plan.\" The intent is clear (criteria in RMPs) but wording could be harmonized.",
+    "Typo in References: \"Iso 12971 : 2020\" likely intends ISO/TR 24971:2020.",
+    "Approval signatories are not displayed in the excerpt. Although an effective date indicates control, explicit approval metadata per QAP001 is not visible here."
+  ],
+  "recommendations": [
+    "Harmonize language to consistently state that risk acceptability criteria are defined in the Risk Management Plan for each product/family, and remove or correct the reference to \"Risk Management Procedure\" in the role description.",
+    "Correct the reference list to explicitly cite ISO/TR 24971:2020 (replace \"Iso 12971 : 2020\").",
+    "Ensure the controlled copy of QAP013.01 shows approval metadata per QAP001 (owners/approvers and approval dates).",
+    "Verify that RMP templates include a dedicated section to define risk acceptance criteria and the method/criteria for overall residual risk, referencing standard of care, expected benefits, and state of the art.",
+    "Optionally, issue a concise, top-management-endorsed Risk Acceptability Policy summary that points to QAP013.01 and clarifies the organizational principles and approval requirements; this can further strengthen evidence for ISO 14971 clause 4.2."
+  ]
+}

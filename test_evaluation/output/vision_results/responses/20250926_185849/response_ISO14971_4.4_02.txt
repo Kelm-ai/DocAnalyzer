@@ -1,0 +1,24 @@
+{
+  "status": "FAIL",
+  "confidence": 0.65,
+  "rationale": "The document shows named owners and approvals at a high level for risk management activities (Section 2 Responsibilities and 5.11.1/5.11.1.6), and specific assignment guidance for responsibilities and authorities (Section 5.2.3.2.1, 5.2.3.2.2). However, there is no explicit RACI chart diagram or table mapping Responsible/Accountable/Consulted/Informed for each risk management activity, which is required by the Acceptance Criteria. Evidence of ownership/approval:",
+  "evidence": [
+    "Section 2. Responsibilities: 'Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP. All functional leads/managers are responsible for ensuring compliance with the applicable segments of this procedure that are within their areas of responsibility.'",
+    "Section 2. Responsibilities (Role Responsibility): 'Quality Assurance Management • Overall responsibility for effective execution and oversight of risk management process, including both internal and external organizations’ scope of work.'",
+    "Section 2. Responsibilities (Role Responsibility): 'Quality Assurance In accordance with this procedure: • Approves risk management documents and risk reduction activities'",
+    "Section 2. Responsibilities (Role Responsibility): ' Regulatory Affairs • Provides regulatory input based on relevant regulatory guidelines' (and related lines for other roles)",
+    "Section 5.2.3.2.1: 'Assignment of responsibilities and authorities for the execution of specific risk management activities throughout the product lifecycle shall include: Identification by function or area of expertise the necessary reviewers, contributors, and personnel responsible for risk management execution throughout the product lifecycle'",
+    "Section 5.2.3.2.2: 'Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.'",
+    "Section 5.11.1.6: 'Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.'",
+    "Figure 1: 'Risk Management Overview' (visual in 5.1.5) – not a RACI chart"
+  ],
+  "gaps": [
+    "No explicit RACI chart or matrix appears in the Risk Management Plan document to satisfy the 'RACI chart in plan' criterion.",
+    "No clear, documented signatures/approvals blocks for the Risk Management Plan included in the provided excerpts (evidence of signatures/approvals is not shown)."
+  ],
+  "recommendations": [
+    "Add a formal RACI matrix in the Risk Management Plan that assigns for each risk management activity (e.g., hazard identification, risk estimation, risk evaluation, risk control, residual risk evaluation, post-market activities) who is Responsible, Accountable, Consulted, and Informed.",
+    "Include explicit sign-off blocks/signatures for the Risk Management Plan and for each risk management document (hazards analysis, risk management report, etc.), with dates and names of approvers, to document formal approvals.",
+    "Map the existing roles from Section 2 (Product Development, Clinical Development, Regulatory Affairs, QA) to the RACI entries to ensure every activity has assigned owners and approvers."
+  ]
+}

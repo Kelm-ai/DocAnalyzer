@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "confidence": 0.85,
+  "rationale": "The document explicitly requires periodic reviews of the risk management process and related artifacts, with documented decisions/actions and consideration of inputs/outputs. Evidence shows periodic reviews (5.13), management review integration (5.13.3; 5.1.6), and outputs/records (5.11.2, 5.11.1). Roles also require documenting decisions/actions, supporting traceability of action tracking.",
+  "evidence": [
+    "5.13.1 Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team and documented in the risk management plan or when events that may impact the original risk management decision occur.",
+    "5.13.2 Periodic review of risk management reports shall be conducted, when elements in the risk management file change, to assess the acceptability of residual risks and the overall residual risk of the combination product.",
+    "5.13.3 The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility. At a minimum, the review shall include: 5.13.3.1 Risk management process; 5.13.3.2 Summaries of responses for critical and high risks; 5.13.3.3 Risk profile(s).",
+    "2.1. Role Responsibility – Management: Reviews suitability of the risk management process at planned intervals to ensure continuing effectiveness of the risk management process and documents any decisions and actions taken.",
+    "5.11.1 Prior to release for clinical usage or commercial production of the combination product, the applicant shall review the execution of the risk management plan. This review shall ensure the following, at a minimum: 5.11.1.1 The risk management plan has been appropriately implemented. 5.11.1.2 The risk management process has been appropriately implemented; 5.11.1.3 The overall residual risk acceptability and overall benefit risk analysis have been determined.",
+    "5.1.6 As a check on the effectiveness of the risk management processes defined, management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.",
+    "5.2.12 The risk management plan shall be reviewed periodically at specified time intervals.",
+    "5.12.4 If a residual risk is no longer acceptable, the impact on previously implemented risk control measures shall be evaluated and should be considered as an input for modification of the combination product."
+  ],
+  "gaps": [
+    "No explicit CAPA/Change control tickets listed as artifacts for periodic reviews in the attached excerpts; evidence of CAPA-related activity is present in context (e.g., change/reassessment references in 5.12.4 and 5.2.13) but not as a named artifact."
+  ],
+  "recommendations": [
+    "If CAPA/Change control tickets are expected artifacts for ISO14971-4.2-03, explicitly document their generation and linkage to periodic management reviews.",
+    "Include a dedicated Management Review Records template showing inputs (risk management outputs, decisions) and outputs (approved actions, updated procedures), and ensure traceability to sections 5.13.1–5.13.3."
+  ]
+}

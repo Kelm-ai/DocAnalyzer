@@ -1,0 +1,27 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.65,
+  "rationale": "The document provides information review mechanisms within risk management (e.g., risk management review prior to release, post-production information review, and periodic reviews), which aligns with information review and escalation concepts. However, explicit items requested by ISO14971-10.3 are not clearly demonstrated: explicit signal review minutes, defined escalation triggers, CAPA integration, and specific artifacts for signal management are not identified in the provided materials. Visuals show the risk management overview but do not indicate a dedicated signal management process. See evidence below.",
+  "evidence": [
+    "5.11.1 Prior to release for clinical usage or commercial production of the combination product, the applicant shall review the execution of the risk management plan. This review shall ensure the following, at a minimum: 5.11.1.1 The risk management plan has been appropriately implemented. 5.11.1.2 The risk management process has been appropriately implemented in accordance with this procedure. 5.11.1.3 The overall residual risk acceptability and overall benefit risk analysis have been determined. 5.11.1.4 Appropriate methods to collect and review the information in the production and post-production phases have been determined and are in place. 5.11.1.5 Requirements for disclosure of overall and individual residual risks through product labeling and other forms of user communication have been determined. 5.11.1.6 Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.",
+    "5.11.2 The results of this review shall be documented and maintained in the Risk Management Report and included in the risk management file.",
+    "5.12.3 The information collected shall be reviewed for possible relevance to safety, especially with respect to the following: 5.12.3.1 Previously unrecognized hazards or hazardous situations are present; 5.12.3.3 The overall residual risk is no longer acceptable in relation to the benefits of the intended use; 5.12.3.4 The generally acknowledged state of the art has changed.",
+    "5.12.4 If any of these conditions occur, the following activities shall be performed: 5.12.4.1 The risk management file shall be reviewed to determine if reassessment of risks and/or assessment of new risks is necessary; 5.12.4.4 Evaluate the impact on previously implemented risk management activities; 5.12.4.5 Provide the results of the evaluation as an input for the review of suitability of the risk management process by top management.",
+    "5.2.11 Unplanned risk management activities (ad hoc) may be required during the product lifecycle.",
+    "5.13 Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team and documented in the risk management plan or when events that may impact the original risk management decision occur.",
+    "5.2.14 The risk management plan shall be included as part of the risk management file. If the plan changes during the product lifecycle, a record of the changes shall be maintained in the risk management file."
+  ],
+  "gaps": [
+    "No explicit 'Signal review minutes' procedure or artifact identified (ISO 14971-10.3 asks for signal review minutes).",
+    "No explicit escalation triggers documented as formalized criteria for escalating safety signals beyond general RM review actions.",
+    "CAPA (corrective and preventive actions) explicit linkage to RM outputs is not described by a named process; RM references ad hoc activities but not a formal CAPA workflow.",
+    "No dedicated 'Signal Management SOP' or Safety Review Board minutes in the artifacts; the RM framework is described but lacks a separate signal management/control artifact."
+  ],
+  "recommendations": [
+    "Add an explicit Signal Management SOP that defines data sources, roles, frequency, and required Signal Review Minutes.",
+    "Define clear escalation triggers for safety signals (e.g., thresholds, timeframes, or decision points) and document in a formal escalation log.",
+    "Integrate a CAPA process with risk management: link identified signals and RM findings to corrective/preventive actions, track closure, and reflect updates in the Hazard Analysis and Risk Management Plan.",
+    "Ensure the Risk Management File includes dedicated artifacts for signal management (Signal Review Minutes, Safety Review Board minutes) and traceability from signal identification to RM updates.",
+    "Enhance traceability by explicitly mapping updates to hazard analyses/RMPs when signals trigger changes, and document these changes with version history."
+  ]
+}

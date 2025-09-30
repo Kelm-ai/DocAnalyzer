@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "confidence": 0.88,
+  "rationale": "The QAP013.01 Risk Management Program SOP clearly establishes, implements, documents and mandates maintenance of an ongoing risk management process covering the product lifecycle and including the required elements (risk analysis, risk evaluation, risk control, and production & post‑production activities). The SOP: (a) states the purpose to 'establish, implement, document and maintain an ongoing process' (Section 1.1); (b) defines lifecycle scope covering product development through discontinuation (Section 1.2); (c) lists and describes the required risk management elements (Section 5.1.4 and throughout Sections 5.6–5.11); (d) requires a Risk Management Plan and Risk Management File (Sections 5.2 and 5.3); (e) includes a process map (Figure 1, Section 5.1.5) illustrating the flow of analysis → evaluation → control → residual evaluation → production/post‑production review; (f) integrates with product realization and design control via explicit cross‑reference to QAP012 (Section 5.1.2); and (g) references document control and other QMS procedures (QAP001, QAP011) for controlled documents, training and verification. These items satisfy the acceptance criteria for existence and control of procedures, lifecycle coverage, presence of a process flow, and cross‑references to the QMS.",
+  "evidence": [
+    "1.1 Purpose: \"The purpose of this Standard Operating Procedure (SOP) is to establish, implement, document and maintain an ongoing process for risk management...\" (Section 1.1).",
+    "1.2 Scope: \"This SOP applies ... throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.\" (Section 1.2).",
+    "5.1.4 Risk management elements: \"The risk management process includes the following elements throughout the product life cycle: 5.1.4.1 Identifying hazards... 5.1.4.2 Estimating and evaluating... 5.1.4.3 Controlling risk and monitoring the effectiveness... 5.1.4.4 Monitoring the effectiveness... 5.1.4.5 Risk reviews driven by new information 5.1.4.6 Periodic review of identified risks.\" (Section 5.1.4).",
+    "5.2 Risk Management Plan: \"For the particular combination product ... a risk management plan shall be documented and shall include the following, at a minimum: ... the scope ... lifecycle phases ... assignment of responsibilities ... evaluation method and criteria ... verification/validation activities ... production and post‑production information...\" (Section 5.2.3–5.2.8).",
+    "5.3 Risk Management File and control: \"For the combination product being considered, a risk management file shall be established and maintained throughout the product lifecycle... The contents ... shall be controlled and maintained in the document management system in accordance with QAP001, Format, Content, Approval and Issuance of Controlled Documents.\" (Section 5.3.1, 5.3.5).",
+    "5.12 Production and post‑production activities: \"Information relevant to the combination product shall be actively collected and reviewed in the production and post‑production phases... This information is collected in the Post Market Surveillance and Complaint Handling Process.\" (Section 5.12.1–5.12.2).",
+    "Integration with product realization/design control: \"Risk management is integrated within QAP012, Design Control as part of product realization.\" (Section 5.1.2).",
+    "Process map/flowchart: Figure 1 'Risk Management Overview' (Section 5.1.5) — diagram showing Risk analysis → Risk evaluation → Risk control → Evaluation of overall residual risk → Risk management review → Production and post‑production activities.",
+    "Documented periodic review and management review: \"Periodic reviews... on an annual basis...\" and \"The risk management process shall be reviewed as part of the management review...\" (Section 5.13, 5.13.3)."
+  ],
+  "gaps": [
+    "Several internal cross‑references use placeholder IDs rather than a specific procedure number (e.g., 'XX-XXX' for Supplier Qualification and 'XX-YYY' for Management Responsibility), which reduces traceability until those references are resolved.",
+    "References list includes apparent typographical inconsistency ('ISO 12971: 2020') while the body refers to ISO/TR 24971:2020 guidance; this should be corrected for clarity.",
+    "The SOP defers specific numerical thresholds for risk acceptability to the Risk Management Plan (Section 1.3 / 5.2). While acceptable practice, the document does not include a template or direct link to the Risk Management Plan template or sample acceptance criteria within the SOP itself.",
+    "Figure 1 is included but in the provided excerpt the graphic is low resolution; ensure the controlled SOP contains a legible, version‑controlled flowchart as an artifact in the Risk Management File."
+  ],
+  "recommendations": [
+    "Replace placeholder references (e.g., 'XX-XXX', 'XX-YYY') with the final controlled procedure/document IDs to ensure clear QMS cross‑traceability.",
+    "Correct the reference list to accurately cite ISO/TR 24971:2020 (or the intended standard) and review the references for typographical errors to avoid confusion during audits.",
+    "Ensure the Risk Management Plan template (or a link to it) is referenced or included in the Risk Management File so that risk acceptability criteria and methods are consistently applied; consider adding a brief statement in the SOP pointing to the RM Plan template/location in the document management system.",
+    "Ensure Figure 1 and any flowcharts are stored in the document management system as legible, version‑controlled attachments and referenced explicitly (filename/version) in the SOP.",
+    "After updating the placeholders and references, perform a quick controlled revision to the SOP and record the changes in the Revision History to demonstrate closure of these gaps."
+  ]
+}

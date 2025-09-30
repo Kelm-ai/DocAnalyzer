@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "confidence": 0.9,
+  "rationale": "A controlled Risk Management SOP (QAP013.01) exists and explicitly establishes, implements, documents, and maintains an ongoing process across the product lifecycle. It integrates with product realization (Design Control) and covers risk analysis, risk evaluation, risk control, and production/post‑production activities. A process overview/flow is referenced and depicted (Figure 1). Clear cross‑references to related QMS processes are provided.",
+  "evidence": [
+    "Section 1.1 (Purpose): \"establish, implement, document and maintain an ongoing process for risk management... including identifying hazards..., estimating and evaluating... controlling these risks, and monitoring the effectiveness... in accordance with... ISO 14971:2019\" (Page 3)",
+    "Section 1.2 (Scope): \"applies... throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation\" (Page 3)",
+    "Section 5.1.2: \"Risk management is integrated within QAP012, Design Control as part of product realization.\" (Page 7)",
+    "Section 5.1.4: \"The risk management process includes the following elements throughout the product life cycle: ... Identifying hazards... Estimating and evaluating... Controlling risk and monitoring... Risk reviews... Periodic review...\" (Page 7)",
+    "Section 5.1.5: \"Figure 1 illustrates the systemic representation of the risk management process.\" Confirmed the flowchart is present and shows risk analysis, risk evaluation, risk control, overall residual risk evaluation, and production/post‑production activities. (Page 8, Figure 1)",
+    "Section 5.6–5.9: Dedicated sections titled Risk Analysis (5.6), Risk Estimation (5.7), Risk Evaluation (5.8), and Risk Control (5.9) (Pages 11–17)",
+    "Section 5.12: \"Production and Post-Production Activities\" with active collection and review of information and PMS/complaint handling inputs (Pages 19–20)",
+    "Header and document controls: Document Number QAP013.01; Effective Date 26Jun2024; Revision History shows controlled change record: \"A New Document\" (Pages 1, 20)",
+    "Section 5.3.5: \"shall be controlled and maintained in the document management system in accordance with QAP001, Format, Content, Approval and Issuance of Controlled Documents.\" (Page 10)",
+    "Cross-references: QAP012 Design Control (Sections 3, 5.1.2, 5.5.1, 5.5.3), QAP001 Document Control (5.3.5), QAP011 GMP Training (5.1.8), Management Review XX-YYY (5.1.6, 5.13.3), Supplier Qualification XX-XXX (1.4), Post Market Surveillance and Complaint Handling Process (5.12.1) (Pages 3–20)"
+  ],
+  "gaps": [
+    "References include a likely typo: \"ISO 12971: 2020\" instead of ISO/TR 24971:2020 (Section 3).",
+    "Some QMS cross-references use placeholders without document numbers (e.g., \"XX-XXX, Supplier Qualification and Management\" in Section 1.4; \"XX-YYY, Management Responsibility\" in Sections 5.1.6 and 5.13.3).",
+    "Post Market Surveillance and Complaint Handling Process is referenced without a controlled document identifier (Section 5.12.1)."
+  ],
+  "recommendations": [
+    "Correct the reference list to ISO/TR 24971:2020 and ensure consistency across the document.",
+    "Replace placeholder references (XX-XXX, XX-YYY) with actual controlled document numbers and titles.",
+    "Add the controlled document identifier for the Post Market Surveillance and Complaint Handling Process.",
+    "Ensure Figure 1 remains maintained as a controlled depiction of the process steps and aligns with the described lifecycle elements."
+  ]
+}

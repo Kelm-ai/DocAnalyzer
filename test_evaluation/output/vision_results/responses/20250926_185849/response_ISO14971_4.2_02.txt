@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "confidence": 0.82,
+  "rationale": "The document embeds a Risk Acceptability Policy within the Risk Management framework: Top management defines and documents risk acceptability criteria, regulatory inputs are cited, criteria for risk acceptability are defined, and overall residual risk evaluation is required. The Risk Management Plan must define acceptability criteria; risk management reports require top management approval when needed. See sections: 2 Responsibilities; 5.2 Risk Management Plan - 5.2.3.2.2, 5.2.5, 5.2.6, 5.11.1, with references to ISO14971 and CFR. Some gaps noted (no standalone policy doc named; device-family specific principles not explicit; accessibility phrasing).",
+  "evidence": [
+    "2. Responsibilities: Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and considers available information such as the general acknowledged state of the art and known stakeholder concerns.",
+    "5.2.3.2.2 Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.",
+    "5.2.5 Categories of risk and criteria for risk acceptability, in accordance with this procedure, including criteria for accepting risks when the probability of occurrence of harm cannot be estimated.",
+    "5.2.6 The evaluation method and criteria for acceptability for the overall residual risk, considering all the impact of all risks together, shall be clearly defined and documented in the risk management plan.",
+    "5.11.1 Prior to release for clinical usage or commercial production of the combination product, the applicant shall review the execution of the risk management plan. This review shall ensure the following, at a minimum: ... The overall residual risk acceptability and overall benefit risk analysis have been determined.",
+    "1.3 This SOP does not define the threshold for acceptable risk (or risk index) since this threshold will change based on the intended use and expected benefit of using the combination product.",
+    "References include: 21 CFR820.30; ISO 14971: 2019; ISO 12971: 2020."
+  ],
+  "gaps": [
+    "No explicit standalone 'Risk Acceptability Policy' document is named; policy is embedded within the SOP.",
+    "Accessibility to teams is implied but not explicitly stated (e.g., how teams access the policy).",
+    "No device-family specific acceptance principles are explicitly enumerated beyond general criteria."
+  ],
+  "recommendations": [
+    "Create an explicit Risk Acceptability Policy document (standalone) citing regulatory inputs (ISO14971, CFR 21 CFR 820, ISO 24971) and mapping to device families as needed.",
+    "Include an explicit statement about distribution/accessibility (who can view/approve) and reference to RMPs.",
+    "Add a dedicated section that defines device-family specific risk acceptability criteria and thresholds, with examples.",
+    "Ensure explicit cross-reference within RMPs to the policy and training materials so teams can access."
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "status": "FAIL",
+  "confidence": 0.78,
+  "rationale": "The SOP defines functional responsibilities and requires the Risk Management Plan (RMP) to assign responsibilities and authorities, but it does not provide a RACI chart nor named owners/approvers for each risk management activity. No product-specific RMP, RACI matrix, or signature/approval records are included. Thus, acceptance criteria requiring named owners/approvers and a RACI chart in the plan are not met.",
+  "evidence": [
+    "Section 2. Responsibilities: \"Quality Assurance ... Approves risk management documents and risk reduction activities\"; \"Overall responsibility for effective execution and oversight of risk management process\" (Quality Assurance; Quality Assurance Management)",
+    "Section 2. Responsibilities: \"Functional Area Management ... Responsible for ensuring that the risk management process is followed within area of responsibility ... Ensures risk management policies are established and followed ... Ensures provision of adequate resources and assignment of competent personnel for risk management\"",
+    "Section 2. Responsibilities: \"Clinical Development • Defines applicable harms • Assigns severity rating to harms • Participates in benefit risk analysis activity\"",
+    "Section 5.2.3.2: \"Assignment of responsibilities and authorities for the execution of specific risk management activities throughout the product lifecycle shall include: 5.2.3.2.1. Identification by function or area of expertise the necessary reviewers, contributors, and personnel responsible for risk management execution throughout the product lifecycle\"",
+    "Section 5.2.3.2.4: \"Risk management responsibilities may be shared with design partners, consultants, contract manufacturers or suppliers, if applicable. The risk management plan shall identify the shared risk management activities, responsible party(ies), controlling procedure(s) and controlling location(s)/documentation system(s).\"",
+    "Section 5.11.1.6: \"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\"",
+    "Section 5.3.4: The Risk Management File includes a Risk Management Plan, but no RACI or named owners are shown in this document."
+  ],
+  "gaps": [
+    "No RACI chart present in the SOP or an attached Risk Management Plan.",
+    "No named owners/approvers for each risk management activity; only functional roles are described.",
+    "No product-specific Risk Management Plan included to demonstrate assignments.",
+    "No signatures/approval pages for the RMP or risk management activities are provided.",
+    "Visual review shows tables for risk probability/severity but no RACI or signature blocks."
+  ],
+  "recommendations": [
+    "Provide a product-specific Risk Management Plan that includes a RACI matrix mapping each risk management activity (e.g., hazard identification, risk estimation, control implementation, residual risk evaluation, PMS inputs, periodic reviews) to Responsible, Accountable, Consulted, and Informed roles.",
+    "Identify named owners and approvers by person (and title) for each activity, not just by function, within the RMP.",
+    "Include formal approvals/signatures for the RMP and key risk management documents (e.g., Hazard Analysis, FMEAs, Risk Management Report) and file them in the Risk Management File.",
+    "Ensure the RMP explicitly lists shared activities and responsible party(ies) for external partners, with controlling procedures and documentation systems as required by Section 5.2.3.2.4.",
+    "Cross-reference the RACI to design reviews and management review to demonstrate oversight and authority per ISO 14971:2019 Clause 4.4(b)."
+  ]
+}

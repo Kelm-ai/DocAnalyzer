@@ -1,0 +1,24 @@
+{
+  "status": "FAIL",
+  "confidence": 0.78,
+  "rationale": "The provided document is an SOP (Risk Management Program), not a device-specific Risk Management Plan (RMP). It does not name any device or version, nor does it include a lifecycle applicability matrix mapping plan elements to lifecycle phases. While the SOP mandates that an RMP shall identify the combination product and specify the lifecycle phases for which each plan element applies, the required RMP artifact and matrix are not present. Therefore, the acceptance criteria are not satisfied.",
+  "evidence": [
+    "Document Header: \"QAP013.01 Title: RISK MANAGEMENT PROGRAM\" (Page 1)",
+    "Section 1.2 Scope: \"This SOP applies to the commercial and investigational (clinical) combination products ... throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.\"",
+    "Section 5.2.3.1: \"[An] RMP shall be documented and shall include ... the scope of the planned risk management activities, identifying and describing the combination product (or product family), intended use, interfaces with external systems or processes, and the lifecycle phases for which each element of the plan is applicable.\"",
+    "Section 5.2.10: \"The risk management plan may be developed for a specific product or for a family of similar products, as appropriate.\"",
+    "Section 5.1.5 and Figure 1: \"Figure 1 illustrates the systemic representation of the risk management process. Depending on the specific product lifecycle phase, individual elements of risk management can have varying emphasis, but always governed by a risk management plan (RMP).\""
+  ],
+  "gaps": [
+    "No device-specific Risk Management Plan (RMP) artifact is provided.",
+    "No identification of a device name and version(s) within an RMP.",
+    "No matrix or table mapping RMP elements to specific lifecycle phases is included.",
+    "No lifecycle applicability table in the provided document; only procedural requirements exist."
+  ],
+  "recommendations": [
+    "Provide the device-specific Risk Management Plan (RMP) vX that explicitly names the device and version(s)/configurations in scope.",
+    "Include a lifecycle applicability matrix within the RMP that maps each plan element (e.g., risk analysis, risk control, verification/validation of controls, residual risk evaluation, risk management report, production and post-production surveillance, periodic review) to the relevant lifecycle phases (development, design transfer, manufacturing, post-market surveillance, discontinuation).",
+    "Ensure the RMP references the governing SOP (QAP013.01) and documents responsibilities, review timing, and data sources per Sections 5.2.3 and 5.12.",
+    "File the completed RMP and lifecycle applicability matrix in the Risk Management File (per Section 5.3) and cross-reference in the DHF."
+  ]
+}

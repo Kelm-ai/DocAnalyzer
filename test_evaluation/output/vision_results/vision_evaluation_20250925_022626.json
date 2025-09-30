@@ -1,0 +1,71 @@
+{
+  "document_info": {
+    "file_name": "Example Viking QAP013.01 Risk Management Final.pdf",
+    "file_path": "/Users/matthewparson/Desktop/SC/Risk Management/Example Viking QAP013.01 Risk Management Final.pdf",
+    "file_size_bytes": 724940,
+    "uploaded_file_id": "file-U7TAxfLL8NGe4cQTrSKUJR",
+    "content_hash": "45a2637b23af0c79117408aca590af18dc85f965683b9369ce51ca2bd36c6fd7",
+    "file_id_cache_hit": true,
+    "model": "gpt-5-mini-2025-08-07",
+    "evaluated_at": "2025-09-25T02:26:26.404137",
+    "run_id": "20250925_022626"
+  },
+  "evaluation_summary": {
+    "total_requirements": 3,
+    "compliance_score": 0,
+    "status_counts": {
+      "PASS": 0,
+      "FAIL": 0,
+      "FLAGGED": 0,
+      "NOT_APPLICABLE": 0,
+      "ERROR": 3
+    },
+    "total_tokens_used": 0,
+    "estimated_cost_usd": 0.0
+  },
+  "requirements_results": [
+    {
+      "requirement_id": "ISO14971-4.1-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "Error code: 400 - {'error': {'message': \"Unsupported parameter: 'temperature' is not supported with this model.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': None}}",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    },
+    {
+      "requirement_id": "ISO14971-4.2-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "Error code: 400 - {'error': {'message': \"Unsupported parameter: 'temperature' is not supported with this model.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': None}}",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    },
+    {
+      "requirement_id": "ISO14971-4.2-02",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "Error code: 400 - {'error': {'message': \"Unsupported parameter: 'temperature' is not supported with this model.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': None}}",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    }
+  ],
+  "generated_at": "2025-09-25T02:26:28.274296"
+}

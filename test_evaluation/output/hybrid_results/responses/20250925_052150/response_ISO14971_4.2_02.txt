@@ -1,0 +1,31 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.75,
+  "rationale": "The SOP (QAP013.01) establishes a clear policy framework requiring that criteria for risk acceptability be defined and documented in the Risk Management Plan (RMP), and it references applicable regulations and standards (ISO 14971:2019, ISO/TR 24971:2020, ISO 13485:2016, 21 CFR). Key elements required by ISO 14971 Clause 4.2 are present in principle: responsibility for defining criteria is assigned to Top Management/QA, the basis for criteria (standard of care, benefit, state of the art) is stated, and the RMP/Risk Management File is required to contain the criteria and be controlled. However the artefact-level acceptance criteria require an approved, explicit Risk Acceptability Policy (or documented thresholds) and device-family principles; the SOP explicitly states it does not define thresholds and defers threshold definition to the RMP. There is no explicit evidence in the excerpt of an approved standalone Risk Acceptability Policy document, recorded acceptance thresholds, or documented device-family-specific principles. Therefore requirements are partially satisfied (policy exists as procedural requirement) but critical evidentiary artifacts and explicit thresholds/approval are not shown in the provided material — hence FLAGGED.",
+  "evidence": [
+    "Section 3 References: \"ISO 14971: 2019\", \"ISO/TR 24971:2020\", \"ISO 13485:2016\", \"21CFR820.30\" (see header References)",
+    "Responsibilities (Functional Area Management): \"Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and considers available information such as the general acknowledged state of the art and known stakeholder concerns.\" (Roles / Responsibilities section)",
+    "5.2.3.2.2: \"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\" (Risk Management Plan section)",
+    "5.2.5: \"Categories of risk and criteria for risk acceptability, in accordance with this procedure, including criteria for accepting risks when the probability of occurrence of harm cannot be estimated. The risk acceptance criteria are based on the following decisions: 5.2.5.1 The risk presented by the current standard of care; 5.2.5.2 The potential health benefits ...; 5.2.5.3 The generally acknowledged state of the art ...\" (Risk Management Plan section)",
+    "5.2.6: \"The evaluation method and criteria for acceptability for the overall residual risk ... shall be clearly defined and documented in the risk management plan.\" (Risk Management Plan section)",
+    "5.3.4 / 5.3.6: \"The risk management file consists of the following deliverables, at a minimum: ... 5.3.4.2. Risk Management Plan ... The risk management file shall be maintained in the associated combination product design history file (DHF).\" (Risk Management File section)",
+    "1.3 Purpose / Scope: \"This SOP does not define the threshold for acceptable risk (or risk index) since this threshold will change based on the intended use and expected benefit of using the combination product.\" (Purpose / Scope)"
+  ],
+  "gaps": [
+    "No explicit, approved standalone 'Risk Acceptability Policy' document or signatory approval is shown in the provided excerpt (no approval/signature block or referenced policy artifact located).",
+    "SOP states it does not define numeric or threshold values for risk acceptability (1.3). There are no example/mandatory thresholds recorded in the SOP itself; deferral to the RMP alone leaves uncertainty unless the RMP artifact is available and approved.",
+    "No evidence of documented, device-family-specific principles or pre-defined acceptability criteria for specific device families (only states RMP may be for a family, 5.2.10).",
+    "No explicit record within the excerpt showing that Top Management has formally 'established acceptable thresholds' (5.2.3.2.2) — i.e., date/versioned approval of thresholds is not shown.",
+    "No explicit evidence that stakeholder concerns have been captured and documented as inputs to the policy beyond a single mention in the Roles section.",
+    "No direct citation within the RMP (or example RMP) referencing the policy or embedding the acceptability criteria — the SOP requires RMP to contain criteria but the actual RMP artifact is not provided."
+  ],
+  "recommendations": [
+    "Produce or reference a dedicated, approved 'Risk Acceptability Policy' document (or add an approval/signature block) that explicitly defines how risk acceptability criteria are established and approved; file it in the controlled document system and cross-reference it in QAP013.01.",
+    "Ensure the Risk Management Plan(s) (RMP) for each product or product family include documented, approved acceptance criteria (including numeric thresholds or decision rules where practicable), with evidence of Top Management approval (e.g., signature/date or approval record).",
+    "For device families where different thresholds/principles are needed, include explicit device-family-specific principles or links to templates in the RMP (per 5.2.10) so teams have concrete guidance rather than only procedural deferral.",
+    "Document how stakeholder concerns are identified, recorded and used when defining acceptability criteria (e.g., a brief section in the RMP or policy listing stakeholder inputs considered).",
+    "Maintain traceability: insert cross-references in QAP013.01 to the specific RMP document IDs where acceptance criteria are defined, and ensure RMPs are easily accessible to project teams (document control location, DHF link).",
+    "Retain evidence of management reviews or meeting minutes showing Top Management’s establishment of thresholds and any benefit-risk decisions (to satisfy ISO 14971 Clause 4.2 audit evidence requirements).",
+    "If not already present, include an index entry in the Risk Management File listing the Risk Acceptability Policy and the RMP(s) with versions/dates to demonstrate availability to teams as required by the acceptance criteria."
+  ]
+}

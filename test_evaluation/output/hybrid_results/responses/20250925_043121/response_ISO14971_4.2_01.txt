@@ -1,0 +1,30 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.90,
+  "rationale": "The SOP (QAP013.01) explicitly assigns top‑management responsibilities and requires that top management \"assures adequate resources\" and \"ensures provision of adequate resources and assignment of competent personnel for risk management,\" and it references management review and a training program (QAP011). These statements demonstrate policy‑level commitment. However, the submitted material does not include the objective documentary evidence required by the acceptance criteria (management review minutes showing resourcing decisions, org chart or named assignments, resource plans, or training records). I cross‑checked the attached pages and images and did not find those artifacts. Therefore the requirement is met at the procedural/policy level but not evidenced at the implementation / records level.",
+  "evidence": [
+    "\"Assures adequate resources and support to carry out this process.\" (Role Responsibility - Functional Area Management)",
+    "\"Ensures provision of adequate resources and assignment of competent personnel for risk management\" (Role Responsibility - Functional Area Management)",
+    "\"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\" (5.1.8)",
+    "\"management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.\" (5.1.6)",
+    "\"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\" (5.2.3.2.2)",
+    "\"Top management ... must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\" (5.11.1.6)"
+  ],
+  "gaps": [
+    "No management review minutes or records of management decisions/resourcing provided (XX-YYY Management Responsibility is referenced but supporting minutes/decisions are not included). Cross‑checked attached pages; not present.",
+    "No organizational chart, formal appointment, or record showing named individuals assigned responsibility for risk management tasks (SOP lists functions but not named assignees).",
+    "No documented resource plan, staffing allocation, or budgetary evidence demonstrating 'adequate resources' for risk management activities.",
+    "No training plan or completed training records for risk management personnel; QAP011 is referenced but the training program and evidence of personnel competence are not provided.",
+    "No evidence of top management sign‑off/approval (signature or recorded approval) of the Risk Management Plan or Risk Management Report in the submitted material.",
+    "Key external documents referenced (QAP011, XX‑YYY, QAP012) were not supplied for verification, preventing confirmation that required actions/records exist."
+  ],
+  "recommendations": [
+    "Provide management review minutes showing top management engagement on risk management (dates, attendees, actions/decisions, and explicit resourcing commitments).",
+    "Add an organizational chart or formal appointment letters showing named individuals responsible for risk management (Product Development, Clinical, Regulatory, QA) and the delegated authorities.",
+    "Include a resource plan (staffing levels, FTE allocations, budget or other resources) tied to the Risk Management Plan demonstrating adequacy of resources.",
+    "Supply the training plan and completed training records per QAP011 for personnel performing risk management tasks (training content, dates, attendees, competency assessment records).",
+    "Include formal top management approval (signature, electronic approval record or management review resolution) of the Risk Management Plan and Risk Management Report documenting acceptance of residual risk thresholds and resource allocation.",
+    "Make the referenced external documents (QAP011, XX‑YYY Management Responsibility, QAP012) available in the Risk Management File or provide direct links so auditors can verify associated records.",
+    "Record and retain all of the above artifacts in the Risk Management File (per Section 5.3) and reference them in the SOP/Risk Management Plan to demonstrate implemented top‑management commitment."
+  ]
+}

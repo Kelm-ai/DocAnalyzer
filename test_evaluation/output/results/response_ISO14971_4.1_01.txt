@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "confidence": 0.86,
+  "rationale": "Acceptance criterion 1 (Procedure(s) exist and are controlled): Satisfied. A dedicated SOP (QAP013.01) is issued with an effective date and revision history, and it mandates document control via QAP001. Evidence shows control of the risk management file and documents. Acceptance criterion 2 (Scope includes life‑cycle coverage): Satisfied. The SOP explicitly applies across all lifecycle phases and includes post‑production and periodic reviews. Acceptance criterion 3 (Process map/flow shows required elements): Satisfied. The SOP references a Figure showing the process overview and textually maps all ISO 14971 elements (risk analysis, evaluation, control, and production/post‑production) with dedicated sections. Acceptance criterion 4 (References to related QMS processes are clear): Satisfied. Clear cross‑references exist to Design Control (QAP012), Document Control (QAP001), Training (QAP011), Management Review, Supplier Qualification, and PMS/Complaints, demonstrating integration with product realization and broader QMS. Minor editorial issues (placeholder doc numbers, a typographical reference) do not prevent meeting Clause 4.1.",
+  "evidence": [
+    "Page 3, Section 1.1: \"establish, implement, document and maintain an ongoing process for risk management... including identifying hazards..., estimating and evaluating the associated risks, controlling these risks, and monitoring the effectiveness of the controls... in accordance with... ISO 14971:2019\"",
+    "Page 3, Section 1.2: \"This SOP applies... throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.\"",
+    "Page 7, Section 5.1.2: \"Risk management is integrated within QAP012, Design Control as part of product realization.\"",
+    "Page 7, Section 5.1.4: \"The risk management process includes the following elements throughout the product life cycle: [identifying hazards/hazardous situations; estimating and evaluating risks; controlling risk and monitoring effectiveness; risk reviews driven by new information; periodic review].\"",
+    "Page 8, Section 5.1.5: \"Figure 1 illustrates the systemic representation of the risk management process.\"",
+    "Pages 11–18, Sections 5.6–5.10: Dedicated sections for Risk Analysis (5.6), Risk Estimation (5.7), Risk Evaluation (5.8), Risk Control (5.9), and Evaluation of Residual Risk (5.10).",
+    "Page 19, Section 5.12: \"Information relevant to the combination product shall be actively collected and reviewed in the production and post‑production phases...\"",
+    "Page 20, Section 5.13.1: \"Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis...\"",
+    "Page 10, Section 5.3.5: \"The contents of the risk management file... shall be controlled and maintained in the document management system in accordance with QAP001, Format, Content, Approval and Issuance of Controlled Documents.\"",
+    "Page 8, Section 5.1.6: \"...in accordance with the Management Review Process specified in XX‑YYY, Management Responsibility.\"",
+    "Page 3, Section 1.4: \"...evaluated and approved in accordance with XX‑XXX, Supplier Qualification and Management.\"",
+    "Page 8, Section 5.1.8: \"...training program requirements are described in QAP011, GMP Training Program.\"",
+    "Page 11, Sections 5.5.1, 5.5.3: \"Verification... conducted in accordance with QAP012, Design Control.\"",
+    "Page 19, Section 5.12.1: \"This information is collected in the Post Market Surveillance and Complaint Handling Process.\"",
+    "Page 21, Appendix A (and Page 26, Appendix B): Supporting guidance for hazard/characteristic identification consistent with ISO/TR 24971 and ISO 14971."
+  ],
+  "gaps": [
+    "Some cross‑reference identifiers appear as placeholders (e.g., \"XX‑XXX\" Supplier Qualification and Management; \"XX‑YYY\" Management Responsibility), which could reduce traceability to specific controlled procedures.",
+    "Reference list includes a likely typo/outdated standards (\"Iso 12971 : 2020\" instead of ISO/TR 24971:2020; \"Iso 62366: 2005\" rather than IEC 62366‑1:2015+A1:2020).",
+    "Figure 1 (process overview) is referenced but the visual is not present in the provided extract; however, the text enumerates the process steps."
+  ],
+  "recommendations": [
+    "Replace placeholder document numbers (XX‑XXX, XX‑YYY) with the actual controlled SOP numbers to strengthen traceability.",
+    "Correct and update the References section to ISO/TR 24971:2020 and IEC 62366‑1 (current edition), removing outdated entries.",
+    "Ensure Figure 1 (Risk Management Overview) is included and controlled with the SOP, and that it explicitly depicts risk analysis, risk evaluation, risk control, and production/post‑production feedback loops.",
+    "Optionally add explicit linkage to the specific Post‑Market Surveillance and Complaint Handling SOP number for clarity."
+  ]
+}

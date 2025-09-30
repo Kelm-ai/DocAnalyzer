@@ -1,0 +1,29 @@
+{
+  "status": "FAIL",
+  "confidence": 0.74,
+  "rationale": "The SOP defines how production and post-production information is reviewed for safety relevance and escalated back into the risk management process, including explicit triggers and requirements to update RM documents. However, required acceptance artifacts are not provided: no signal/safety review minutes, no evidence of actual updates to hazard analysis/RMP, and no CAPA records. The document references post-market surveillance and management review but does not supply the minutes or a dedicated signal management SOP. Therefore, not all acceptance criteria are satisfied.",
+  "evidence": [
+    "Section 5.12.1: \"Information relevant to the combination product shall be actively collected and reviewed... This information is collected in the Post Market Surveillance and Complaint Handling Process.\"",
+    "Section 5.12.3: Triggers documented for safety relevance review: \"5.12.3.1. Previously unrecognized hazards or hazardous situations are present; 5.12.3.2. An estimated risk arising from a hazardous situation is present; 5.12.3.3. The overall residual risk is no longer acceptable in relation to the benefits of the intended use; 5.12.3.4. The generally acknowledged state of the art has changed\"",
+    "Section 5.12.4: Required escalation and feedback actions: \"5.12.4.1. The risk management file shall be reviewed to determine if reassessment of risks and/or assessment of new risks is necessary... 5.12.4.3. Consider the need for actions regarding combination products on the market... 5.12.4.5. Provide the results of the evaluation as an input for the review of suitability of the risk management process by top management\"",
+    "Section 5.12.5: RM updates required: \"The results of any production and post-production evaluation(s) shall be recorded in the affected documents in the risk management file which include the risk management plan, hazards analysis, FMEAs, and risk management report.\"",
+    "Section 5.2.12–5.2.14: RMP review and change records: \"The risk management plan shall be reviewed periodically... If the plan changes during the product lifecycle, a record of the changes shall be maintained in the risk management file.\"",
+    "Section 5.13.1–5.13.3: Periodic reviews and management review: \"Periodic reviews of risk management documentation shall be conducted... The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility.\"",
+    "Section 5.1.11: Escalation: \"Major risks shall be communicated to Senior Product Development and Quality Assurance Management.\"",
+    "Figure 1 caption (visual): \"Figure 1. Risk Management Overview\" depicting iterative feedback including \"Production and post-production activities\" feeding into earlier RM phases"
+  ],
+  "gaps": [
+    "No signal review or safety review board minutes provided to demonstrate execution of reviews.",
+    "No dedicated Signal Management SOP or Safety Review Board charter included; only a reference to Post Market Surveillance and Complaint Handling Process without document ID.",
+    "No evidence of actual updates made to the Hazard Analysis or Risk Management Plan (only procedural requirements).",
+    "No CAPA procedure reference or CAPA records demonstrating actions taken from safety signals.",
+    "No management review minutes evidencing escalation outcomes or decisions."
+  ],
+  "recommendations": [
+    "Provide a Signal Management/Safety Surveillance SOP (or reference number to existing PMS/complaints SOP) detailing signal detection, triage, and escalation workflows aligned with ISO 14971:2019 clause 10.3.",
+    "Submit recent Safety Review Board or signal review meeting minutes showing reviewed signals, decisions, and rationales.",
+    "Include evidence of updates to the Risk Management File (e.g., a tracked-change Risk Management Plan revision, updated Hazard Analysis/FMEAs, and updated Risk Management Report) tied to specific post-production signals.",
+    "Provide CAPA SOP reference and sample CAPA records initiated from safety signals, including linkage to RM updates and verification of effectiveness.",
+    "Provide management review minutes demonstrating that results of the post-production evaluations and RM feedback were reviewed by top management, including any actions or resource decisions."
+  ]
+}

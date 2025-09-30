@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "confidence": 0.78,
+  "rationale": "The SOP establishes a policy for how risk acceptability criteria are to be defined and used. It assigns ownership to management, cites regulatory and standards inputs, instructs that product-/family-specific criteria be documented in the Risk Management Plan (RMP), and includes guidance on evaluating overall residual risk. The document appears controlled and effective (dated), implying organizational approval and accessibility within the QMS. Minor inconsistencies and missing artifacts (e.g., a sample RMP reference) do not outweigh the clear presence of the policy and process.",
+  "evidence": [
+    "Header/Title block: \"Document Number: QAP013.01 Title: RISK MANAGEMENT PROGRAM ... Effective Date: 26Jun2024\"",
+    "Section 2, Responsibilities (Functional Area Management): \"Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and considers available information such as the general acknowledged state of the art and known stakeholder concerns.\"",
+    "Section 2, Responsibilities (Functional Area Management): \"Ensures risk management policies are established and followed\"",
+    "Section 2, Responsibilities (Quality Assurance): \"Defines and documents criteria for risk acceptability in the Risk Management Plan according to the process established in this SOP.\"",
+    "Section 3, References: \"21CFR820.30; ISO 14971: 2019; ISO 12971: 2020; ... ISO 62366: 2005\"",
+    "Section 5.2.3.2.2: \"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\"",
+    "Section 5.2.5: \"Categories of risk and criteria for risk acceptability, in accordance with this procedure, including criteria for accepting risks when the probability of occurrence of harm cannot be estimated. The risk acceptance criteria are based on the following decisions: 5.2.5.1. The risk presented by the current standard of care; 5.2.5.2. The potential health benefits of using the combination product; 5.2.5.3. The generally acknowledged state of the art defined in recognized consensus standards\"",
+    "Section 5.2.6: \"The evaluation method and criteria for acceptability for the overall residual risk, considering all the impact of all risks together, shall be clearly defined and documented in the risk management plan.\"",
+    "Section 5.2.10: \"The risk management plan may be developed for a specific product or for a family of similar products, as appropriate.\"",
+    "Section 5.8.1: \"For each identified hazardous situation, the applicant shall evaluate estimated risks to determine whether the risk is acceptable, using criteria for risk acceptability defined in the risk management plan.\"",
+    "Section 5.9.4.3, Table 6: \"Required Action Based on Residual Risk Evaluation ... Red: Benefit-risk analysis ... Residual risk disclosure ...; Yellow: Investigate further risk controls ...; Green: Overall benefit-risk analysis within the Risk Management Report\"",
+    "Section 5.10.1: \"After all risk control measures have been implemented and verified, the Applicant shall evaluate the overall residual risk ... using the method and the criteria for acceptability of the overall residual risk defined in the risk management plan.\"",
+    "Section 5.1.10: \"Risk management activities shall be communicated during the product development phases as part of the design review process, and as part of the production and post‑production process during the commercialization phase.\"",
+    "Section 5.3.5: \"The contents of the risk management file ... shall be controlled and maintained in the document management system in accordance with QAP001...\"",
+    "Section 5.3.6: \"The risk management file shall be maintained in the associated combination product design history file (DHF).\"",
+    "Section 1.3: \"This SOP does not define the threshold for acceptable risk (or risk index) since this threshold will change based on the intended use and expected benefit of using the combination product.\""
+  ],
+  "gaps": [
+    "The SOP contains a minor inconsistency: Section 1.3 states the SOP does not define thresholds, while Section 5.2.3.2.2 says top management establishes acceptable thresholds within this procedure.",
+    "No explicit approval signatures or approver names are shown in the provided extract; approval is inferred from the effective date and controlled document format.",
+    "Standards reference lists \"ISO 12971: 2020\" instead of ISO/TR 24971:2020 (typo) despite mentioning ISO/TR 24971 elsewhere.",
+    "Expected artifact linkage: No actual RMP example or template page was provided showing explicit inclusion of risk acceptability criteria referencing this policy.",
+    "Stakeholder concern capture is referenced conceptually but not operationalized (e.g., no explicit mechanism described for collecting stakeholder input beyond general statements)."
+  ],
+  "recommendations": [
+    "Clarify the location of risk acceptability thresholds to eliminate ambiguity: explicitly state that thresholds are defined and approved in the RMP per product or product family, and adjust Section 5.2.3.2.2 or Section 1.3 accordingly.",
+    "Include or reference an approval/signature page (e.g., per QAP001) in the SOP to demonstrate formal approval status.",
+    "Correct the reference to ISO/TR 24971:2020 in Section 3 and ensure consistency throughout the document.",
+    "Provide or link to an RMP template that includes a dedicated section for risk acceptability criteria and overall residual risk acceptability method, explicitly referencing this SOP’s policy and Tables 1–6.",
+    "Add a brief, explicit statement of the risk acceptability policy (e.g., Green generally acceptable; Yellow conditionally acceptable pending further controls/benefit-risk; Red unacceptable unless justified via benefit-risk with disclosure) to improve clarity for teams.",
+    "Define a practical mechanism to capture and incorporate stakeholder concerns (e.g., VOC, clinician advisory input) into risk acceptability criteria during RMP development.",
+    "Ensure document accessibility is communicated (e.g., location in the eQMS and training requirements) and cross-referenced in onboarding/training materials."
+  ]
+}

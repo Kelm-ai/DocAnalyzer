@@ -1,0 +1,33 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.87,
+  "rationale": "The QAP013.01 Risk Management Program SOP demonstrates top‑management commitment in policy and role definitions: it assigns responsibilities to Functional Area Management and QA, explicitly states that management 'assures adequate resources and ... ensures provision of adequate resources and assignment of competent personnel for risk management', requires management review and top‑management approval of risk management reports, and references a training program (QAP011). However, the document provided does not include the concrete, documented artifacts cited in the acceptance criteria (management review minutes, org chart, resource plans, training plans/records). The SOP references external documents (XX-YYY Management Responsibility; QAP011 GMP Training Program) but those referenced artifacts were not provided here, so evidence of actual resourcing decisions, named personnel assignments, training plans and completed training records is not present in the supplied materials.",
+  "evidence": [
+    "Section 2 Responsibilities: 'Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP. All functional leads/managers are responsible for ensuring compliance with the applicable segments of this procedure that are within their areas of responsibility.'",
+    "Role Responsibility table — Functional Area Management (Product Development, Clinical Development, Regulatory Affairs and Quality Assurance Management): includes: 'Assures adequate resources and support to carry out this process.' and 'Ensures provision of adequate resources and assignment of competent personnel for risk management'.",
+    "Role Responsibility table — Quality Assurance: 'Completes all required training and qualification activities prior to conducting formal risk analysis' and 'Approves and monitors risk management activities'.",
+    "Section 5.1.8 (transcribed from image): 'Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.'",
+    "Section 5.2.3.2.1: 'Identification by function or area of expertise the necessary reviewers, contributors, and personnel responsible for risk management execution throughout the product lifecycle.'",
+    "Section 5.11.1.6: 'Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.'",
+    "Section 5.13.3: 'The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility.'",
+    "Figure 1 (Risk Management Overview) — transcribed box: 'Risk management review' (flowchart includes management review step and shows Risk Management Plan / Risk assessment / Risk control / Evaluation / Production and post-production activities).",
+    "References list includes QAP011 (GMP Training Program) and XX-YYY (Management Responsibility) indicating intent for linked procedures that should contain training and management review records."
+  ],
+  "gaps": [
+    "No management review records (minutes) included or attached that show management reviewed risk management outputs and made documented resourcing decisions.",
+    "No organizational chart or explicit documented assignment of named/identified competent personnel for risk management (only functional role descriptions).",
+    "No resource plan(s) or evidence of allocated resources (FTE, budget, time) for risk management activities included in the supplied materials.",
+    "Training plan(s), training matrix, or completed training records for people performing risk management are not present (only a reference to QAP011 is provided).",
+    "Referenced documents (XX-YYY Management Responsibility; QAP011) were cited but not provided — cannot verify that they contain the required evidence (management minutes, resourcing decisions, training plans/records).",
+    "No explicit top‑management signed statement or documented approval demonstrating commitment to provide resources beyond role/responsibility statements in the SOP itself."
+  ],
+  "recommendations": [
+    "Provide and file management review minutes that explicitly show top management reviewed the risk management process, approved resource allocations, and documented decisions/actions. Link these minutes to the Risk Management File and the SOP (e.g., include document IDs and storage location).",
+    "Include an organizational chart (org chart) or risk management RACI that shows named personnel (or roles with clear reporting lines) assigned to risk management responsibilities; attach job descriptions or qualification summaries demonstrating competence.",
+    "Create and attach a resource plan or resourcing record for risk management activities (FTE allocation, budget, time commitments, contractor/partner responsibilities) and retain it in the Risk Management File.",
+    "Provide the training plan(s)/matrix for risk management roles and evidence of completed training records (course IDs, dates, attendees, completion status). If QAP011 contains these, attach the relevant sections or cross‑reference with version numbers and records.",
+    "Ensure the Risk Management Plan and Risk Management Report include explicit top‑management approval signatures (or documented electronic approvals) and store those approvals in the Risk Management File.",
+    "Update the SOP (or an annex) to reference where the documentary evidence will be maintained (document management system path/document IDs), and require that management review outputs explicitly record resourcing decisions and assignment of competent personnel.",
+    "If XX-YYY and QAP011 are intended to provide the documentary evidence, provide those documents (or the relevant extracts) for audit: management review procedure plus sample minutes; training program content and records; and resource allocation procedures/records."
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "document_info": {
+    "file_name": "Example Altimmune Risk Management Procedure v2 11-30-2022.docx",
+    "file_type": ".docx",
+    "file_size_bytes": 492128,
+    "markdown_length": 59587,
+    "word_count": 8891,
+    "line_count": 870,
+    "conversion_timestamp": "2025-09-18T16:25:16.738681"
+  },
+  "evaluation_summary": {
+    "total_requirements": 3,
+    "compliance_score": 0,
+    "status_counts": {
+      "PASS": 0,
+      "FAIL": 0,
+      "FLAGGED": 0,
+      "NOT_APPLICABLE": 0,
+      "ERROR": 3,
+      "SKIPPED": 0
+    },
+    "total_tokens_used": 0,
+    "total_duration_ms": 598,
+    "estimated_cost_usd": 0.0
+  },
+  "requirements_results": [
+    {
+      "requirement_id": "ISO14971-4.1-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "API error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}",
+      "evidence": [],
+      "gaps": [
+        "API call failed"
+      ],
+      "recommendations": [
+        "Check API configuration"
+      ],
+      "tokens_used": 0,
+      "evaluation_duration_ms": 237
+    },
+    {
+      "requirement_id": "ISO14971-4.2-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "API error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}",
+      "evidence": [],
+      "gaps": [
+        "API call failed"
+      ],
+      "recommendations": [
+        "Check API configuration"
+      ],
+      "tokens_used": 0,
+      "evaluation_duration_ms": 169
+    },
+    {
+      "requirement_id": "ISO14971-4.2-02",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "API error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}",
+      "evidence": [],
+      "gaps": [
+        "API call failed"
+      ],
+      "recommendations": [
+        "Check API configuration"
+      ],
+      "tokens_used": 0,
+      "evaluation_duration_ms": 192
+    }
+  ],
+  "generated_at": "2025-09-18T16:25:17.339490"
+}

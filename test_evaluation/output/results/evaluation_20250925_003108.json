@@ -1,0 +1,74 @@
+{
+  "document_info": {
+    "file_name": "Example Viking QAP013.01 Risk Management Final.pdf",
+    "file_type": ".pdf",
+    "file_size_bytes": 724940,
+    "markdown_length": 67589,
+    "word_count": 9257,
+    "line_count": 1921,
+    "conversion_timestamp": "2025-09-25T00:31:08.463416"
+  },
+  "evaluation_summary": {
+    "total_requirements": 3,
+    "compliance_score": 0,
+    "status_counts": {
+      "PASS": 0,
+      "FAIL": 0,
+      "FLAGGED": 0,
+      "NOT_APPLICABLE": 0,
+      "ERROR": 3,
+      "SKIPPED": 0
+    },
+    "total_tokens_used": 0,
+    "total_duration_ms": 92,
+    "estimated_cost_usd": 0.0
+  },
+  "requirements_results": [
+    {
+      "requirement_id": "ISO14971-4.1-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "API error: Completions.create() got an unexpected keyword argument 'reasoning'",
+      "evidence": [],
+      "gaps": [
+        "API call failed"
+      ],
+      "recommendations": [
+        "Check API configuration"
+      ],
+      "tokens_used": 0,
+      "evaluation_duration_ms": 92
+    },
+    {
+      "requirement_id": "ISO14971-4.2-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "API error: Completions.create() got an unexpected keyword argument 'reasoning'",
+      "evidence": [],
+      "gaps": [
+        "API call failed"
+      ],
+      "recommendations": [
+        "Check API configuration"
+      ],
+      "tokens_used": 0,
+      "evaluation_duration_ms": 0
+    },
+    {
+      "requirement_id": "ISO14971-4.2-02",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "API error: Completions.create() got an unexpected keyword argument 'reasoning'",
+      "evidence": [],
+      "gaps": [
+        "API call failed"
+      ],
+      "recommendations": [
+        "Check API configuration"
+      ],
+      "tokens_used": 0,
+      "evaluation_duration_ms": 0
+    }
+  ],
+  "generated_at": "2025-09-25T00:31:08.559773"
+}

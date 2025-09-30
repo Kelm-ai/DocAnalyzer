@@ -1,0 +1,19 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.62,
+  "rationale": "The SOP PD-002 includes a Risk Management Plan (RMP) framework and references to a Risk Management Plan Template, and it requires lifecycle phases to be defined for each plan element (addressing lifecycle coverage). However, explicit evidence of an actual device name and version within an RMP, and a standalone matrix mapping each plan element to lifecycle phases (lifecycle applicability table) is not clearly shown in the provided pages. The key criterion is partially evidenced but not fully demonstrated in the visible extracts.",
+  "evidence": [
+    "8.2.3.1 The scope of the planned risk management activities, identifying and describing the combination product (or product family), intended use, interfaces with external systems or processes, and the lifecycle phases for which each element of the plan is applicable.",
+    "4.0 References – [4] PD-002-T01 Risk Management Plan Template"
+  ],
+  "gaps": [
+    "No explicit excerpt demonstrating that the RMP in this document names the device and version (device name and version fields) within the RMP template or in the Risk Management Plan itself.",
+    "No explicit matrix or lifecycle applicability table mapping each Risk Management Plan element (e.g., Hazards Analysis, Master Harms, Risk Analyses, Risk Controls, Residual Risk Evaluation, etc.) to specific lifecycle phases appears in the provided pages (the requirement exists conceptually via 8.2.3.1 but a dedicated matrix is not shown).",
+    "The actual content of the Risk Management Plan Template (PD-002-T01) showing device name, version, and lifecycle mapping is not visible in the supplied extracts."
+  ],
+  "recommendations": [
+    "Provide the content or a screenshot of the PD-002-T01 Risk Management Plan Template (or the actual RMP) showing the device name and version fields populated for the product(s) in scope.",
+    "Include a dedicated lifecycle applicability matrix in the RMP that maps each risk management plan element to the lifecycle phases (e.g., development, production, post-production, etc.).",
+    "If not already present, ensure the RMP explicitly names the device/product and its version(s) within the plan and that the lifecycle applicability table is referenced or attached as part of the RMP documentation."
+  ]
+}

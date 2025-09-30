@@ -1,0 +1,32 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.90,
+  "rationale": "The submitted Risk Management SOP (QAP013.01) documents explicit top-management responsibilities and commitment language (assurance of resources, assignment of competent personnel, requirement for management review) and references the training program (QAP011). Roles and responsibilities are defined in the SOP. However, the package does not include the objective artefacts called out in the acceptance criteria (management review minutes/records showing decisions on resourcing, organizational chart or named assignments, resource plan or documented resourcing decisions, or training plans/records). Because procedural commitment is present but documentary evidence of executed management actions and resourcing is missing, the requirement is partially met and flagged pending provision of the expected artefacts.",
+  "evidence": [
+    "Document: QAP013.01 RISK MANAGEMENT PROGRAM (Effective Date: 26Jun2024). Section 2 Responsibilities - Functional Area Management (Product Development, Clinical Development, Regulatory Affairs and Quality Assurance Management): 'Assures adequate resources and support to carry out this process.' 'Ensures provision of adequate resources and assignment of competent personnel for risk management' 'Reviews suitability of the risk management process at planned intervals to ensure continuing effectiveness of the risk management process and documents any decisions and actions taken.'",
+    "Section 5.1.6: 'As a check on the effectiveness of the risk management processes defined, management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.'",
+    "Section 5.1.7: 'Documented records, including evidence of decisions and actions taken, shall be maintained to ensure and demonstrate the effective planning, operation, and control of this process.'",
+    "Section 5.1.8: 'Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them. ... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.'",
+    "Section 5.11.1.6: 'Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.'",
+    "Section 5.13.3: 'The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility. At a minimum, the review shall include the following: Risk management process; Summaries of responses for critical and high risks; Risk profile(s).' (references management review requirement)",
+    "Image transcription excerpt (figure page): '5.1.8. Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them. ... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.' and 'Figure 1. Risk Management Overview.' (visual content confirms same commitments)",
+    "Observation: The supplied document references other documents (QAP011; XX-YYY Management Responsibility) but the referenced management review procedure and any management review minutes, resource plans, org charts or training records were not included in the provided package."
+  ],
+  "gaps": [
+    "No management review records/minutes provided that demonstrate top management has reviewed the risk management process, approved resource allocations, or documented decisions/actions (dates, attendees, decisions, actions, signatures).",
+    "No organizational chart or named-role evidence showing assignment of competent personnel to execute/oversee the risk management activities (only role descriptions exist in the SOP).",
+    "No resource plan or documented resourcing decisions (e.g., allocated FTEs, budget, dedicated time, tooling) showing adequate resources were committed to risk management activities.",
+    "No training plan or training completion records for personnel performing risk management tasks (QAP011 is referenced but the actual training plan/records are not present in the submission).",
+    "Reference to 'XX-YYY, Management Responsibility' is a placeholder; the actual management review procedure identifier and related records are not provided for verification.",
+    "No evidence of top-management approval/signature on Risk Management Plan or Risk Management Report (section 5.11.1.6 requires such approval when benefit-risk assessment is needed)."
+  ],
+  "recommendations": [
+    "Provide management review minutes/records that explicitly show top management review of the risk management process. Include date, attendees (identify top management roles), agenda items (risk management process, risk profiles, critical/high risks), decisions taken, resourcing commitments and assigned actions, and evidence of follow-up.",
+    "Attach an organizational chart (or table) showing named roles/positions responsible for risk management activities and reporting lines (or link to controlled org-chart document).",
+    "Provide a resource plan or resourcing decision document that demonstrates allocation of adequate resources (budget, FTEs, time, tools) to risk management activities; tie resources to specific risk-management tasks or phases where possible.",
+    "Include the training plan content referenced by QAP011 and training records for personnel carrying out risk management (course titles, dates, attendees, evidence of successful completion, competency assessments).",
+    "Replace the placeholder reference 'XX-YYY' with the actual Management Responsibility document identifier and include a sample management review and/or a cross-reference index showing where management review outputs are stored in the Risk Management File.",
+    "Include evidence of top-management approval/signature on the Risk Management Plan and Risk Management Report (especially where benefit-risk analysis was used to justify residual risk acceptance).",
+    "Ensure the Risk Management File contains traceable links to the management review outputs, resource decisions, org-chart, and training records so auditors can verify top-management commitment and the assignment of competent personnel."
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.58,
+  "rationale": "The document addresses lifecycle coverage in the Risk Management Plan scope (5.2.3.1) and requires inclusion of the RMP in the risk management file (5.2.14), but it does not provide explicit evidence of a named device and RMP version, nor a dedicated matrix mapping plan elements to lifecycle phases. Therefore, while aspects of lifecycle coverage are described, the specific artifacts requested by ISO14971-4.4-01 (device name and version, and a lifecycle-to-element matrix) are not clearly evidenced in the available content.",
+  "evidence": [
+    "5.2.3.1. The scope of the planned risk management activities, identifying and describing the combination product (or product family), intended use, interfaces with external systems or processes, and the lifecycle phases for which each element of the plan is applicable",
+    "5.2.14. The risk management plan shall be included as part of the risk management file.",
+    "Figure 1 illustrates the systemic representation of the risk management process."
+  ],
+  "gaps": [
+    "No device name and RMP version are named in the provided content.",
+    "No explicit lifecycle applicability matrix appears to map each Risk Management Plan element to lifecycle phases.",
+    "Absence of a standalone lifecycle applicability table (as an artifact) in the excerpt."
+  ],
+  "recommendations": [
+    "Specify the Risk Management Plan with an exact device name and an RMP version (e.g., RMP vX for Device Y).",
+    "Include a lifecycle applicability matrix (or table) that maps each RMP element (e.g., risk analysis, risk evaluation, risk control, residual risk, benefit-risk analysis, post-production activities, periodic reviews, etc.) to the lifecycle phases (e.g., development, design transfer, manufacturing, product surveillance, post-production).",
+    "Attach the lifecycle applicability table as an artifact to satisfy ISO14971-4.4-01."
+  ]
+}

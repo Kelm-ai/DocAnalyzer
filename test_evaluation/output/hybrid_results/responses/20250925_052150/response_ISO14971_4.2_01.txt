@@ -1,0 +1,28 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.85,
+  "rationale": "The SOP (QAP013.01) documents top management responsibilities and commitment to provide resources and assign competent personnel, and references a training program (QAP011) and management review process (XX-YYY). It therefore demonstrates management intent and defined roles (partial satisfaction of Clause 4.2). However, the excerpt does not contain the required documentary evidence of management commitment (e.g., management review minutes capturing resourcing decisions, org chart showing assigned roles, resource plans, or completed training records). Because the requirement asks for evidence (management review records; org charts; resource plans; training plans/records) and those artifacts are not present in the provided material, the criterion is only partially satisfied and is FLAGGED pending provision of the expected artifacts.",
+  "evidence": [
+    "Section 2.1 Responsibilities: \"Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP.\" (see Responsibilities, top of excerpt).",
+    "Functional Area Management (Responsibilities table): \"Assures adequate resources and support to carry out this process.\" and \"Ensures provision of adequate resources and assignment of competent personnel for risk management.\" (Roles/Responsibilities section).",
+    "Quality Assurance responsibilities: \"Completes all required training and qualification activities prior to conducting formal risk analysis\" and \"Defines and documents criteria for risk acceptability in the Risk Management Plan...\" (Responsibilities / Quality Assurance).",
+    "Section 5.1.6: \"management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.\"",
+    "Section 5.11.1.6: \"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\"",
+    "Section 5.1.8: \"Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\""
+  ],
+  "gaps": [
+    "No management review minutes or records are included that demonstrate top-management decisions on resourcing for risk management (e.g., documented resource allocations, actions arising from management review).",
+    "No organizational chart (org chart) or formal document showing explicit assignment of named competent personnel or their roles/authorities for risk management is provided in the excerpt.",
+    "No resource plan, budget, or resourcing decision record (e.g., staffing plan or approved resource allocation) is present to demonstrate that adequate resources were assigned.",
+    "No training plan document or evidence of completed training records for personnel assigned to conduct risk management (e.g., records from QAP011 showing training completion) is included.",
+    "References to other procedures (XX-YYY Management Responsibility, QAP011) are present but the referenced documents or evidence of execution (minutes, training records, org chart) were not provided for confirmation."
+  ],
+  "recommendations": [
+    "Provide management review records (minutes, action items) that explicitly show top-management endorsement of the risk management process and any resourcing decisions (e.g., staffing approvals, budget allocation). Cite the management review date(s) and link to the risk management plan or file.",
+    "Include an organizational chart or a document that shows assignment of responsibility and authority for risk management roles (named or position titles) and confirm these are recorded in the Risk Management Plan / Risk Management File.",
+    "Provide resource plans or approved staffing/budget documents that show allocation of adequate resources for risk management activities (e.g., dedicated FTEs, external consultants, tools, and training budgets).",
+    "Attach training documentation from QAP011 for personnel performing risk management: training plans, attendance/completion records, competence assessments, and qualification records demonstrating personnel competence.",
+    "If management review process (XX-YYY) and QAP011 contain the necessary evidence, cross-reference and include those documents in the Risk Management File; otherwise, update the SOP or Risk Management Plan to explicitly state where these artifacts will be stored and provide sample completed artifacts for audit traceability.",
+    "Document traceability in the Risk Management File linking the Risk Management Plan, Risk Management Report approvals, management review outputs, and evidence of assigned competent personnel so an auditor can readily verify Clause 4.2 compliance."
+  ]
+}

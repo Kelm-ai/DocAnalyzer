@@ -1,0 +1,27 @@
+{
+  "status": "FAIL",
+  "confidence": 0.64,
+  "rationale": "The SOP defines planned, periodic reviews of the risk management process and states that decisions and actions will be documented, satisfying the procedural intent. However, there is no evidence of actual execution: no Management Review records, no action tracking outputs, and no CAPA/change control artifacts showing updates to the process or procedures. Acceptance criteria require evidence of periodic reviews with inputs/outputs and action tracking, and updates to procedures as needed; these artifacts are not present.",
+  "evidence": [
+    "Section 2, Responsibilities: \"Reviews suitability of the risk management process at planned intervals to ensure continuing effectiveness of the risk management process and documents any decisions and actions taken\"",
+    "Section 5.1.6: \"management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.\"",
+    "Section 5.1.7: \"Documented records, including evidence of decisions and actions taken, shall be maintained to ensure and demonstrate the effective planning, operation, and control of this process.\"",
+    "Section 5.12.5: \"Provide the results of the evaluation as an input for the review of suitability of the risk management process by top management, as noted in Section 5.13.3.\"",
+    "Section 5.13.1: \"Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team and documented in the risk management plan... These events may be planned (i.e., ... change control, ... ) or unplanned (i.e., root cause from failure investigations, product recall).\"",
+    "Section 5.13.3: \"The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility. At a minimum, the review shall include the following: 5.13.3.1. Risk management process 5.13.3.2. Summaries of responses for critical and high risks 5.13.3.3. Risk profile(s)\""
+  ],
+  "gaps": [
+    "No Management Review records provided to demonstrate actual periodic review execution, inputs, outputs, or decisions/actions.",
+    "No CAPA or Change Control tickets showing updates to the risk management process or related procedures based on review outcomes.",
+    "No action tracking logs or evidence that identified actions from reviews were monitored to closure.",
+    "Referenced procedure XX-YYY (Management Responsibility) is not included; thus, inputs/outputs of management review cannot be verified.",
+    "No evidence that this SOP (QAP013.01) was updated as a result of periodic suitability/effectiveness reviews."
+  ],
+  "recommendations": [
+    "Provide recent Management Review minutes or records showing the risk management process was reviewed, including agenda, inputs (e.g., risk profiles, summaries of high/critical risks), decisions, and assigned actions with owners and due dates.",
+    "Submit CAPA or Change Control records demonstrating updates/improvements to the risk management process or SOPs resulting from the reviews.",
+    "Include an action tracker or log showing follow-up and closure of actions arising from the periodic and management reviews.",
+    "Attach the referenced Management Responsibility procedure (XX-YYY) or excerpts to substantiate the review process and required records.",
+    "Explicitly cross-reference your CAPA and Change Control procedures in Section 5.13 to ensure process deficiencies trigger formal corrective actions and controlled document updates."
+  ]
+}

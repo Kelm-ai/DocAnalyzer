@@ -1,0 +1,86 @@
+{
+  "document_info": {
+    "file_name": "Example Altimmune Risk Management Procedure v2 11-30-2022.docx",
+    "file_type": ".docx",
+    "file_size_bytes": 492128,
+    "markdown_length": 59587,
+    "word_count": 8891,
+    "line_count": 870,
+    "conversion_timestamp": "2025-09-18T18:20:54.241012"
+  },
+  "evaluation_summary": {
+    "total_requirements": 3,
+    "compliance_score": 33.3,
+    "status_counts": {
+      "PASS": 1,
+      "FAIL": 0,
+      "FLAGGED": 2,
+      "NOT_APPLICABLE": 0,
+      "ERROR": 0,
+      "SKIPPED": 0
+    },
+    "total_tokens_used": 34525,
+    "total_duration_ms": 29954,
+    "estimated_cost_usd": 0.1726
+  },
+  "requirements_results": [
+    {
+      "status": "PASS",
+      "confidence": 0.9,
+      "rationale": "The document provides comprehensive coverage of the risk management process, including risk analysis, risk evaluation, risk control, and production & post-production activities. It also integrates risk management with product realization and includes references to related QMS processes.",
+      "evidence": [
+        "The purpose of this procedure is to establish, implement, document and maintain an ongoing process for risk management at Altimmune for combination products, including identifying hazards associated with a combination product, estimating and evaluating the associated risks, controlling these risks, and monitoring the effectiveness of the controls in accordance with applicable subclauses of ISO 13485:2016 [1], ISO 14971:2019, and taking into consideration the guidelines provided by ISO/TR 24971:2020.",
+        "The risk management process includes the following elements throughout the product life cycle: Identifying hazards and hazardous situations associated with the combination product, Estimating and evaluating the associated risks, Controlling risk and monitoring the effectiveness of the risk control measures, Monitoring the effectiveness of the risk control measures, Risk reviews driven by new information, Periodic review of identified risks."
+      ],
+      "gaps": [],
+      "recommendations": [
+        "Ensure that the process flowchart is included in the documentation to visually represent the risk management process.",
+        "Maintain regular updates to the document to reflect any changes in related QMS processes or standards."
+      ],
+      "requirement_id": "ISO14971-4.1-01",
+      "tokens_used": 11564,
+      "evaluation_duration_ms": 20718
+    },
+    {
+      "status": "FLAGGED",
+      "confidence": 0.6,
+      "rationale": "The document provides some evidence of top management commitment through defined roles and responsibilities, as well as references to training programs. However, it lacks explicit documentation of management review records, resource plans, or specific evidence of management's resourcing decisions.",
+      "evidence": [
+        "Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.",
+        "Persons performing risk management tasks shall have the knowledge and experience appropriate to the tasks assigned to them. Appropriate competence and training program requirements are described in QA-019, Training Program."
+      ],
+      "gaps": [
+        "No explicit mention of management review records or minutes.",
+        "Lack of specific resource plans or evidence of resourcing decisions by top management."
+      ],
+      "recommendations": [
+        "Include documented evidence of management review meetings or minutes that demonstrate top management's commitment to risk management.",
+        "Provide specific resource plans or decisions made by top management to support risk management activities."
+      ],
+      "requirement_id": "ISO14971-4.2-01",
+      "tokens_used": 11442,
+      "evaluation_duration_ms": 4993
+    },
+    {
+      "status": "FLAGGED",
+      "confidence": 0.6,
+      "rationale": "The document provides some elements related to risk acceptability, but it lacks a clear, standalone policy document specifically defining criteria for risk acceptability as required by ISO 14971:2019 Clause 4.2. While there are references to risk acceptability criteria within the Risk Management Plan and procedures, there is no explicit mention of a separate Risk Acceptability Policy document that aligns with regulations, relevant standards, state of the art, and stakeholder concerns.",
+      "evidence": [
+        "The risk management plan shall associate each risk index with a specified level of reliability (also known as the probability content) and statistical confidence.",
+        "Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure."
+      ],
+      "gaps": [
+        "No explicit Risk Acceptability Policy document is mentioned.",
+        "Lack of detailed guidance on overall residual risk in a standalone policy."
+      ],
+      "recommendations": [
+        "Develop a standalone Risk Acceptability Policy document that clearly defines criteria for risk acceptability, aligned with regulations, relevant standards, state of the art, and stakeholder concerns.",
+        "Ensure that the Risk Acceptability Policy is accessible to all relevant teams and is referenced within Risk Management Plans."
+      ],
+      "requirement_id": "ISO14971-4.2-02",
+      "tokens_used": 11519,
+      "evaluation_duration_ms": 4243
+    }
+  ],
+  "generated_at": "2025-09-18T18:21:24.199251"
+}
