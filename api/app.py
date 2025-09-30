@@ -40,7 +40,7 @@ TEST_EVALUATION_DIR = ROOT_DIR / "test_evaluation"
 load_dotenv(ROOT_DIR / ".env")
 load_dotenv(BASE_DIR / ".env")
 
-for path in (ROOT_DIR, SCRIPTS_DIR, TEST_EVALUATION_DIR):
+for path in (ROOT_DIR, SCRIPTS_DIR, TEST_EVALUATION_DIR, BASE_DIR):
     str_path = str(path)
     if str_path not in sys.path:
         sys.path.append(str_path)
