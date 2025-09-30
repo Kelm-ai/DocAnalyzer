@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "confidence": 0.9,
+  "rationale": "Acceptance Criteria satisfied: the document establishes periodic reviews (inputs/outputs, action tracking) and a pathway for updates to risk management documentation. Evidence shows explicit periodic review requirements, management review inclusion, and triggers for updates. See: Periodic review cadence (5.13.1), review of risk management reports when file elements change (5.13.2), management-review criteria (5.13.3), pre-release risk management report contents and approvals (5.11.1), management oversight and improvement obligation (5.1.6), periodic risk management plan reviews (5.2.12), and post-production inputs triggering reassessment (5.12.4). These collectively demonstrate inputs/outputs, action tracking, and updates to procedures as needed.",
+  "evidence": [
+    "5.13.1 Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team and documented in the risk management plan or when events that may impact the original risk management decision occur.",
+    "5.13.2 Periodic review of risk management reports shall be conducted, when elements in the risk management file change, to assess the acceptability of residual risks and the overall residual risk of the combination product.",
+    "5.13.3 The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility. At a minimum, the review shall include: 5.13.3.1. Risk management process 5.13.3.2. Summaries of responses for critical and high risks 5.13.3.3. Risk profile(s).",
+    "5.11.1 Prior to release for clinical usage or commercial production of the combination product, the applicant shall review the execution of the risk management plan. This review shall ensure the following, at a minimum: 5.11.1.1 The risk management plan has been appropriately implemented. 5.11.1.2 The risk management process has been appropriately implemented in accordance with this procedure. 5.11.1.3 The overall residual risk acceptability and overall benefit risk analysis have been determined. 5.11.1.4 Appropriate methods to collect and review the information in the production and post-production phases have been determined and are in place. 5.11.1.5 Requirements for disclosure of overall and individual residual risks through product labeling and other forms of user communication have been determined. 5.11.1.6 Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.",
+    "5.1.6 As a check on the effectiveness of the risk management processes defined, management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.",
+    "5.2.12 The risk management plan shall be reviewed periodically at specified time intervals.",
+    "5.12.4 If any of these conditions occur, the following activities shall be performed: 5.12.4.1 The risk management file shall be reviewed to determine if reassessment of risks and/or assessment of new risks is necessary.",
+    "5.2.13 During product development, the risk management plan review requirements shall be specified in the design and development plan. After the product is released to market, the risk management file shall be reviewed."
+  ],
+  "gaps": [
+    "Explicit reference to CAPA/change control tickets as risk-management artifacts is not present; the document refers to risk management files, risk management plans, and risk reviews but does not name CAPA tickets or a formal change-control ticketing system (see 5.11.x, 5.12.x, 5.13.x for review/update workflows).",
+    "No direct sample artifacts or templates for CAPA/change-control tickets are shown in the provided excerpts; availability of such artifacts would strengthen evidence of formal action tracking beyond risk management file entries."
+  ],
+  "recommendations": [
+    "Add or reference explicit CAPA/change-control ticketing artifacts within the risk management framework (e.g., CAPA IDs, change-control ticket numbers, status, and closure evidence) to satisfy expectations for action-tracking artifacts.",
+    "Include a concrete cross-reference in the Risk Management File to CAPA/Change Control tickets and tie them to 5.13 periodic reviews and 5.12 post-production evaluations for traceability.",
+    "Consider adding explicit language in the SOP to require updating controlled documents (RMP, Hazard Analysis, FMEA) upon CAPA/Change Control closures and to document these updates in the revision history."
+  ]
+}

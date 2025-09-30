@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "confidence": 0.82,
+  "rationale": "The document embeds a risk acceptability policy within the Risk Management Program/SOP. It specifies that criteria for risk acceptability are defined and documented in the Risk Management Procedure, requires top management to set thresholds, cites regulatory/standards inputs, allows risk management planning at product or family level, and assigns responsibilities to QA, Regulatory, Clinical Development, etc.—all of which satisfy the acceptance criteria for policy existence, regulatory/standard inputs, principle definitions (including per product family when applicable), and accessibility via formal procedures and roles.",
+  "evidence": [
+    "2.1. The responsibility statements include: \"Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and considers available information such as the general acknowledged state of the art and known stakeholder concerns.\"",
+    "3. References: \"21CFR820.30; ISO 14971: 2019; ISO 12971: 2020; Viking QAP012 Design Control; ISO 62366: 2005\"",
+    "5.2.3.2.2: \"Top management of Product Development, Clinical Development, Regulatory Affairs and QA establish acceptable thresholds for residual risk acceptance within this procedure.\"",
+    "5.2.5: \"Categories of risk and criteria for risk acceptability, in accordance with this procedure, including criteria for accepting risks when the probability of occurrence of harm cannot be estimated. The risk acceptance criteria are based on the following decisions: 5.2.5.1. The risk presented by the current standard of care 5.2.5.2. The potential health benefits of using the combination product 5.2.5.3. The generally acknowledged state of the art defined in recognized consensus standards\"",
+    "5.2.6: \"The evaluation method and criteria for acceptability for the overall residual risk, considering all the impact of all risks together, shall be clearly defined and documented in the risk management plan.\"",
+    "5.2.10: \"The risk management plan may be developed for a specific product or for a family of similar products, as appropriate.\"",
+    "2. Responsibilities (Role Responsibility table) notes that top management defines and documents risk acceptability criteria and ensures policies are established and followed, demonstrating accessible governance and alignment with teams.",
+    "5.3.4.5: \"Risk Management Report(s)\" and related risk management artifacts indicate where acceptability decisions and their documentation reside within team processes."
+  ],
+  "gaps": [
+    "No explicit standalone 'Risk Acceptability Policy' document with a visible approval stamp is shown; the policy is embedded within the Risk Management Procedure (2.1) rather than as a separate policy artifact.",
+    "Device-family specific acceptability criteria are supported conceptually (5.2.10 and 5.2.5), but the document does not provide concrete, example criteria for particular device families within this policy; would benefit from explicit family-level criteria in RMPs or an appended policy.",
+    "Explicit statement of distribution/availability to all relevant teams is not directly shown (e.g., distribution list, training, or intranet location); relies on standard SOP distribution practices rather than a stated accessibility mechanism.",
+    "No explicit cross-reference to an operating mechanism for maintaining and communicating an updated risk acceptability policy aside from periodic reviews (5.13) and risk management plan updates."
+  ],
+  "recommendations": [
+    "Create and publish a standalone Risk Acceptability Policy document with formal approval, versioning, and a clear distribution/communication plan to teams.",
+    "Document device-family specific risk acceptability criteria within each Risk Management Plan or add a dedicated annex for device family criteria, including thresholds and decision rules.",
+    "Establish and document explicit accessibility mechanisms (e.g., intranet posting, training records, distribution lists) confirming that the policy and related risk acceptance criteria are readily accessible to all affected teams.",
+    "Link the Risk Acceptability Policy to RMPs and ensure periodic reviews (in line with 5.13) include revalidation of acceptability criteria and update cross-references to ISO 14971/TR 24971 guidance where applicable."
+  ]
+}

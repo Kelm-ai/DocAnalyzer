@@ -1,0 +1,21 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.58,
+  "rationale": "The document acknowledges competence requirements for risk management tasks and references an existing training program (QAP011) but does not provide explicit artifacts required by the acceptance criteria. Specifically, there is no visible training matrix, CVs/experience records, or defined role-based competency profiles within this document. Evidence found: (i) 5.1.8 states competence requirements and references QAP011 for training; (ii) 2.1 outlines responsibilities and roles but does not define competency profiles. The expected artifacts (training records; CVs; competency matrices) are not shown in the attached text/images.",
+  "evidence": [
+    "5.1.8. Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them. These shall include, where appropriate, knowledge and experience of the particular combination product (or similar products) and its use, the technologies involved, or the risk management techniques. Appropriate competence and training program requirements are described in QAP011, GMP Training Program.",
+    "2.1. Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP. All functional leads/managers are responsible for ensuring compliance with the applicable segments of this procedure that are within their areas of responsibility."
+  ],
+  "gaps": [
+    "No explicit training matrix present in the document.",
+    "No training records shown or referenced as attached within this SOP.",
+    "No CVs/experience records for personnel performing risk management tasks are provided.",
+    "No role-based competency profiles defined or linked to specific risk management duties within this document."
+  ],
+  "recommendations": [
+    "Include or attach a formal Training Matrix mapping personnel to specific risk management tasks, with completion dates and competency levels, in the Risk Management File (per 5.3.x and 5.2.x).",
+    "Capture and attach CVs/experience records for personnel assigned to risk management tasks, or document a standardized method to verify qualifications in the competency profiles.",
+    "Develop and include explicit role-based competency profiles (e.g., for Product Development, QA, Regulatory Affairs, Clinical Development) with required education, training, and experience, and reference these in QAP011 as applicable.",
+    "Ensure cross-references to QAP011 and any other related training/qualification templates are included in the Risk Management Plan and Risk Management File, and maintain evidence of competency verification as part of the risk management records."
+  ]
+}

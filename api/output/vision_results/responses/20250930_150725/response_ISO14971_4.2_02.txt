@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "confidence": 0.78,
+  "rationale": "The attached Risk Management SOP (QAP013.01) explicitly defines a policy framework for risk acceptability, ties it to regulatory/standard inputs, covers risk acceptability criteria applicable to products and product families, and prescribes how acceptability criteria are defined in Risk Management Plans and applied to residual risk. It also documents how risk acceptability decisions feed into overall risk management and product release. Evidence includes responsibilities assigning top-management control over acceptability thresholds, explicit criteria for acceptability (standard of care, health benefits, state of the art), and requirement to document acceptability criteria in the Risk Management Plan; it also references ISO 14971 and other standards. See citations below.",
+  "evidence": [
+    "2. Responsibilities (Role Responsibility) - 'Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and considers available information such as the general acknowledged state of the art and known stakeholder concerns.'",
+    "2. Responsibilities (Role Responsibility) - 'Top Management ... establish acceptable thresholds for residual risk acceptance within this procedure.'",
+    "Quality Assurance responsibilities include: 'Defines and documents criteria for risk acceptability in the Risk Management Plan according to the process established in this SOP.'",
+    "3. References - 'ISO 14971: 2019' (and other standards/regulatory inputs) cited as inputs to the policy.",
+    "5.2.3.2.2 - 'Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.'",
+    "5.2.3.2.1 - 'Identification by function or area of expertise the necessary reviewers, contributors, and personnel responsible for risk management execution throughout the product lifecycle.'",
+    "5.2.3.2.3 - 'When a product exceeds risk acceptability thresholds, but still has clinical benefit as designed, a benefit risk analysis is required to justify acceptance of risk.'",
+    "5.2.3.2.4 - 'Risk management responsibilities may be shared with design partners, consultants, contract manufacturers or suppliers, if applicable.'",
+    "5.2.5 - 'Categories of risk and criteria for risk acceptability, in accordance with this procedure, including criteria for accepting risks when the probability of occurrence of harm cannot be estimated. The risk acceptance criteria are based on the following decisions: 5.2.5.1 The risk presented by the current standard of care; 5.2.5.2 The potential health benefits of using the combination product; 5.2.5.3 The generally acknowledged state of the art defined in recognized consensus standards.'",
+    "5.2.6 - 'The evaluation method and criteria for acceptability for the overall residual risk, considering all the impact of all risks together, shall be clearly defined and documented in the risk management plan.'",
+    "5.9.4.1 - 'After the risk control measures are implemented, the applicant shall evaluate the residual risk using the criteria for risk acceptability defined in the risk management plan.'",
+    "5.9.5.1-5.9.5.4 - 'A benefit-risk analysis shall be performed to determine the acceptability of each individual risk and the overall residual risk of the combination product.'",
+    "5.1.3-5.1.7 - The process is described as ongoing, with periodic reviews and communication of risk management activities (supporting accessibility to teams).",
+    "5.1.11 - 'Major risks shall be communicated to Senior Product Development and Quality Assurance Management.'",
+    "5.11.1.6 - 'Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.'",
+    "1.3 - 'This SOP does not define the threshold for acceptable risk (or risk index) since this threshold will change based on the intended use and expected benefit of using the combination product.'"
+  ],
+  "gaps": [
+    "Explicit, standalone 'Risk Acceptability Policy' document title and its formal approval status are not clearly shown as a separate document; the policy is embedded within the SOP and referenced via responsibilities and plan requirements.",
+    "Accessibility/distribution statement confirming that the policy is readily accessible to all teams is not explicitly stated (though the SOP describes communication of risk management activities).",
+    "No explicit citation within the artifact to a standalone Risk Management Plan (RMP) document that contains the formal risk acceptability criteria, aside from references to ‘risk management plan’ in sections like 5.2.6 and 5.9.4.1; the exact cross-reference mapping to RMPs is not shown in the extracted content."
+  ],
+  "recommendations": [
+    "Consider publishing a standalone Risk Acceptability Policy document (or clearly labeling the existing document as the policy) with an explicit approval signature/date and a distribution list to satisfy the 'Approved policy exists' criteria.",
+    "Add an explicit statement within the SOP or an accompanying document confirming accessibility: e.g., 'Policy is accessible to all relevant teams via the QMS portal; training is provided.'",
+    "Ensure cross-references in risk management plans (RMPs) explicitly cite the Risk Acceptability Policy and show how product-family specific criteria are applied; include a short example mapping (product family → risk criteria → acceptability thresholds).",
+    "Include a brief cross-reference table in the SOP linking key acceptability criteria (standard of care, health benefit, state of the art) to applicable product families or categories to satisfy the 'principles defined for specific device families' requirement more explicitly."
+  ]
+}

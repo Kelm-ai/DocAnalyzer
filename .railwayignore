@@ -1,0 +1,4 @@
+# Ignore everything at root for frontend builds
+/*
+# Except the frontend directory
+!/iso-compliance-frontend
