@@ -1,1 +1,1 @@
-web: npm run start
+web: npx serve --single --listen $PORT dist
