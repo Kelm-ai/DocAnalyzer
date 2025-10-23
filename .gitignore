@@ -38,6 +38,7 @@ ENV/
 
 # Node.js
 node_modules/
+iso-compliance-frontend/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -89,6 +90,10 @@ settings.local.json
 # Generated reports
 *.html
 report_*.html
+
+# Vision evaluation outputs
+api/output/
+api/output/vision_results/
 
 # Cache
 .cache/

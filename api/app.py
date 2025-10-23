@@ -45,6 +45,7 @@ for path in (ROOT_DIR, SCRIPTS_DIR, TEST_EVALUATION_DIR, BASE_DIR):
     if str_path not in sys.path:
         sys.path.append(str_path)
 
+from canonical_document_builder import build_canonical_document_artifact  # type: ignore
 EVALUATION_PIPELINE = os.getenv("EVALUATION_PIPELINE", "vision").lower()
 
 # Vision evaluator (optional)
@@ -78,9 +79,15 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+# Read allowed origins from environment variable, defaulting to localhost for development
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173,http://localhost:3000"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Frontend URLs
+    allow_origins=[origin.strip() for origin in ALLOWED_ORIGINS],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,6 +97,28 @@ app.add_middleware(
 pipeline: Optional[CompliancePipeline] = None
 vision_evaluator: Optional[VisionResponsesEvaluator] = None
 document_intelligence_service: Optional[DocumentIntelligenceService] = None
+
+# In-memory progress tracking for long-running evaluations
+evaluation_progress: Dict[str, Dict[str, Any]] = {}
+progress_lock = asyncio.Lock()
+
+
+async def _set_evaluation_progress(evaluation_id: str, payload: Dict[str, Any]) -> None:
+    data = dict(payload)
+    data.setdefault('last_updated', datetime.utcnow().isoformat())
+    async with progress_lock:
+        evaluation_progress[evaluation_id] = data
+
+
+async def _get_evaluation_progress(evaluation_id: str) -> Optional[Dict[str, Any]]:
+    async with progress_lock:
+        snapshot = evaluation_progress.get(evaluation_id)
+        return dict(snapshot) if snapshot is not None else None
+
+
+async def _clear_evaluation_progress(evaluation_id: str) -> None:
+    async with progress_lock:
+        evaluation_progress.pop(evaluation_id, None)
 
 
 @app.get("/api/health")
@@ -291,6 +320,7 @@ class EvaluationStatus(BaseModel):
     status: str
     document_name: str
     progress: Optional[int] = 0
+    metadata: Optional[Dict[str, Any]] = None
     created_at: str
     completed_at: Optional[str] = None
     overall_compliance_score: Optional[float] = None
@@ -328,6 +358,8 @@ class DocumentMarkdownResponse(BaseModel):
     pages: List[str]
     metadata: Dict[str, Any]
     supabase_id: Optional[str] = None
+    canonical_artifact: Optional[Dict[str, Any]] = None
+    coverage_manifest: Optional[List[Dict[str, Any]]] = None
 
 
 class ISORequirementResponse(BaseModel):
@@ -492,7 +524,25 @@ async def convert_document_to_markdown(
             raise HTTPException(status_code=500, detail=result.get('error') or "Document analysis failed")
 
         supabase_id: Optional[str] = None
-        metadata = dict(result.get('metadata') or {})
+        base_metadata = dict(result.get('metadata') or {})
+        pages = result.get('pages', [])
+
+        canonical_artifact = dict(
+            build_canonical_document_artifact(
+                pages,
+                filename=file.filename,
+                extraction_metadata=base_metadata
+            )
+        )
+        coverage_manifest = canonical_artifact.get('coverage_windows', [])
+        metadata = dict(base_metadata)
+        metadata.setdefault('canonical', {})
+        metadata['canonical'].update({
+            'artifact_id': canonical_artifact.get('artifact_id'),
+            'coverage_window_count': len(coverage_manifest),
+            'generated_at': canonical_artifact.get('generated_at')
+        })
+        canonical_artifact['extraction_metadata'] = metadata
 
         if store_in_supabase:
             try:
@@ -502,6 +552,8 @@ async def convert_document_to_markdown(
                     'markdown_content': result.get('markdown_content'),
                     'page_count': result.get('page_count'),
                     'extraction_metadata': metadata,
+                    'canonical_artifact': canonical_artifact,
+                    'coverage_manifest': coverage_manifest,
                     'processed_at': datetime.utcnow().isoformat(),
                     'status': 'processed'
                 }
@@ -517,6 +569,7 @@ async def convert_document_to_markdown(
         storage_meta['stored_in_supabase'] = bool(supabase_id)
         if supabase_id is not None:
             storage_meta['record_id'] = supabase_id
+        canonical_artifact['extraction_metadata'] = metadata
 
         return DocumentMarkdownResponse(
             filename=file.filename,
@@ -524,7 +577,9 @@ async def convert_document_to_markdown(
             markdown_content=result.get('markdown_content') or "",
             pages=result.get('pages', []),
             metadata=metadata,
-            supabase_id=supabase_id
+            supabase_id=supabase_id,
+            canonical_artifact=canonical_artifact,
+            coverage_manifest=coverage_manifest
         )
 
     except HTTPException:
@@ -640,7 +695,23 @@ async def run_evaluation(evaluation_id: str, blob_name: str):
                 logger.info("Active pipeline: %s", get_active_pipeline_name())
                 if vision_evaluator is None or EVALUATION_PIPELINE != "vision":
                     raise RuntimeError("Vision evaluator pipeline is not configured")
-                summary = await vision_evaluator.evaluate_document(temp_file_path)
+                await _set_evaluation_progress(evaluation_id, {
+                    'completed_requirements': 0,
+                    'total_requirements': 0,
+                    'progress_percent': 0,
+                    'batch_number': 0,
+                    'batch_total': 0,
+                    'batch_size': getattr(vision_evaluator, 'concurrent_requests', 0),
+                    'status_message': 'Preparing evaluation batches...',
+                })
+
+                async def progress_callback(update: Dict[str, Any]) -> None:
+                    await _set_evaluation_progress(evaluation_id, update)
+
+                summary = await vision_evaluator.evaluate_document(
+                    temp_file_path,
+                    progress_callback=progress_callback,
+                )
                 persist_vision_results(evaluation_id, summary)
             finally:
                 try:
@@ -658,6 +729,8 @@ async def run_evaluation(evaluation_id: str, blob_name: str):
             'error_message': str(e),
             'completed_at': datetime.utcnow().isoformat()
         }).eq('id', evaluation_id).execute()
+    finally:
+        await _clear_evaluation_progress(evaluation_id)
 
 
 @app.get("/api/requirements", response_model=List[ISORequirementResponse])
@@ -875,10 +948,18 @@ async def list_evaluations():
             partial = row.get('requirements_partial')
             if partial is None and flagged is not None:
                 partial = flagged
+            progress_metadata = await _get_evaluation_progress(row['id'])
+            progress_percent: Optional[int] = None
+            if progress_metadata is not None:
+                progress_percent = int(progress_metadata.get('progress_percent', 0))
+            elif row.get('progress') is not None:
+                progress_percent = int(row.get('progress'))
             evaluations.append(EvaluationStatus(
                 id=row['id'],
                 status=row['status'],
                 document_name=row['document_name'],
+                progress=progress_percent,
+                metadata=progress_metadata,
                 created_at=row['created_at'],
                 completed_at=row.get('completed_at'),
                 overall_compliance_score=row.get('overall_compliance_score'),
@@ -917,10 +998,18 @@ async def get_evaluation_status(evaluation_id: str):
         partial = row.get('requirements_partial')
         if partial is None and flagged is not None:
             partial = flagged
+        progress_metadata = await _get_evaluation_progress(evaluation_id)
+        progress_percent: Optional[int] = None
+        if progress_metadata is not None:
+            progress_percent = int(progress_metadata.get('progress_percent', 0))
+        elif row.get('progress') is not None:
+            progress_percent = int(row.get('progress'))
         return EvaluationStatus(
             id=row['id'],
             status=row['status'],
             document_name=row['document_name'],
+             progress=progress_percent,
+             metadata=progress_metadata,
             created_at=row['created_at'],
             completed_at=row.get('completed_at'),
             overall_compliance_score=row.get('overall_compliance_score'),
