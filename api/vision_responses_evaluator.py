@@ -368,6 +368,22 @@ class VisionResponsesEvaluator:
 
         window_block = ""
         if context_windows:
+            # Debug logging: show selected windows
+            logger.info(
+                "Selected %d coverage windows for requirement %s:",
+                len(context_windows),
+                requirement.get('id', 'UNKNOWN')
+            )
+            for idx, window in enumerate(context_windows, start=1):
+                logger.info(
+                    "  Window %d: %s | Pages %s-%s | Words: %d",
+                    idx,
+                    window.get('window_id', 'unknown'),
+                    window.get('start_page', '?'),
+                    window.get('end_page', '?'),
+                    window.get('word_count', 0)
+                )
+
             window_lines: List[str] = []
             for idx, window in enumerate(context_windows, start=1):
                 heading_path = window.get("heading_path") or []
