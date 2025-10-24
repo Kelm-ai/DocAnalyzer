@@ -17,9 +17,10 @@ import math
 import json
 import logging
 import os
+import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Tuple
 
 # Load environment variables from .env file
 from dotenv import load_dotenv
@@ -64,6 +65,7 @@ class VisionResponsesEvaluator:
         self.concurrent_requests = int(os.getenv("VISION_EVALUATOR_CONCURRENCY", "10"))
         self.reasoning_effort = os.getenv('VISION_REASONING_EFFORT', 'medium')
         self.requirements_limit = int(os.getenv("VISION_EVALUATOR_REQUIREMENT_LIMIT", "0"))
+        self.context_window_limit = int(os.getenv("VISION_CANONICAL_WINDOW_LIMIT", "4"))
 
         self.supabase: Optional[Client] = None
         if SUPABASE_AVAILABLE:
@@ -101,6 +103,8 @@ class VisionResponsesEvaluator:
         file_path: str,
         *,
         progress_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
+        canonical_artifact: Optional[Dict[str, Any]] = None,
+        coverage_windows: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict:
         document_path = Path(file_path)
         if not document_path.exists():
@@ -176,7 +180,14 @@ class VisionResponsesEvaluator:
             "run_id": run_id,
         }
 
+        if canonical_artifact:
+            document_stats["canonical_artifact_id"] = canonical_artifact.get("artifact_id")
+            document_stats["canonical_window_count"] = len(coverage_windows or [])
+            document_stats["canonical_generated_at"] = canonical_artifact.get("generated_at")
+
         semaphore = asyncio.Semaphore(self.concurrent_requests)
+        coverage_windows = coverage_windows or []
+        canonical_artifact = canonical_artifact or {}
         tasks = [
             self._evaluate_single_requirement(
                 file_id,
@@ -184,6 +195,8 @@ class VisionResponsesEvaluator:
                 semaphore,
                 run_responses_dir,
                 handle_progress,
+                coverage_windows=coverage_windows,
+                canonical_metadata=canonical_artifact,
             )
             for requirement in requirements
         ]
@@ -246,9 +259,17 @@ class VisionResponsesEvaluator:
         semaphore: asyncio.Semaphore,
         run_responses_dir: Path,
         on_complete: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
+        *,
+        coverage_windows: Optional[List[Dict[str, Any]]] = None,
+        canonical_metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict:
         async with semaphore:
-            prompt = self._build_prompt(requirement)
+            context_windows = self._select_context_windows(requirement, coverage_windows or [])
+            prompt = self._build_prompt(
+                requirement,
+                context_windows=context_windows,
+                canonical_metadata=canonical_metadata or {},
+            )
 
             try:
                 response = await asyncio.to_thread(
@@ -320,19 +341,48 @@ class VisionResponsesEvaluator:
                 await on_complete(parsed)
             return parsed
 
-    def _build_prompt(self, requirement: Dict) -> str:
+    def _build_prompt(
+        self,
+        requirement: Dict,
+        *,
+        context_windows: Optional[List[Dict[str, Any]]] = None,
+        canonical_metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
         requirement_details = "\n".join([
             f"- ID: {requirement['id']}",
             f"- Clause: {requirement['clause']}",
             f"- Title: {requirement['title']}",
             f"- Requirement Text: {requirement['requirement_text']}",
-            f"- Acceptance Criteria: {requirement['acceptance_criteria']}",
+            f"- Acceptance Criteria: {requirement.get('acceptance_criteria', 'Not specified')}",
             f"- Expected Artifacts: {requirement.get('expected_artifacts', 'Not specified')}",
         ])
 
+        metadata_block = ""
+        if canonical_metadata:
+            canonical_lines = [
+                f"Canonical artifact ID: {canonical_metadata.get('artifact_id')}",
+                f"Generated at: {canonical_metadata.get('generated_at')}",
+                f"Page count: {canonical_metadata.get('page_count')}",
+            ]
+            metadata_block = "Canonical Context Summary:\n" + "\n".join(filter(None, canonical_lines))
+
+        window_block = ""
+        if context_windows:
+            window_lines: List[str] = []
+            for idx, window in enumerate(context_windows, start=1):
+                heading_path = window.get("heading_path") or []
+                heading_label = " > ".join(
+                    [node.get("text", "") for node in heading_path if node.get("text")]
+                ) or "Unspecified"
+                window_lines.append(
+                    f"Window {idx} · Pages {window.get('start_page')}–{window.get('end_page')} · Heading Path: {heading_label}\n"
+                    f"{(window.get('text') or '').strip()}"
+                )
+            window_block = "Canonical Coverage Windows (most relevant first):\n" + "\n\n".join(window_lines)
+
         instruction_block = (
             "MANDATORY METHOD:\n"
-            "1. Review the attached PDF for visuals (tables, charts, signatures) whenever the text layer is insufficient.\n"
+            "1. Use the canonical coverage windows below as your primary source of textual evidence. Consult the PDF attachment only when visuals, signatures, or layout cues are required.\n"
             "2. Evaluate each acceptance criterion individually; cite page or section references for your evidence.\n"
             "3. Use PASS when all criteria are clearly satisfied with explicit evidence, FAIL when evidence is clearly missing or contradictory, and FLAGGED only when the evidence is partial or genuinely uncertain.\n"
             "4. Before finalising, confirm the chosen status best matches the evidence; avoid defaulting to FLAGGED when PASS or FAIL is well supported.\n"
@@ -351,9 +401,59 @@ class VisionResponsesEvaluator:
             self.BASE_INSTRUCTION,
             "".join(instruction_block),
             "Requirement:\n" + requirement_details,
+            metadata_block,
+            window_block,
         ]
 
-        return "\n\n".join(prompt_sections)
+        return "\n\n".join(section for section in prompt_sections if section)
+
+    def _select_context_windows(
+        self,
+        requirement: Dict[str, Any],
+        coverage_windows: Iterable[Dict[str, Any]],
+        *,
+        limit: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        if not coverage_windows:
+            return []
+
+        limit = limit or self.context_window_limit
+        if limit <= 0:
+            return []
+
+        query_text_parts = [
+            requirement.get("title", ""),
+            requirement.get("requirement_text", ""),
+            requirement.get("acceptance_criteria", ""),
+            requirement.get("guidance_notes", ""),
+        ]
+        requirement_tokens = self._tokenize_text(" ".join(filter(None, query_text_parts)))
+
+        scored_windows: List[Tuple[float, int, Dict[str, Any]]] = []
+        for index, window in enumerate(coverage_windows):
+            window_text = window.get("text", "")
+            window_tokens = self._tokenize_text(window_text)
+            overlap = float(len(requirement_tokens & window_tokens))
+
+            heading_tokens = self._tokenize_text(" ".join(
+                node.get("text", "") for node in window.get("heading_path") or []
+            ))
+            overlap += 0.5 * len(requirement_tokens & heading_tokens)
+
+            scored_windows.append((overlap, index, window))
+
+        scored_windows.sort(key=lambda item: (-item[0], item[1]))
+        top_windows = [window for score, _, window in scored_windows[:limit] if score > 0]
+        if not top_windows:
+            top_windows = [window for _, _, window in scored_windows[:limit]]
+        return top_windows
+
+    @staticmethod
+    def _tokenize_text(text: str) -> set:
+        if not text:
+            return set()
+        return set(re.findall(r"[a-z0-9]{2,}", text.lower()))
+
     def _extract_response_text(self, response) -> str:
         try:
             output = getattr(response, "output", None)

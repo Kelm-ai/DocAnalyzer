@@ -1,6 +1,6 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "iso-compliance-frontend/Dockerfile"
+dockerfilePath = "Dockerfile.frontend"
 
 [deploy]
 startCommand = "serve dist -s -p $PORT"

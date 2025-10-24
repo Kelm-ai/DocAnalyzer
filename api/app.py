@@ -708,9 +708,72 @@ async def run_evaluation(evaluation_id: str, blob_name: str):
                 async def progress_callback(update: Dict[str, Any]) -> None:
                     await _set_evaluation_progress(evaluation_id, update)
 
+                canonical_artifact: Optional[Dict[str, Any]] = None
+                coverage_manifest: List[Dict[str, Any]] = []
+                if document_intelligence_service is not None:
+                    try:
+                        with open(temp_file_path, "rb") as doc_handle:
+                            document_bytes = doc_handle.read()
+                        canonical_result = await document_intelligence_service.extract_markdown_with_page_splitting(
+                            document_bytes=document_bytes,
+                            filename=os.path.basename(blob_name),
+                        )
+                        if canonical_result.get('success'):
+                            base_metadata = dict(canonical_result.get('metadata') or {})
+                            pages = canonical_result.get('pages', [])
+                            canonical_artifact = dict(build_canonical_document_artifact(
+                                pages,
+                                filename=os.path.basename(blob_name),
+                                extraction_metadata=base_metadata
+                            ))
+                            coverage_manifest = canonical_artifact.get('coverage_windows', [])
+
+                            metadata = dict(base_metadata)
+                            metadata.setdefault('canonical', {})
+                            metadata['canonical'].update({
+                                'artifact_id': canonical_artifact.get('artifact_id'),
+                                'coverage_window_count': len(coverage_manifest),
+                                'generated_at': canonical_artifact.get('generated_at'),
+                            })
+                            canonical_artifact['extraction_metadata'] = metadata
+
+                            supabase_record_id: Optional[str] = None
+                            if vision_evaluator.supabase is not None:
+                                record = {
+                                    'filename': os.path.basename(blob_name),
+                                    'markdown_content': canonical_result.get('markdown_content'),
+                                    'page_count': canonical_result.get('page_count'),
+                                    'extraction_metadata': metadata,
+                                    'canonical_artifact': canonical_artifact,
+                                    'coverage_manifest': coverage_manifest,
+                                    'processed_at': datetime.utcnow().isoformat(),
+                                    'status': 'processed'
+                                }
+                                try:
+                                    supabase_result = vision_evaluator.supabase.table('processed_documents').insert(record).execute()
+                                    if getattr(supabase_result, 'data', None):
+                                        supabase_record_id = supabase_result.data[0]['id']
+                                except Exception as store_error:
+                                    logger.warning("Failed to store canonical document: %s", store_error)
+
+                            storage_meta = canonical_artifact.setdefault('extraction_metadata', {}).setdefault('storage', {})
+                            storage_meta['stored_in_supabase'] = bool(supabase_record_id)
+                            if supabase_record_id is not None:
+                                storage_meta['record_id'] = supabase_record_id
+                        else:
+                            logger.warning(
+                                "Document Intelligence extraction failed for %s: %s",
+                                blob_name,
+                                canonical_result.get('error'),
+                            )
+                    except Exception as canonical_error:
+                        logger.warning("Canonical artifact generation failed: %s", canonical_error)
+
                 summary = await vision_evaluator.evaluate_document(
                     temp_file_path,
                     progress_callback=progress_callback,
+                    canonical_artifact=canonical_artifact,
+                    coverage_windows=coverage_manifest,
                 )
                 persist_vision_results(evaluation_id, summary)
             finally:
