@@ -57,23 +57,43 @@ VITE_API_URL=https://your-backend.up.railway.app
 
 ## Deployment Steps
 
+### IMPORTANT: Root Directory Configuration
+
+⚠️ **Critical Step**: Railway's Root Directory **MUST** be configured in the service settings UI, not in railway.toml.
+
 1. **Create Two Services in Railway**
    - One for backend (API)
    - One for frontend
 
 2. **Configure Backend Service**
-   - Set Root Directory to `api`
+   - **REQUIRED**: In Railway service settings UI, set **Root Directory** to `api`
+   - **REQUIRED**: In Railway service settings UI, set **Railway Config File Path** to `/api/railway.toml`
    - Add all required environment variables listed above
    - Update `ALLOWED_ORIGINS` to include your frontend Railway domain
 
 3. **Configure Frontend Service**
-   - Set Root Directory to `iso-compliance-frontend`
+   - **REQUIRED**: In Railway service settings UI, set **Root Directory** to `iso-compliance-frontend`
+   - **REQUIRED**: In Railway service settings UI, set **Railway Config File Path** to `/iso-compliance-frontend/railway.toml`
    - Set `VITE_API_URL` to your backend Railway domain
    - Railpack will automatically use Node 24 from package.json engines field
 
 4. **Deploy**
    - Both services will automatically deploy on push to `main` branch
    - Railway will use the `railway.toml` configurations in each directory
+
+### How to Set Root Directory in Railway UI
+
+1. Go to your Railway project dashboard
+2. Select the service (backend or frontend)
+3. Click **Settings** tab
+4. Scroll to **Service Settings** section
+5. Find **Root Directory** field and enter:
+   - Backend: `api`
+   - Frontend: `iso-compliance-frontend`
+6. Find **Railway Config File Path** field and enter:
+   - Backend: `/api/railway.toml`
+   - Frontend: `/iso-compliance-frontend/railway.toml`
+7. Click **Deploy** to trigger a new build
 
 ## Troubleshooting
 
@@ -88,7 +108,14 @@ VITE_API_URL=https://your-backend.up.railway.app
 ### Frontend Build Fails with "Could not resolve entry module"
 **Error**: `Could not resolve entry module "index.html"`
 
-**Solution**: Verify Root Directory is set to `iso-compliance-frontend` in Railway service settings.
+**Solution**:
+1. **This is the most common error for monorepo setups**
+2. In Railway UI, go to Service Settings
+3. Ensure **Root Directory** is set to `iso-compliance-frontend` (not empty, not `/iso-compliance-frontend`)
+4. Ensure **Railway Config File Path** is set to `/iso-compliance-frontend/railway.toml`
+5. Redeploy the service
+
+The error occurs because Railway is building from the repository root instead of the frontend subdirectory.
 
 ### Backend CORS Errors
 **Error**: CORS policy blocking frontend requests
