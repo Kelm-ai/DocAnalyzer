@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import type { ColumnDef, Row } from "@tanstack/react-table"
+import * as XLSX from "xlsx"
 
 import { DataTable } from "@/components/data-table"
 import { Badge } from "@/components/ui/badge"
@@ -12,6 +13,7 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
+  Download,
   Loader2,
   ThumbsDown,
   ThumbsUp,
@@ -296,6 +298,31 @@ export function Results() {
     [saveComment]
   )
 
+  const handleExport = useCallback(() => {
+    if (!report || report.requirements.length === 0) {
+      return
+    }
+
+    const exportRows = report.requirements.map((req) => ({
+      "Requirement ID": req.requirement_id || "",
+      "Title": req.title || "",
+      "Status": (req.status || "PENDING").toUpperCase(),
+      "Confidence": req.confidence_score != null ? `${Math.round(req.confidence_score * 100)}%` : "N/A",
+      "Evaluation Rationale": req.evaluation_rationale || "",
+      "Evidence Snippets": req.evidence_snippets?.filter(Boolean).join(" | ") || "",
+      "Gaps Identified": req.gaps_identified?.filter(Boolean).join(" | ") || "",
+      "Recommendations": req.recommendations?.filter(Boolean).join(" | ") || "",
+    }))
+
+    const worksheet = XLSX.utils.json_to_sheet(exportRows)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Evaluation Results")
+
+    const timestamp = new Date().toISOString().split("T")[0]
+    const filename = `evaluation-${evaluationId}-${timestamp}.xlsx`
+    XLSX.writeFile(workbook, filename)
+  }, [report, evaluationId])
+
   const columns: ColumnDef<RequirementResult>[] = useMemo(
     () => [
       {
@@ -536,26 +563,15 @@ export function Results() {
     )
   }
 
-  const stats = report.summary_stats ?? {}
-  const totalEvaluated =
-    (typeof stats.total_evaluated === "number" ? stats.total_evaluated : undefined) ??
-    (typeof stats.total === "number" ? stats.total : undefined) ??
-    report.requirements.length
+  const stats = report.summary_stats
+  const totalEvaluated = stats.total_evaluated ?? report.requirements.length
 
-  const passed = (typeof stats.passed === "number" ? stats.passed : undefined) ?? 0
-  const failed = (typeof stats.failed === "number" ? stats.failed : undefined) ?? 0
-  const flagged =
-    (typeof stats.flagged === "number" ? stats.flagged : undefined) ??
-    (typeof stats.partial === "number" ? stats.partial : undefined) ?? 0
-  const notApplicable =
-    (typeof stats.not_applicable === "number" ? stats.not_applicable : undefined) ??
-    (typeof stats.na === "number" ? stats.na : undefined) ?? 0
+  const passed = stats.passed ?? 0
+  const failed = stats.failed ?? 0
+  const flagged = (stats.flagged ?? 0) + (stats.partial ?? 0)
+  const notApplicable = stats.not_applicable ?? 0
 
-  const rawScore =
-    (typeof report.overall_score === "number" ? report.overall_score : undefined) ??
-    (typeof stats.score === "number" ? stats.score : undefined) ??
-    0
-  const overallScore = Number.isFinite(rawScore) ? rawScore : 0
+  const overallScore = Number.isFinite(report.overall_score) ? report.overall_score : 0
 
   const activeRequirement =
     selectedRequirementIndex !== null
@@ -637,6 +653,16 @@ export function Results() {
             columns={columns}
             data={report.requirements}
             filterPlaceholder="Filter requirements..."
+            toolbarSlot={
+              <Button
+                onClick={handleExport}
+                disabled={!report || report.requirements.length === 0}
+                size="sm"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export to Excel
+              </Button>
+            }
             onRowClick={(row: Row<RequirementResult>) => {
               const clickedIndex = report.requirements.findIndex(
                 (item: RequirementResult) => item.requirement_id === row.original.requirement_id
