@@ -81,8 +81,21 @@ export interface RequirementCreatePayload {
   evaluation_type?: string
 }
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:5001/api';
+const API_BASE_URL = (() => {
+  const envBaseUrl =
+    (import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL)?.replace(/\/$/, '');
+
+  if (envBaseUrl && envBaseUrl.length > 0) {
+    return envBaseUrl;
+  }
+
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin.replace(/\/$/, '');
+    return `${origin}/api`;
+  }
+
+  return '/api';
+})();
 
 class APIError extends Error {
   public status?: number;

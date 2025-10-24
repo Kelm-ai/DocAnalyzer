@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useCallback } from "react"
+import * as XLSX from "xlsx"
 import { ChevronDown, ChevronRight, Search, Download, ExternalLink } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -71,6 +72,34 @@ export function RequirementsTable() {
     return grouped
   }, [filteredRequirements])
 
+  const handleExport = useCallback(() => {
+    if (filteredRequirements.length === 0) {
+      return
+    }
+
+    const exportRows = filteredRequirements.map((req) => ({
+      ID: req.id,
+      Clause: req.clause,
+      Title: req.title,
+      Status: req.status ?? "PENDING",
+      Confidence: req.confidence != null ? `${Math.round(req.confidence * 100)}%` : "N/A",
+      "Requirement Text": req.requirement_text,
+      "Acceptance Criteria": req.acceptance_criteria ?? "",
+      "Expected Artifacts": req.expected_artifacts ?? "",
+      "Evidence Snippets": req.evidence_snippets?.join("\n") ?? "",
+      Gaps: req.gaps?.join("\n") ?? "",
+      Recommendations: req.recommendations?.join("\n") ?? ""
+    }))
+
+    const worksheet = XLSX.utils.json_to_sheet(exportRows)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Evaluation")
+
+    const timestamp = new Date().toISOString().split("T")[0]
+    const filename = `iso14971-evaluation-${timestamp}.xlsx`
+    XLSX.writeFile(workbook, filename)
+  }, [filteredRequirements])
+
   return (
     <div className="space-y-6">
       <Card>
@@ -82,7 +111,7 @@ export function RequirementsTable() {
                 Detailed compliance assessment for each requirement
               </CardDescription>
             </div>
-            <Button>
+            <Button onClick={handleExport} disabled={filteredRequirements.length === 0}>
               <Download className="mr-2 h-4 w-4" />
               Export Report
             </Button>
