@@ -1,6 +1,5 @@
 [build]
 builder = "RAILPACK"
-buildCommand = "cd iso-compliance-frontend && npm ci && npm run build"
 
 [deploy]
-startCommand = "cd iso-compliance-frontend && npx serve dist -s -p $PORT"
+startCommand = "npx serve dist -s -p $PORT"
