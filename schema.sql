@@ -72,6 +72,8 @@ CREATE TABLE IF NOT EXISTS processed_documents (
     markdown_content TEXT,
     page_count INTEGER,
     extraction_metadata JSONB,
+    canonical_artifact JSONB,
+    coverage_manifest JSONB,
     processed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     status TEXT DEFAULT 'processed'
 );

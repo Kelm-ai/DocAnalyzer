@@ -13,12 +13,13 @@ from __future__ import annotations
 import argparse
 import asyncio
 import hashlib
+import math
 import json
 import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 # Load environment variables from .env file
 from dotenv import load_dotenv
@@ -60,7 +61,7 @@ class VisionResponsesEvaluator:
         self.model = model or os.getenv("OPENAI_VISION_MODEL", os.getenv("OPENAI_MODEL", "gpt-5"))
         self.client = OpenAI(api_key=api_key)
 
-        self.concurrent_requests = int(os.getenv("VISION_EVALUATOR_CONCURRENCY", "8"))
+        self.concurrent_requests = int(os.getenv("VISION_EVALUATOR_CONCURRENCY", "10"))
         self.reasoning_effort = os.getenv('VISION_REASONING_EFFORT', 'medium')
         self.requirements_limit = int(os.getenv("VISION_EVALUATOR_REQUIREMENT_LIMIT", "0"))
 
@@ -95,7 +96,12 @@ class VisionResponsesEvaluator:
         )
 
 
-    async def evaluate_document(self, file_path: str) -> Dict:
+    async def evaluate_document(
+        self,
+        file_path: str,
+        *,
+        progress_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
+    ) -> Dict:
         document_path = Path(file_path)
         if not document_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -105,6 +111,54 @@ class VisionResponsesEvaluator:
         file_id, file_hash, cache_hit = await self.ensure_file_id(document_path)
 
         requirements = self._load_requirements()
+        total_requirements = len(requirements)
+        completed_requirements = 0
+        batch_size = max(self.concurrent_requests, 1)
+        total_batches = math.ceil(total_requirements / batch_size) if total_requirements else 0
+        progress_lock = asyncio.Lock()
+
+        async def handle_progress(result: Dict[str, Any]) -> None:
+            if progress_callback is None:
+                return
+
+            nonlocal completed_requirements
+            async with progress_lock:
+                completed_requirements += 1
+                completed = completed_requirements
+
+            percent = int((completed / total_requirements) * 100) if total_requirements else 0
+            batch_number = max(1, math.ceil(completed / batch_size)) if total_requirements else 0
+
+            update_payload: Dict[str, Any] = {
+                "completed_requirements": completed,
+                "total_requirements": total_requirements,
+                "progress_percent": percent,
+                "batch_number": batch_number,
+                "batch_total": total_batches,
+                "batch_size": batch_size,
+                "last_requirement_id": result.get("requirement_id"),
+            }
+
+            if batch_number and total_batches:
+                update_payload["status_message"] = (
+                    f"Batch {batch_number} of {total_batches} · "
+                    f"Completed {completed}/{total_requirements} requirements"
+                )
+            elif total_requirements:
+                update_payload["status_message"] = (
+                    f"Completed {completed}/{total_requirements} requirements"
+                )
+            else:
+                update_payload["status_message"] = "Evaluating requirements..."
+
+            try:
+                await progress_callback(update_payload)
+            except Exception as progress_error:
+                logger.warning(
+                    "Progress callback failed for requirement %s: %s",
+                    result.get("requirement_id"),
+                    progress_error,
+                )
 
         run_id = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         run_responses_dir = self.responses_dir / run_id
@@ -124,16 +178,26 @@ class VisionResponsesEvaluator:
 
         semaphore = asyncio.Semaphore(self.concurrent_requests)
         tasks = [
-            self._evaluate_single_requirement(file_id, requirement, semaphore, run_responses_dir)
+            self._evaluate_single_requirement(
+                file_id,
+                requirement,
+                semaphore,
+                run_responses_dir,
+                handle_progress,
+            )
             for requirement in requirements
         ]
 
         evaluations = await asyncio.gather(*tasks, return_exceptions=True)
 
-        results: List[Dict] = []
+        results: List[Dict[str, Any]] = []
         for requirement, evaluation in zip(requirements, evaluations):
             if isinstance(evaluation, Exception):
-                results.append({
+                logger.exception(
+                    "Requirement %s raised an exception during evaluation",
+                    requirement["id"],
+                )
+                fallback_result = {
                     "requirement_id": requirement["id"],
                     "status": "ERROR",
                     "confidence": 0,
@@ -142,7 +206,10 @@ class VisionResponsesEvaluator:
                     "gaps": ["Evaluation failed"],
                     "recommendations": ["Retry requirement"],
                     "tokens_used": 0,
-                })
+                }
+                results.append(fallback_result)
+                if progress_callback is not None:
+                    await handle_progress(fallback_result)
             else:
                 results.append(evaluation)
 
@@ -178,6 +245,7 @@ class VisionResponsesEvaluator:
         requirement: Dict,
         semaphore: asyncio.Semaphore,
         run_responses_dir: Path,
+        on_complete: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
     ) -> Dict:
         async with semaphore:
             prompt = self._build_prompt(requirement)
@@ -199,7 +267,7 @@ class VisionResponsesEvaluator:
                 )
             except AttributeError as attr_err:
                 logger.exception("Vision API attribute error for requirement %s", requirement['id'])
-                return {
+                result = {
                     "requirement_id": requirement["id"],
                     "status": "ERROR",
                     "confidence": 0,
@@ -209,6 +277,9 @@ class VisionResponsesEvaluator:
                     "recommendations": ["Upgrade openai package"],
                     "tokens_used": 0,
                 }
+                if on_complete is not None:
+                    await on_complete(result)
+                return result
 
             response_text = response.output_text or self._extract_response_text(response)
             usage = getattr(response, "usage", None)
@@ -226,7 +297,7 @@ class VisionResponsesEvaluator:
                 parsed = json.loads(cleaned)
             except Exception as exc:
                 logger.exception("Vision requirement %s failed", requirement['id'])
-                return {
+                result = {
                     "requirement_id": requirement["id"],
                     "status": "ERROR",
                     "confidence": 0,
@@ -237,11 +308,16 @@ class VisionResponsesEvaluator:
                     "tokens_used": tokens_used,
                     "raw_response": response_text,
                 }
+                if on_complete is not None:
+                    await on_complete(result)
+                return result
 
             parsed.setdefault("requirement_id", requirement["id"])
             parsed.setdefault("requirement_title", requirement.get("title"))
             parsed.setdefault("requirement_clause", requirement.get("clause"))
             parsed["tokens_used"] = tokens_used
+            if on_complete is not None:
+                await on_complete(parsed)
             return parsed
 
     def _build_prompt(self, requirement: Dict) -> str:

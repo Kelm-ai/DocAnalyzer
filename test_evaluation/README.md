@@ -81,7 +81,7 @@ Each run uploads the PDF to the Files API (cached by SHA-256 hash), reuses the r
 
 Optional environment variables for tuning:
 
-- `VISION_EVALUATOR_CONCURRENCY` – parallel OpenAI calls (default 3)
+- `VISION_EVALUATOR_CONCURRENCY` – parallel OpenAI calls (default 10)
 - `VISION_REASONING_EFFORT` – override reasoning effort (default `medium`)
 
 ## Hybrid Evaluator

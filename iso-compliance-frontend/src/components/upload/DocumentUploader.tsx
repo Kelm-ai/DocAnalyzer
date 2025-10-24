@@ -24,6 +24,9 @@ interface UploadedFile {
     completed: number
     total: number
     message: string
+    batchNumber?: number
+    batchTotal?: number
+    batchSize?: number
   }
 }
 
@@ -98,20 +101,38 @@ export function DocumentUploader() {
       await api.pollEvaluationStatus(
         result.evaluation_id,
         (status: EvaluationStatusData) => {
-          setFiles(prev => prev.map(f => 
-            f.id === fileId ? { 
-              ...f, 
-              status: status.status === "completed" ? "success" : 
-                     status.status === "error" ? "error" : "processing",
+          setFiles(prev => prev.map(f => {
+            if (f.id !== fileId) {
+              return f
+            }
+
+            const previousProgress = f.evaluationProgress
+            const nextMetadata = status.metadata
+            const computedStatus =
+              status.status === "completed" ? "success" :
+              status.status === "error" || status.status === "failed" ? "error" :
+              "processing"
+
+            return {
+              ...f,
+              status: computedStatus,
               error: status.error_message,
-              evaluationProgress: status.metadata ? {
-                percent: status.metadata.progress_percent || 0,
-                completed: status.metadata.completed_requirements || 0,
-                total: status.metadata.total_requirements || 38,
-                message: status.metadata.status_message || "Processing..."
+              evaluationProgress: nextMetadata ? {
+                percent: nextMetadata.progress_percent ?? previousProgress?.percent ?? 0,
+                completed: nextMetadata.completed_requirements ?? previousProgress?.completed ?? 0,
+                total: nextMetadata.total_requirements ?? previousProgress?.total ?? 38,
+                message: nextMetadata.status_message || previousProgress?.message || "Processing...",
+                batchNumber: nextMetadata.batch_number ?? previousProgress?.batchNumber,
+                batchTotal: nextMetadata.batch_total ?? previousProgress?.batchTotal,
+                batchSize: nextMetadata.batch_size ?? previousProgress?.batchSize,
               } : undefined
-            } : f
-          ))
+            }
+          }))
+        },
+        {
+          intervalMs: 5000,
+          maxIdleIntervals: 120,
+          maxTotalMs: 30 * 60 * 1000,
         }
       )
 
@@ -267,6 +288,9 @@ export function DocumentUploader() {
                         {file.status === "processing" && file.evaluationProgress && (
                           <p className="text-muted-foreground font-mono">
                             {file.evaluationProgress.completed}/{file.evaluationProgress.total} ({file.evaluationProgress.percent}%)
+                            {file.evaluationProgress.batchNumber && file.evaluationProgress.batchTotal && (
+                              <> · Batch {file.evaluationProgress.batchNumber}/{file.evaluationProgress.batchTotal}</>
+                            )}
                           </p>
                         )}
                       </div>

@@ -60,7 +60,7 @@ class VisionResponsesEvaluator:
         self.model = model or os.getenv("OPENAI_VISION_MODEL", os.getenv("OPENAI_MODEL", "gpt-5"))
         self.client = OpenAI(api_key=api_key)
 
-        self.concurrent_requests = int(os.getenv("VISION_EVALUATOR_CONCURRENCY", "8"))
+        self.concurrent_requests = int(os.getenv("VISION_EVALUATOR_CONCURRENCY", "10"))
         self.reasoning_effort = os.getenv('VISION_REASONING_EFFORT', 'medium')
         self.requirements_limit = int(os.getenv("VISION_EVALUATOR_REQUIREMENT_LIMIT", "0"))
 
