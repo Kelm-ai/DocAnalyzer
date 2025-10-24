@@ -90,6 +90,8 @@ ALLOWED_ORIGINS = [
     if origin.strip().strip('"\'')
 ]
 
+logger.info("Configured CORS origins: %s", ALLOWED_ORIGINS)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
