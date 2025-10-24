@@ -10,7 +10,7 @@
 
 #### Settings
 - **Root Directory**: `api`
-- **Builder**: Nixpacks (auto-detected from `requirements.txt`)
+- **Builder**: Railpack (configured in `api/railway.toml`)
 - **Start Command**: Defined in `api/railway.toml`
   - `uvicorn app:app --host 0.0.0.0 --port $PORT`
 - **Health Check Path**: `/api/health`
@@ -42,14 +42,14 @@ AZURE_DOCUMENT_INTELLIGENCE_KEY=your_key
 
 #### Settings
 - **Root Directory**: `iso-compliance-frontend`
-- **Builder**: Nixpacks (auto-detected from `package.json`)
+- **Builder**: Railpack (configured in `iso-compliance-frontend/railway.toml`)
 - **Start Command**: Defined in `iso-compliance-frontend/railway.toml`
   - `npx serve dist -s -p $PORT`
 
 #### Required Environment Variables
 ```bash
-# Node.js Version (Required to avoid version mismatch)
-NIXPACKS_NODE_VERSION=20
+# Node.js Version (Required - Railpack will use the version specified in package.json engines field)
+# The project requires Node 24 as specified in package.json
 
 # API Backend URL
 VITE_API_URL=https://your-backend.up.railway.app
@@ -68,8 +68,8 @@ VITE_API_URL=https://your-backend.up.railway.app
 
 3. **Configure Frontend Service**
    - Set Root Directory to `iso-compliance-frontend`
-   - Set `NIXPACKS_NODE_VERSION=20` (important!)
    - Set `VITE_API_URL` to your backend Railway domain
+   - Railpack will automatically use Node 24 from package.json engines field
 
 4. **Deploy**
    - Both services will automatically deploy on push to `main` branch
@@ -78,9 +78,12 @@ VITE_API_URL=https://your-backend.up.railway.app
 ## Troubleshooting
 
 ### Frontend Build Fails with Node Version Error
-**Error**: `Unsupported engine { required: { node: '>=22.12.0' } }`
+**Error**: `Unsupported engine { required: { node: '^24.0.0' } }`
 
-**Solution**: Ensure `NIXPACKS_NODE_VERSION=20` is set in Railway environment variables.
+**Solution**:
+1. Ensure `builder = "RAILPACK"` is set in `iso-compliance-frontend/railway.toml`
+2. Railpack will automatically detect and use Node 24 from the `engines` field in package.json
+3. Verify your package.json has `"engines": { "node": "^24.0.0" }`
 
 ### Frontend Build Fails with "Could not resolve entry module"
 **Error**: `Could not resolve entry module "index.html"`

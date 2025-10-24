@@ -1,8 +1,5 @@
 [build]
-builder = "nixpacks"
-
-[build.nixpacksPlan.phases.setup]
-nixPkgs = ["nodejs_24"]
+builder = "RAILPACK"
 
 [deploy]
 startCommand = "npx serve dist -s -p $PORT"
