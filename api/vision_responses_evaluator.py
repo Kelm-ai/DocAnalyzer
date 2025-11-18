@@ -66,6 +66,14 @@ class VisionResponsesEvaluator:
         self.reasoning_effort = os.getenv('VISION_REASONING_EFFORT', 'medium')
         self.requirements_limit = int(os.getenv("VISION_EVALUATOR_REQUIREMENT_LIMIT", "0"))
 
+        # Use deterministic seed for reproducible responses (default: 42)
+        self.seed = int(os.getenv("OPENAI_SEED", "42"))
+        logger.info(f"Using OpenAI seed for deterministic responses: {self.seed}")
+
+        # Temperature controls randomness: 0 = deterministic, 1 = creative (default: 0.0 for consistency)
+        self.temperature = float(os.getenv("OPENAI_TEMPERATURE", "0.0"))
+        logger.info(f"Using OpenAI temperature: {self.temperature}")
+
         self.supabase: Optional[Client] = None
         if SUPABASE_AVAILABLE:
             supabase_url = os.getenv("SUPABASE_URL")
@@ -188,6 +196,8 @@ class VisionResponsesEvaluator:
                 response = await asyncio.to_thread(
                     self.client.responses.parse,
                     model=self.model,
+                    seed=self.seed,
+                    temperature=self.temperature,
                     reasoning={"effort": self.reasoning_effort},
                     input=[
                         {
