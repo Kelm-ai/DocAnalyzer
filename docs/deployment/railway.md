@@ -28,6 +28,7 @@ Railway detects the Python Railpack from `requirements.txt`. The `Procfile` defi
    - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
    - `EVALUATION_PIPELINE` (set to `vision` unless you restore the Azure pipeline)
    - `OPENAI_API_KEY` if you rely on the vision evaluator
+   - `CORS_ALLOW_ORIGINS` with the public frontend URL(s), e.g. `https://frontend-docanalyzer-production.up.railway.app`
 4. Set the health check path to `/api/health`.
 5. Deploy. The Railpack will install dependencies, run migrations (if defined), and start `uvicorn`. Confirm with `railway logs` and `curl https://<backend-domain>/api/health`.
 

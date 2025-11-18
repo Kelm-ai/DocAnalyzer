@@ -40,6 +40,48 @@ TEST_EVALUATION_DIR = ROOT_DIR / "test_evaluation"
 load_dotenv(ROOT_DIR / ".env")
 load_dotenv(BASE_DIR / ".env")
 
+
+def _split_env_list(raw: Optional[str]) -> List[str]:
+    """Split comma/space separated env vars into clean origin entries."""
+    if not raw:
+        return []
+    items = []
+    for part in raw.replace(" ", ",").split(","):
+        cleaned = part.strip().rstrip("/")
+        if cleaned:
+            items.append(cleaned)
+    return items
+
+
+def _get_allowed_origins() -> List[str]:
+    """Build CORS origins list from defaults + environment overrides."""
+    default_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
+    allow_all = os.getenv("CORS_ALLOW_ALL", "false").lower() in {"1", "true", "yes"}
+    if allow_all:
+        logger.info("CORS_ALLOW_ALL enabled - allowing all origins")
+        return ["*"]
+
+    configured_origins: List[str] = []
+    for key in ("FRONTEND_URL", "CORS_ALLOW_ORIGINS"):
+        configured_origins.extend(_split_env_list(os.getenv(key)))
+
+    # Preserve ordering but remove duplicates
+    seen = set()
+    merged: List[str] = []
+    for origin in default_origins + configured_origins:
+        if origin and origin not in seen:
+            seen.add(origin)
+            merged.append(origin)
+
+    logger.info("Allowed CORS origins: %s", merged)
+    return merged or default_origins
+
 for path in (ROOT_DIR, SCRIPTS_DIR, TEST_EVALUATION_DIR, BASE_DIR):
     str_path = str(path)
     if str_path not in sys.path:
@@ -78,9 +120,10 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+ALLOWED_CORS_ORIGINS = _get_allowed_origins()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Frontend URLs
+    allow_origins=ALLOWED_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
