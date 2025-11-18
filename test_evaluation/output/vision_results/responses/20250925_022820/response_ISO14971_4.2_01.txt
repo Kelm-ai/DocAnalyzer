@@ -1,0 +1,29 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.85,
+  "rationale": "The Risk Management SOP (QAP013.01) demonstrates documented top‑management commitment at the policy level: roles and responsibilities are defined, the document states that management will assure adequate resources and assign competent personnel, and it references management review and training programs. However, the file does not contain the concrete expected artifacts (management review minutes, resource/resourcing decisions or plans, org chart, or training plan/completion records) required by the acceptance criteria to demonstrate enacted management commitment and resourcing. Therefore the requirement is partially satisfied (policy/roles present) but lacks objective records/evidence of implementation.",
+  "evidence": [
+    "\"Assures adequate resources and support to carry out this process.\" (Responsibilities: Functional Area Management)",
+    "\"Ensures provision of adequate resources and assignment of competent personnel for risk management\" (Responsibilities: Functional Area Management)",
+    "\"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them. ... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\" (Section 5.1.8)",
+    "\"management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.\" (Section 5.1.6)",
+    "\"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\" (Section 5.11.1.6)",
+    "\"Assignment of responsibilities and authorities for the execution of specific risk management activities ... Identification by function or area of expertise the necessary reviewers, contributors, and personnel responsible for risk management execution throughout the product lifecycle\" (Section 5.2.3.2.1)"
+  ],
+  "gaps": [
+    "No management review records or minutes demonstrating that top management has reviewed the risk management process (management review minutes or signed records are not present in this document).",
+    "No documented resourcing decisions or resource plans showing allocation of budget, personnel or other resources to risk management activities (e.g., resource plan, budget approval).",
+    "No org chart or explicit assignment records (names, positions, delegated authorities) showing which specific individuals have been assigned responsibility for risk management activities.",
+    "No training plan or completed training records for personnel assigned to risk management (QAP011 is referenced but the SOP does not include the training plan or records of competence/qualification).",
+    "No evidence of management approvals or signatures for the Risk Management Plan or Risk Management File items (only procedural requirement to approve is stated).",
+    "No post‑implementation evidence that roles/resourcing commitments were enacted (e.g., hiring or assignment records, personnel competency evidence, KPI or resource monitoring outputs)."
+  ],
+  "recommendations": [
+    "Provide copies of recent management review minutes that explicitly cover the risk management process (include date, attendees, topics discussed, decisions/actions and management signatures).",
+    "Add or link a resource plan or resourcing decision record showing budget/personnel allocation for risk management (include approvals from top management and dates).",
+    "Include an org chart or a responsibility assignment matrix (RACI) listing named individuals (or positions) assigned to risk management roles and authorities, with evidence of delegation/assignment.",
+    "Embed or reference the actual training plan(s) from QAP011 and include training completion records (training dates, attendees, training content, and evidence of competency/qualification) for personnel performing risk management tasks.",
+    "Record and retain management approvals (signatures/date stamps) on the Risk Management Plan and Risk Management Report(s) to evidence top management commitment to release decisions.",
+    "During periodic reviews, capture and retain evidence that management resourcing commitments were reviewed and any resource shortfalls were addressed (minutes, action item tracking, and closure evidence)."
+  ]
+}

@@ -1,0 +1,29 @@
+[
+  {
+    "id": "ISO14971-4.1-01",
+    "clause": "4.1",
+    "title": "Risk management process established",
+    "requirement_text": "Establish, implement, document, and maintain an ongoing risk management process covering the entire device life cycle. Include risk analysis, risk evaluation, risk control, and production & post‑production activities. Integrate with product realization as appropriate.",
+    "acceptance_criteria": "Procedure(s) exist and are controlled; scope includes life‑cycle coverage; process map/flow shows required elements; references to related QMS processes are clear.",
+    "expected_artifacts": "Risk Management SOP; process flowchart; quality manual/QMS cross‑references.",
+    "guidance_notes": "TR24971 clarifies the process can be within a QMS but is not required; ensure linkage to ISO 13485 processes as relevant."
+  },
+  {
+    "id": "ISO14971-4.2-01",
+    "clause": "4.2",
+    "title": "Top management commitment",
+    "requirement_text": "Provide evidence of top‑management commitment: adequate resources and assignment of competent personnel.",
+    "acceptance_criteria": "Documented management commitment (e.g., management review minutes, resourcing decisions); defined roles; training plans.",
+    "expected_artifacts": "Management Review records; org charts; resource plans.",
+    "guidance_notes": "TR24971 details the emphasis on top management and periodic suitability review."
+  },
+  {
+    "id": "ISO14971-4.2-02",
+    "clause": "4.2",
+    "title": "Policy for risk acceptability",
+    "requirement_text": "Define and document a policy for establishing criteria for risk acceptability, aligned with regulations, relevant standards, state of the art, and stakeholder concerns; include guidance on overall residual risk.",
+    "acceptance_criteria": "Approved policy exists; cites regulatory/standard inputs; defines principles for specific device families where needed; accessible to teams.",
+    "expected_artifacts": "Risk Acceptability Policy document; references within RMPs.",
+    "guidance_notes": "TR24971 Annex C provides detailed guidance and examples for setting the policy and criteria."
+  }
+]

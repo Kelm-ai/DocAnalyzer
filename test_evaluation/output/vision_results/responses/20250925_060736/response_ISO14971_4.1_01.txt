@@ -1,0 +1,37 @@
+{
+  "status": "PASS",
+  "confidence": 0.9,
+  "rationale": "The SOP establishes, implements, documents, and maintains an ongoing risk management process across the product life cycle. It explicitly includes risk analysis, risk evaluation, risk control, and production/post‑production activities, and integrates with product realization via Design Control. A controlled procedure exists with document metadata, a process flow (Figure 1) showing the required elements, and clear cross‑references to related QMS processes. Minor gaps are limited to placeholder document numbers for some cross‑references.",
+  "evidence": [
+    "Front matter/header: \"Document Number: QAP013.01 Title: RISK MANAGEMENT PROGRAM Effective Date: 26Jun2024\" (cover metadata demonstrating a controlled SOP)",
+    "Section 1.1 (Purpose): \"establish, implement, document and maintain an ongoing process for risk management... in accordance with applicable subclauses of ISO 13485:2016, ISO 14971:2019\"",
+    "Section 1.2 (Scope): \"applies... throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.\"",
+    "Section 5.1.2: \"Risk management is integrated within QAP012, Design Control as part of product realization.\"",
+    "Section 5.1.4: \"The risk management process includes the following elements throughout the product life cycle: ... Identifying hazards... Estimating and evaluating the associated risks... Controlling risk and monitoring... Risk reviews... Periodic review of identified risks.\"",
+    "Section 5.1.5 and Figure 1 (Risk Management Overview): visual flow shows the process elements: Risk analysis; Risk evaluation of each individual risk; Risk control; Evaluation of overall residual risk; Production and post‑production activities; Review of risk management activities; anchored by a Risk management plan. [Transcribed from figure]",
+    "Section 5.6 (Risk Analysis) and 5.6.1.1: \"Identify all reasonably foreseeable... hazards... Estimate the probability... Identify the risk controls... Estimate the reduction...\"",
+    "Section 5.8 (Risk Evaluation): \"evaluate estimated risks to determine whether the risk is acceptable, using criteria for risk acceptability defined in the risk management plan\"",
+    "Section 5.9 (Risk Control) including 5.9.2–5.9.4 detailing option analysis, implementation, and residual risk evaluation",
+    "Section 5.10 (Evaluation of Residual Risk): \"evaluate the overall residual risk... using the method and the criteria for acceptability... defined in the risk management plan\"",
+    "Section 5.11 (Risk Management Report): requires review prior to clinical/commercial release and top management approval when benefit‑risk is needed",
+    "Section 5.12 (Production and Post-Production Activities): \"Information relevant to the combination product shall be actively collected and reviewed in the production and post-production phases... Post Market Surveillance and Complaint Handling Process.\"",
+    "Section 5.13 (Periodic Reviews): \"Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis...\"",
+    "Section 5.3.1–5.3.6 (Risk Management File): \"shall be established and maintained throughout the product lifecycle\"; traceability to analysis, evaluation, controls, residual risk; maintained in DHF and controlled per QAP001",
+    "Section 5.3.5: \"controlled and maintained in the document management system in accordance with QAP001, Format, Content, Approval and Issuance of Controlled Documents.\"",
+    "Section 5.1.6 and 5.13.3: linkage to management review \"in accordance with XX-YYY, Management Responsibility\"",
+    "Section 5.5 and 5.5.1–5.5.3: integration with Design Verification/Validation via QAP012 for verification of risk controls",
+    "Section 3 (References): cites ISO 14971:2019 and QAP012 Design Control",
+    "Section 2 and 1.4: responsibilities include ensuring external parties follow risk management; supplier qualification referenced (XX-XXX)."
+  ],
+  "gaps": [
+    "Some QMS cross‑references use placeholder document numbers (e.g., XX-XXX Supplier Qualification and Management; XX-YYY Management Responsibility).",
+    "Post‑market surveillance/complaint handling is referenced but without a specific controlled document number/title.",
+    "Figure 1 text is embedded as an image; ensure it is legible in all controlled copies for auditability."
+  ],
+  "recommendations": [
+    "Replace placeholder QMS document identifiers (XX-XXX, XX-YYY) with the final, controlled document numbers and titles.",
+    "Add explicit document identifiers for the Post Market Surveillance and Complaint Handling procedure.",
+    "Ensure Figure 1 is high‑resolution and fully legible in the controlled SOP to clearly depict the process flow during audits.",
+    "Optionally reference the Quality Manual section that anchors risk management within the QMS for additional clarity."
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.6,
+  "rationale": "The SOP shows lifecycle coverage and requirement to include lifecycle scope in the Risk Management Plan, but it does not provide explicit evidence of a named device with version in the RMP, nor a lifecycle applicability matrix mapping plan elements to lifecycle phases. Therefore, criteria are partially supported but not fully evidenced.",
+  "evidence": [
+    "Page 1, Section 1.2: 'Scope This SOP applies to the commercial and investigational (clinical) combination products designed, manufactured, and distributed under Current Good Manufacturing Practice (cGMP) conditions throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.'",
+    "5.2.3.1: 'The scope of the planned risk management activities, identifying and describing the combination product (or product family), intended use, interfaces with external systems or processes, and the lifecycle phases for which each element of the plan is applicable'",
+    "5.2.14: 'The risk management plan shall be included as part of the risk management file. If the plan changes during the product lifecycle, a record of the changes shall be maintained in the risk management file.'",
+    "5.3.1: 'For the combination product being considered, a risk management file shall be established and maintained throughout the product lifecycle.'",
+    "5.3.4: 'The risk management file consists of the following deliverables, at a minimum: 5.3.4.1. Hazard Analysis 5.3.4.2. Risk Management Plan 5.3.4.3. Risk Analyses (internal and external) 5.3.4.4. Benefit Risk Analysis (when applicable) 5.3.4.5. Risk Management Report(s) 5.3.4.6. Post-production Risk Management Report(s) (when appropriate) 5.3.4.7. Any supporting or referenced documents or records of activities required by the risk management plan'"
+  ],
+  "gaps": [
+    "No explicit device name and version for the Risk Management Plan (RMP) is evidenced in the provided text.",
+    "No lifecycle applicability matrix/table mapping RMP elements to lifecycle phases is shown in the provided text.",
+    "Expected artifact 'RMP vX' and a dedicated lifecycle applicability table are not demonstrated in the current excerpt."
+  ],
+  "recommendations": [
+    "Provide an actual Risk Management Plan document (RMP) with a defined device name/identifier and a version (e.g., RMP vX for [Device Name]), including version control.",
+    "Include a lifecycle applicability matrix in the RMP that maps each plan element (scope, responsibilities, risk assessment, risk control, verification/validation, post-market activities, etc.) to specific lifecycle phases (development, design transfer, manufacturing, production, post-production, etc.).",
+    "Add or reference a standalone lifecycle applicability table to clearly satisfy ISO14971-4.4(a) by showing how each element applies across lifecycle phases."
+  ]
+}

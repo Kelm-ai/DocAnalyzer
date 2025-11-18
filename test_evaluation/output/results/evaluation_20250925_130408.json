@@ -1,0 +1,74 @@
+{
+  "document_info": {
+    "file_name": "Example Viking QAP013.01 Risk Management Final.pdf",
+    "file_type": ".pdf",
+    "file_size_bytes": 724940,
+    "markdown_length": 67589,
+    "word_count": 9257,
+    "line_count": 1921,
+    "conversion_timestamp": "2025-09-25T13:04:06.186819"
+  },
+  "evaluation_summary": {
+    "total_requirements": 3,
+    "compliance_score": 0,
+    "status_counts": {
+      "PASS": 0,
+      "FAIL": 0,
+      "FLAGGED": 0,
+      "NOT_APPLICABLE": 0,
+      "ERROR": 3,
+      "SKIPPED": 0
+    },
+    "total_tokens_used": 0,
+    "total_duration_ms": 1993,
+    "estimated_cost_usd": 0.0
+  },
+  "requirements_results": [
+    {
+      "requirement_id": "ISO14971-4.1-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "API error: Error code: 400 - {'error': {'message': \"Unsupported parameter: 'temperature' is not supported with this model.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': None}}",
+      "evidence": [],
+      "gaps": [
+        "API call failed"
+      ],
+      "recommendations": [
+        "Check API configuration"
+      ],
+      "tokens_used": 0,
+      "evaluation_duration_ms": 807
+    },
+    {
+      "requirement_id": "ISO14971-4.2-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "API error: Error code: 400 - {'error': {'message': \"Unsupported parameter: 'temperature' is not supported with this model.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': None}}",
+      "evidence": [],
+      "gaps": [
+        "API call failed"
+      ],
+      "recommendations": [
+        "Check API configuration"
+      ],
+      "tokens_used": 0,
+      "evaluation_duration_ms": 732
+    },
+    {
+      "requirement_id": "ISO14971-4.2-02",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "API error: Error code: 400 - {'error': {'message': \"Unsupported parameter: 'temperature' is not supported with this model.\", 'type': 'invalid_request_error', 'param': 'temperature', 'code': None}}",
+      "evidence": [],
+      "gaps": [
+        "API call failed"
+      ],
+      "recommendations": [
+        "Check API configuration"
+      ],
+      "tokens_used": 0,
+      "evaluation_duration_ms": 454
+    }
+  ],
+  "generated_at": "2025-09-25T13:04:08.184845"
+}

@@ -1,0 +1,79 @@
+{
+  "document_info": {
+    "file_name": "Example Altimmune Risk Management Procedure v2 11-30-2022.docx",
+    "file_type": ".docx",
+    "file_size_bytes": 492128,
+    "markdown_length": 59587,
+    "word_count": 8891,
+    "line_count": 870,
+    "conversion_timestamp": "2025-09-18T18:54:08.831853"
+  },
+  "evaluation_summary": {
+    "total_requirements": 3,
+    "compliance_score": 66.7,
+    "status_counts": {
+      "PASS": 2,
+      "FAIL": 1,
+      "FLAGGED": 0,
+      "NOT_APPLICABLE": 0,
+      "ERROR": 0,
+      "SKIPPED": 0
+    },
+    "total_tokens_used": 34383,
+    "total_duration_ms": 14733,
+    "estimated_cost_usd": 0.1719
+  },
+  "requirements_results": [
+    {
+      "status": "PASS",
+      "confidence": 1.0,
+      "rationale": "The document establishes, implements, documents, and maintains a comprehensive risk management process that covers the entire lifecycle of combination products. It includes detailed sections on risk analysis, risk evaluation, risk control, and production & post-production activities, which align with the requirements of ISO 14971:2019. The integration with product realization is also clearly stated.",
+      "evidence": [
+        "The purpose of this procedure is to establish, implement, document and maintain an ongoing process for risk management at Altimmune for combination products.",
+        "The risk management process includes the following elements throughout the product life cycle: Identifying hazards and hazardous situations associated with the combination product, Estimating and evaluating the associated risks, Controlling risk and monitoring the effectiveness of the risk control measures, Monitoring the effectiveness of the risk control measures."
+      ],
+      "gaps": [],
+      "recommendations": [],
+      "requirement_id": "ISO14971-4.1-01",
+      "tokens_used": 11461,
+      "evaluation_duration_ms": 4876
+    },
+    {
+      "status": "PASS",
+      "confidence": 0.95,
+      "rationale": "The document provides clear evidence of top management commitment through defined roles and responsibilities, as well as the establishment of processes for risk management. It specifies that top management from various departments (Product Development, Clinical Development, Regulatory Affairs, and Quality Assurance) is responsible for establishing acceptable thresholds for residual risk acceptance and ensuring compliance with the risk management process. Additionally, the document outlines the need for adequate resources and competent personnel for risk management activities.",
+      "evidence": [
+        "Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.",
+        "Functional Area Management is responsible for ensuring that the risk management process is followed within their area of responsibility and provides subject matter expertise."
+      ],
+      "gaps": [],
+      "recommendations": [],
+      "requirement_id": "ISO14971-4.2-01",
+      "tokens_used": 11396,
+      "evaluation_duration_ms": 3451
+    },
+    {
+      "status": "FAIL",
+      "confidence": 0.6,
+      "rationale": "The document does not explicitly define or document a policy for establishing criteria for risk acceptability. While it mentions that top management establishes acceptable thresholds for residual risk acceptance, it lacks a formalized policy that is accessible to teams and does not cite specific regulatory or standard inputs. Additionally, there is no clear guidance on overall residual risk as required by the clause.",
+      "evidence": [
+        "Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.",
+        "The risk acceptance criteria is based on the following decisions: The risk presented by the current standard of care, The potential health benefits of using the combination product, The generally acknowledged state of the art defined in recognized consensus standards."
+      ],
+      "gaps": [
+        "No formalized risk acceptability policy document is provided.",
+        "Lack of specific references to regulatory or standard inputs in the context of risk acceptability.",
+        "No clear principles for specific device families are defined."
+      ],
+      "recommendations": [
+        "Develop and document a formal Risk Acceptability Policy that aligns with regulations and standards.",
+        "Ensure the policy includes guidance on overall residual risk and is accessible to relevant teams.",
+        "Cite specific regulatory and standard inputs within the policy to strengthen compliance."
+      ],
+      "requirement_id": "ISO14971-4.2-02",
+      "tokens_used": 11526,
+      "evaluation_duration_ms": 6406
+    }
+  ],
+  "generated_at": "2025-09-18T18:54:23.571308"
+}

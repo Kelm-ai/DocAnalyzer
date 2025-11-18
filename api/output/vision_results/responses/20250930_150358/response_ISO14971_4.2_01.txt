@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "confidence": 0.78,
+  "rationale": "The document demonstrates top management commitment and defined roles, plus training plan references. Evidence includes explicit resource assignment for risk management, defined roles across functions, top management approval requirements, and a training program reference. These align with ISO14971-4.2 acceptance criteria.",
+  "evidence": [
+    "Section 2.1 Role Responsibility: 'Assures adequate resources and assignment of competent personnel for risk management'.",
+    "Section 5.11.1.6: 'Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.'",
+    "Section 5.13.3: 'The risk management process shall be reviewed as part of the management review.'",
+    "Section 5.1.8: 'Appropriate competence and training program requirements are described in QAP011, GMP Training Program.'"
+  ],
+  "gaps": [
+    "No explicit management review minutes or documented management review records are provided in the excerpt.",
+    "No standalone organizational chart or formal resource plan is presented in the shown content."
+  ],
+  "recommendations": [
+    "Attach or reference actual management review minutes and explicit resourcing decisions to demonstrate documented top management commitment.",
+    "Include or attach organizational charts and a formal resource plan for risk management as artifacts.",
+    "Maintain a formal training plan in the risk management records showing completed training for risk management personnel."
+  ]
+}

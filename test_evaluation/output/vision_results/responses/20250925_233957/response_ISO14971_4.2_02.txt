@@ -1,0 +1,35 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.6,
+  "rationale": "The SOP establishes a policy framework for how risk acceptability criteria are to be created and used, cites regulatory and standards inputs, provides guidance on overall residual risk, and indicates availability via the QMS. However, it explicitly states it does not define thresholds for acceptable risk, deferring those to product Risk Management Plans (RMPs). There is also an internal inconsistency about whether thresholds are defined within the procedure. Evidence of approved, documented risk acceptability thresholds or specific device-family principles and references within actual RMPs are not provided.",
+  "evidence": [
+    "Section 1.1: \"establish, implement, document and maintain an ongoing process for risk management ... in accordance with ... ISO 13485:2016, ISO 14971:2019, and taking into consideration ... ISO/TR 24971:2020.\"",
+    "Section 1.3: \"This SOP does not define the threshold for acceptable risk (or risk index) since this threshold will change based on the intended use and expected benefit of using the combination product.\"",
+    "Section 2 (Responsibilities) – Functional Area Management: \"Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and considers available information such as the general acknowledged state of the art and known stakeholder concerns.\"",
+    "Section 2 (Responsibilities) – Quality Assurance: \"Defines and documents criteria for risk acceptability in the Risk Management Plan according to the process established in this SOP.\"",
+    "Section 3 (References): \"21CFR820.30; ISO 14971: 2019; ISO 12971: 2020 [sic, likely ISO/TR 24971:2020]; ... ISO 62366: 2005.\"",
+    "Section 5.2.3.2.2: \"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\"",
+    "Section 5.2.5: \"Categories of risk and criteria for risk acceptability, in accordance with this procedure, including criteria for accepting risks when the probability of occurrence of harm cannot be estimated. The risk acceptance criteria are based on ... (1) current standard of care; (2) potential health benefits; (3) state of the art defined in recognized consensus standards.\"",
+    "Section 5.2.6: \"The evaluation method and criteria for acceptability for the overall residual risk ... shall be clearly defined and documented in the risk management plan.\"",
+    "Section 5.10 (Evaluation of Residual Risk): \"the Applicant shall evaluate the overall residual risk ... using the method and the criteria for acceptability of the overall residual risk defined in the risk management plan.\"",
+    "Section 5.11.1.3: \"The overall residual risk acceptability and overall benefit risk analysis have been determined.\"",
+    "Table 6 (Section 5.9.4.3): Action guidance tied to risk index colors (Red/Yellow/Green), including requirements for benefit-risk analysis and labeling for significant residual risks.",
+    "Section 5.3.5: \"The contents of the risk management file ... shall be controlled and maintained in the document management system...\"",
+    "Section 5.2.10: \"The risk management plan may be developed for a specific product or for a family of similar products, as appropriate.\"",
+    "Document header: \"Document Number: QAP013.01 ... Title: RISK MANAGEMENT PROGRAM ... Effective Date: 26Jun2024\""
+  ],
+  "gaps": [
+    "No explicit, approved Risk Acceptability Policy document separate from the SOP is provided; the SOP itself serves as a framework but states it does not define thresholds.",
+    "Internal inconsistency: Section 1.3 says the SOP does not define thresholds, while Section 5.2.3.2.2 says top management establishes thresholds within this procedure.",
+    "No evidence provided of actual RMPs referencing and applying the policy or documenting product-/family-specific risk acceptability criteria and overall residual risk acceptability methods.",
+    "No explicit confirmation (e.g., signatures/approvals page) of top management approval of a risk acceptability policy beyond the presence of an effective date.",
+    "Limited device-family-specific principles; the SOP allows family-level RMPs but does not articulate differentiated acceptability principles by family."
+  ],
+  "recommendations": [
+    "Resolve the inconsistency between Sections 1.3 and 5.2.3.2.2: either include organizational risk acceptability thresholds/principles within the SOP or clearly state that thresholds are defined solely in RMPs and update Section 5.2.3.2.2 accordingly.",
+    "Issue or append a formal Risk Acceptability Policy section approved by top management that: (a) defines organizational principles/thresholds or a clear method to set them; (b) explicitly aligns with ISO 14971:2019, ISO/TR 24971:2020, relevant regulations, state of the art, and stakeholder concerns; and (c) provides clear guidance on overall residual risk acceptability.",
+    "Provide sample or actual RMPs that reference this policy and document product-/family-specific risk acceptability criteria and the overall residual risk acceptability evaluation method.",
+    "Consider adding device-family-specific principles or default thresholds where appropriate to guide consistency across similar products, while allowing justified deviations in individual RMPs.",
+    "Ensure the policy/SOP includes a documented approval record by top management and is clearly accessible in the document management system."
+  ]
+}

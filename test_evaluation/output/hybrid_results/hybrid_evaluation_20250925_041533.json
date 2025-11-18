@@ -1,0 +1,126 @@
+{
+  "document_info": {
+    "file_name": "Example Viking QAP013.01 Risk Management Final.pdf",
+    "file_path": "/Users/matthewparson/Desktop/SC/Risk Management/Example Viking QAP013.01 Risk Management Final.pdf",
+    "file_size_bytes": 724940,
+    "uploaded_file_id": "file-8K9ZA34fU64jn8CUP88ask",
+    "content_hash": "45a2637b23af0c79117408aca590af18dc85f965683b9369ce51ca2bd36c6fd7",
+    "file_id_cache_hit": true,
+    "model": "gpt-5-mini-2025-08-07",
+    "evaluated_at": "2025-09-25T04:15:33.916741",
+    "run_id": "20250925_041533",
+    "markdown_chars": 67589,
+    "markdown_truncated_chars": 67589,
+    "markdown_file": "/Users/matthewparson/Desktop/SC/test_evaluation/output/hybrid_markdown/Example Viking QAP013.01 Risk Management Final_20250925_041533.md"
+  },
+  "evaluation_summary": {
+    "total_requirements": 3,
+    "compliance_score": 0.0,
+    "status_counts": {
+      "PASS": 0,
+      "FAIL": 0,
+      "FLAGGED": 3,
+      "NOT_APPLICABLE": 0,
+      "ERROR": 0
+    },
+    "total_tokens_used": 97094,
+    "estimated_cost_usd": 0.4855
+  },
+  "requirements_results": [
+    {
+      "status": "FLAGGED",
+      "confidence": 0.85,
+      "rationale": "The submitted QAP013.01 Risk Management Program SOP clearly establishes, documents and describes an ongoing risk management process across the device life cycle and includes the required elements of ISO 14971 (risk analysis, risk evaluation, risk control, production and post\u2011production activities). A process diagram (Figure 1), references to Design Control (QAP012), document control (QAP001), training (QAP011) and post\u2011market activities are present. However, there are a small number of incomplete cross\u2011references and missing administrative evidence (e.g., placeholder references like 'XX-XXX'/'XX-YYY', no visible approval/signature metadata in the excerpt) that should be closed to demonstrate full, auditable integration with the QMS and demonstrate controlled issuance.",
+      "evidence": [
+        "Purpose: \"The purpose of this Standard Operating Procedure (SOP) is to establish, implement, document and maintain an ongoing process for risk management at Viking Therapeutics for combination products...\" (Section 1.1)",
+        "Scope: \"This SOP applies to the commercial and investigational (clinical) combination products... throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.\" (Section 1.2)",
+        "Procedure elements: \"The risk management process includes the following elements throughout the product life cycle: 5.1.4.1. Identifying hazards and hazardous situations... 5.1.4.2. Estimating and evaluating the associated risks... 5.1.4.3. Controlling risk and monitoring the effectiveness of the risk control measures... 5.1.4.4. Monitoring the effectiveness of the risk control measures... 5.1.4.6. Periodic review of identified risks.\" (Section 5.1.4)",
+        "Integration with product realization: \"Risk management is integrated within QAP012, Design Control as part of product realization.\" (Section 5.1.2)",
+        "Production/post-production: Section header and content: \"5.12. Production and Post-Production Activities\" and details on active collection and review of production/post-production information (Sections 5.12.1\u20135.12.5)",
+        "Process flowchart: \"Figure 1. Risk Management Overview\" referenced and included in the attachment (visual evidence)",
+        "Document control & RM file location: \"The contents of the risk management file... shall be controlled and maintained in the document management system in accordance with QAP001, Format, Content, Approval and Issuance of Controlled Documents.\" (Section 5.3.5)",
+        "Incomplete cross-references: Examples include placeholders: \"Partners... shall be evaluated and approved in accordance with XX -XXX, Supplier Qualification and Management.\" (Section 1.4) and \"in accordance with the Management Review Process specified in XX- YYY, Management Responsibility.\" (Section 5.1.6/5.13.3)"
+      ],
+      "gaps": [
+        "Placeholder cross-references (e.g., 'XX-XXX', 'XX-YYY') appear in multiple locations referencing Supplier Qualification/Management and Management Responsibility. These should be resolved to specific controlled procedure identifiers to ensure traceability.",
+        "No explicit approval / signature / controlled issuance metadata visible in the provided excerpt (e.g., approver name, role, approval date, document owner). QAP001 is referenced but evidence of this document's application to QAP013.01 (signed/approved record) is not shown in the materials reviewed.",
+        "Risk acceptance thresholds are described as established by top management and may be defined in the Risk Management Plan, but the SOP itself (or accompanying RMP template) does not contain example or default acceptance criteria. Evidence that specific product Risk Management Plans consistently capture the acceptance criteria (and where they are stored) was not presented.",
+        "Although integration with Design Control (QAP012) and other QMS processes is stated, the excerpt does not show explicit pointers to the Quality Manual / centralized cross\u2011reference table demonstrating how RM activities feed into related QMS records (e.g., change control, CAPA, supplier qualification) beyond individual references.",
+        "No explicit mention in the excerpt of the controlled location (document ID/path) or versioning/retention rules for the figure (Figure 1) and templates \u2014 although a document management procedure is referenced, direct evidence of the figure/template being under control is not shown."
+      ],
+      "recommendations": [
+        "Replace all placeholder cross-references ('XX-XXX', 'XX-YYY', etc.) with the final, controlled procedure identifiers and ensure links or references point to the current controlled documents in the document management system.",
+        "Include/attach documented evidence of controlled issuance for QAP013.01 in the risk management file (or provide a cover page) showing approver(s), effective date, version/revision number, and document owner to demonstrate the procedure is formally approved and controlled per QAP001.",
+        "Ensure Risk Management Plans (RMPs) reference and record the specific risk acceptability criteria (or provide the RMP template location) and confirm that top management accepted thresholds are documented and auditable. If thresholds are product- or context-specific, require the RMP to state where the acceptance criteria are defined.",
+        "Provide or reference a QMS cross\u2011reference table or the Quality Manual section that explicitly maps how the RM process integrates with Design Control (QAP012), Supplier Qualification, Change Control, CAPA, Complaint Handling and Management Review, and ensure those procedures reference back to QAP013.01 where appropriate.",
+        "Ensure that Figure 1, any templates (Hazard Analysis, FMEA), and appendix forms are maintained as controlled documents (with IDs/revision history) and store them in the Risk Management File/DHF; include the template IDs in the SOP for direct traceability.",
+        "During the next periodic management review, present evidence that the procedure is being implemented (sample RMP, hazard analysis, RM report, sign\u2011offs) to demonstrate operational effectiveness and closure of the above gaps."
+      ],
+      "requirement_id": "ISO14971-4.1-01",
+      "tokens_used": 32517
+    },
+    {
+      "status": "FLAGGED",
+      "confidence": 0.86,
+      "rationale": "The SOP (QAP013.01) includes explicit statements of top\u2011management responsibilities and commitment (e.g., assurance of adequate resources, assignment of competent personnel, requirement for management review and top\u2011management approval). However, the document is a procedure that references other documents (QAP011, XX\u2011YYY, QAP001, QAP012) and does not itself contain the concrete, recorded artifacts required by the acceptance criteria (management review minutes, resourcing decisions, org chart/resource plan, or training records) that demonstrate evidence of management commitment in practice. Therefore the procedure meets the policy-level requirements but lacks the demonstrable records/evidence required for full compliance.",
+      "evidence": [
+        "\"Assures adequate resources and support to carry out this process.\" (Functional Area Management responsibilities)",
+        "\"Ensures provision of adequate resources and assignment of competent personnel for risk management\" (Functional Area Management responsibilities)",
+        "\"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\" (5.2.3.2.2)",
+        "\"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\" (5.11.1.6)",
+        "\"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\" (5.1.8)"
+      ],
+      "gaps": [
+        "No management review records or minutes in the provided material showing top\u2011management consideration/decisions specific to risk management (e.g., dated minutes, attendees, decisions, actions and signatures).",
+        "No documented resourcing decisions or resource plans (budget, headcount, staffing allocations) showing that adequate resources were provided for risk management activities.",
+        "No org chart or documented assignment by name/function demonstrating assignment of competent personnel to execute risk management activities (the SOP defines roles by function but does not show assignment evidence).",
+        "Training plans and training records referenced (QAP011) are not included; no evidence of completed competence assessments or training records for personnel performing risk management in the supplied material.",
+        "References to other procedures (XX\u2011YYY Management Responsibility, QAP011, QAP012, QAP001) are present but the referenced documents/records were not provided for cross verification.",
+        "No explicit management sign\u2011off (signature/date) on the Risk Management Plan or Risk Management File shown in the provided content."
+      ],
+      "recommendations": [
+        "Provide management review minutes that explicitly cover the risk management process, including attendance by top management, decisions on resourcing, acceptance thresholds, evidence reviewed (risk profile, critical/high risks), and action items with owners and due dates. Quote: include text such as \"Management reviewed Risk Management Report for [product] on [date]; decision: allocate X FTE/budget; action: ...; approved by [name/title].\"",
+        "Include documented resourcing evidence in the risk management file or as an annex (resource plan, budget approvals, staffing allocations) showing that adequate resources were committed to risk management activities.",
+        "Supply an organizational assignment record (org chart or role assignment table) linking named or role\u2011identified competent personnel to risk management responsibilities called out in the SOP (e.g., Product Development, Clinical Development, Regulatory, QA).",
+        "Provide training program documentation and individual training records demonstrating completion of required risk management training (QAP011) and documented competence for personnel performing risk analysis and reviews.",
+        "Ensure top management sign\u2011off (name, title, date, signature) on the Risk Management Plan and Risk Management Report(s) where benefit\u2011risk analysis or residual risk acceptance decisions are required (consistent with 5.11.1.6).",
+        "Make the referenced documents (QAP011, XX\u2011YYY, QAP012, QAP001) available for audit and cross\u2011reference them in the risk management file; include excerpts of relevant clauses showing how they satisfy training, management review and document control evidence requirements.",
+        "Maintain traceability in the risk management file linking management decisions (minutes, approvals, resourcing) to specific residual risk acceptance decisions and to the Risk Management Report to demonstrate implementation of top\u2011management commitments."
+      ],
+      "requirement_id": "ISO14971-4.2-01",
+      "tokens_used": 31918
+    },
+    {
+      "status": "FLAGGED",
+      "confidence": 0.86,
+      "rationale": "The QAP013.01 Risk Management Program SOP provides a documented, procedure-level policy framework for establishing risk acceptability criteria: it cites relevant standards and regulations, assigns responsibility to top management to establish thresholds, and requires that criteria for overall residual risk be defined and documented in the Risk Management Plan (RMP). Quotes in the SOP explicitly require that criteria be based on regulations/standards and state of the art. However, the SOP does not contain a single, explicit, approved 'Risk Acceptability Policy' document or a concrete set of acceptability thresholds within the procedure itself. The SOP intentionally defers numeric thresholds to product-specific RMPs and to top management decisions, and does not provide device-family specific principles or examples in the SOP (only that RMP should define them). These omissions mean the organization has a policy framework but lacks demonstrable, centralized, approved acceptability criteria (or evidence of top-management approved thresholds) that are directly accessible and uniformly applied across teams.",
+      "evidence": [
+        "\"Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and considers available information such as the general acknowledged state of the art and known stakeholder concerns.\" (Role Responsibility, Functional Area Management)",
+        "\"The risk acceptance criteria are based on the following decisions: 5.2.5.1. The risk presented by the current standard of care 5.2.5.2. The potential health benefits of using the combination product 5.2.5.3. The generally acknowledged state of the art defined in recognized consensus standards.\" (Section 5.2.5)",
+        "\"The evaluation method and criteria for acceptability for the overall residual risk ... shall be clearly defined and documented in the risk management plan.\" (Section 5.2.6)",
+        "\"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\" (Section 5.2.3.2.2)",
+        "\"This SOP does not define the threshold for acceptable risk (or risk index) since this threshold will change based on the intended use and expected benefit of using the combination product.\" (Section 1.3)",
+        "References list: \"21CFR820.30\", \"ISO 14971: 2019\", \"ISO 12971 : 2020\", \"ISO 62366: 2005\" (Section 3 References) \u2014 shows standards/regulatory inputs are cited"
+      ],
+      "gaps": [
+        "No standalone or explicitly titled 'Risk Acceptability Policy' document is provided or referenced as approved; policy elements are dispersed in the SOP and delegated to product-specific Risk Management Plans.",
+        "No documented, organization-level, approved numerical thresholds or a decision matrix for risk acceptability are present in the SOP itself (SOP defers thresholds to top management/RMPs).",
+        "No evidence in the supplied content of top management having approved specific acceptability thresholds or the Risk Acceptability policy (e.g., approval signature, dated policy document, or a central policy file reference).",
+        "No device-family or product-class specific principles, worked examples, or documented guidance included in the SOP to assist teams in applying acceptability criteria consistently across different products.",
+        "Limited explicit description of how 'known stakeholder concerns' are identified, documented, and incorporated into acceptability criteria (no process or examples provided).",
+        "No explicit cross-referenced artifact (e.g., a named Risk Acceptability Policy file or repository location) shown to be accessible to teams; SOP states RMP will contain criteria but does not show template/example."
+      ],
+      "recommendations": [
+        "Create and maintain a documented, approved Risk Acceptability Policy (or a clearly identified section within QAP013.01 with a distinct policy title) that is signed/approved by Top Management and readily referenced by all RMPs. Include approval metadata (approver, date, version).",
+        "Populate the policy with clear principles and examples (not necessarily fixed global numeric thresholds) and include guidance on how to set product- or device-family-specific acceptability thresholds in the RMP, including representative decision matrices or example thresholds for common product families.",
+        "Ensure the policy explicitly references the regulatory and standards inputs (e.g., ISO 14971:2019, ISO/TR 24971:2020, 21 CFR 820.30) and documents how 'state of the art' and 'stakeholder concerns' will be assessed and recorded (e.g., periodic literature review, stakeholder mapping, clinical advisory input).",
+        "Require that each Risk Management Plan (RMP) include a dedicated section that references the organization-level Risk Acceptability Policy, documents the product-specific thresholds (numerical or qualitative), the rationale for selected thresholds, and the top-management approval (or delegated approval) for those thresholds.",
+        "Provide device-family specific annexes or worked examples (templates) for common combination product classes to promote consistent application across teams and to satisfy the 'defines principles for specific device families where needed' acceptance criterion.",
+        "Add traceable links in QAP013.01 to the location(s) where the Risk Acceptability Policy and approved RMPs are stored (document control system), and include training/communication to ensure accessibility and awareness across functions."
+      ],
+      "requirement_id": "ISO14971-4.2-02",
+      "tokens_used": 32659
+    }
+  ],
+  "generated_at": "2025-09-25T04:16:22.972316"
+}

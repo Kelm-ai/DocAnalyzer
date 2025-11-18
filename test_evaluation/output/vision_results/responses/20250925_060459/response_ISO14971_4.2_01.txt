@@ -1,0 +1,28 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.77,
+  "rationale": "The SOP (QAP013.01) contains clear statements of top‑management responsibilities, defined roles/responsibilities, and references to an organizational training program, which indicate commitment and assignment of competent personnel. (See Sections 2.1; Role Responsibility table; 5.2.3.2; 5.1.8; 5.11.1.6). However, the acceptance criteria explicitly require documented management commitment artifacts (e.g., management review minutes, resourcing decisions), training plans, and expected artifacts (management review records, org charts, resource plans). The provided document contains policy statements and references to other documents (e.g., QAP011, XX-YYY) but does not include the actual artifacts (management review minutes, explicit resourcing/approval records, org chart, or the training plan content). Because the evidence is partial (policy + references present, but the required documentary artifacts are missing from the supplied file), the status is FLAGGED rather than PASS or FAIL.",
+  "evidence": [
+    "Section 2.1 Responsibilities: \"Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP. All functional leads/managers are responsible for ensuring compliance with the applicable segments of this procedure that are within their areas of responsibility.\"",
+    "Role Responsibility - Functional Area Management (Responsibilities table): \"Assures adequate resources and support to carry out this process. ... Ensures provision of adequate resources and assignment of competent personnel for risk management\"",
+    "Role Responsibility - Quality Assurance: \"Completes all required training and qualification activities prior to conducting formal risk analysis\"",
+    "Section 5.1.6: \"As a check on the effectiveness of the risk management processes defined, management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.\"",
+    "Section 5.1.8: \"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\"",
+    "Section 5.2.3.2: \"Assignment of responsibilities and authorities for the execution of specific risk management activities throughout the product lifecycle shall include: ... Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\"",
+    "Section 5.11.1.6: \"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\""
+  ],
+  "gaps": [
+    "No management review minutes or management review records included in the supplied document demonstrating that top management has actually reviewed/approved risk management outputs (the SOP references XX-YYY Management Review Process but no minutes are attached).",
+    "No documented resourcing decisions or resource plans (e.g., budgeting or formal resource allocation records) are present; the SOP states management shall provide resources but does not show evidence of allocated resources.",
+    "No organizational chart (org chart) or formal assignment matrix (RACI) included to demonstrate assignment of personnel to risk management activities.",
+    "No training plan content or QAP011 GMP Training Program records included (only a reference to QAP011). No training schedules, competency records, or evidence that personnel completed required training are provided.",
+    "No management signatures/approvals or dated records attached (e.g., top management approval signatures on a Risk Management Report) within the provided file."
+  ],
+  "recommendations": [
+    "Provide management review records (minutes) that show review of the risk management process and explicit decisions/actions, dated and signed by top management, to demonstrate documented management commitment as required.",
+    "Attach documented resourcing evidence (resource plans, budget approvals, staffing allocation records) that show adequate resources were assigned for risk management activities.",
+    "Include an organizational chart or RACI matrix that maps roles to specific risk management responsibilities to demonstrate defined role assignment.",
+    "Provide the training plan and records (QAP011 excerpt or training matrix, completed training/certification records for personnel involved in risk management) to show assignment of competent personnel and that required training was completed.",
+    "Include copies of Risk Management Report approvals (signed/dated) or other top management approval artifacts referenced in Section 5.11.1.6, and any related benefit-risk analysis approvals, to close the evidence gap."
+  ]
+}

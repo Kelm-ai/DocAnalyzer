@@ -1,0 +1,169 @@
+{
+  "document_info": {
+    "file_name": "tmpevnawx9l.pdf",
+    "file_path": "/private/var/folders/74/gmbqttjd55jdp5rkths5nhj80000gn/T/tmpevnawx9l.pdf",
+    "file_size_bytes": 724940,
+    "uploaded_file_id": "file-U7TAxfLL8NGe4cQTrSKUJR",
+    "content_hash": "45a2637b23af0c79117408aca590af18dc85f965683b9369ce51ca2bd36c6fd7",
+    "file_id_cache_hit": true,
+    "model": "gpt-5-nano-2025-08-07",
+    "evaluated_at": "2025-09-26T16:40:47.465876",
+    "run_id": "20250926_164047"
+  },
+  "evaluation_summary": {
+    "total_requirements": 10,
+    "compliance_score": 0,
+    "status_counts": {
+      "PASS": 0,
+      "FAIL": 0,
+      "FLAGGED": 0,
+      "NOT_APPLICABLE": 0,
+      "ERROR": 10
+    },
+    "total_tokens_used": 0,
+    "estimated_cost_usd": 0.0
+  },
+  "requirements_results": [
+    {
+      "requirement_id": "ISO14971-10.1-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "'AsyncOpenAI' object has no attribute 'responses'",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    },
+    {
+      "requirement_id": "ISO14971-10.2-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "'AsyncOpenAI' object has no attribute 'responses'",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    },
+    {
+      "requirement_id": "ISO14971-10.3-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "'AsyncOpenAI' object has no attribute 'responses'",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    },
+    {
+      "requirement_id": "ISO14971-4.1-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "'AsyncOpenAI' object has no attribute 'responses'",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    },
+    {
+      "requirement_id": "ISO14971-4.2-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "'AsyncOpenAI' object has no attribute 'responses'",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    },
+    {
+      "requirement_id": "ISO14971-4.2-02",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "'AsyncOpenAI' object has no attribute 'responses'",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    },
+    {
+      "requirement_id": "ISO14971-4.2-03",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "'AsyncOpenAI' object has no attribute 'responses'",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    },
+    {
+      "requirement_id": "ISO14971-4.3-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "'AsyncOpenAI' object has no attribute 'responses'",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    },
+    {
+      "requirement_id": "ISO14971-4.4-01",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "'AsyncOpenAI' object has no attribute 'responses'",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    },
+    {
+      "requirement_id": "ISO14971-4.4-02",
+      "status": "ERROR",
+      "confidence": 0,
+      "rationale": "'AsyncOpenAI' object has no attribute 'responses'",
+      "evidence": [],
+      "gaps": [
+        "Evaluation failed"
+      ],
+      "recommendations": [
+        "Retry requirement"
+      ],
+      "tokens_used": 0
+    }
+  ],
+  "generated_at": "2025-09-26T16:40:47.466495"
+}

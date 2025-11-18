@@ -1,0 +1,28 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.6,
+  "rationale": "The provided Risk Management Program SOP (QAP013.01) contains comprehensive RM processes (hazard analysis, risk estimation/evaluation, risk control, residual risk, RM file, periodic reviews) and references to post-production information and management review, which align with updating hazard analyses and RM artifacts. However, there is no explicit evidence of signal management activities (signal review minutes, signal management SOP), documented triggers for escalation, nor an explicit CAPA process within the RM context. This leaves gaps relative to Acceptance Criteria (Signal review minutes; triggers documented; updates to hazard analysis/RMP; CAPA as needed). See evidence sections below for specific clause references. ",
+  "evidence": [
+    "5.3.1. For the combination product being considered, a risk management file shall be established and maintained throughout the product lifecycle.",
+    "5.3.4. The risk management file consists of the following deliverables, at a minimum: 5.3.4.1 Hazard Analysis; 5.3.4.2 Risk Management Plan; 5.3.4.3 Risk Analyses (internal and external); 5.3.4.5 Risk Management Report(s); 5.3.4.7 Any supporting or referenced documents or records of activities required by the risk management plan.",
+    "5.11.1. Prior to release for clinical usage or commercial production of the combination product, the applicant shall review the execution of the risk management plan. This review shall ensure the following, at a minimum: 5.11.1.6 Top management ... approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.",
+    "5.12.3. The information collected shall be reviewed for possible relevance to safety, especially with respect to the following: 5.12.3.1 Previously unrecognized hazards or hazardous situations are present; 5.12.3.2 An estimated risk arising from a hazardous situation is present; 5.12.3.3 The overall residual risk is no longer acceptable in relation to the benefits of the intended use; 5.12.3.4 The generally acknowledged state of the art has changed.",
+    "5.13.1. Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team and documented in the risk management plan or when events that may impact the original risk management decision occur.",
+    "5.2.11. Unplanned risk management activities (ad hoc) may be required during the product lifecycle. These unplanned activities shall comply with this procedure and shall be included in the risk management file.",
+    "5.9.4.1. After the risk control measures are implemented, the applicant shall evaluate the residual risk using the criteria for risk acceptability defined in the risk management plan. The results of this evaluation shall be recorded in the Hazards Analysis and/or the FMEAs.",
+    "5.9.5.1. A benefit-risk analysis shall be performed to determine the acceptability of each individual risk and the overall residual risk of the combination product; 5.9.5.2–5.9.5.4 describe further actions if residual risk is unacceptable (data/literature review, modification, etc.)."
+  ],
+  "gaps": [
+    "No explicit Signal Management SOP provided in the document; no signal review minutes or signal escalation workflow evident.",
+    "No formally documented triggers for escalation or signal-driven CAPA workflow within the RM context.",
+    "CAPA terminology and a dedicated CAPA workflow are not explicitly described; risk management actions exist but not a standalone CAPA process.",
+    "No explicit linkage or template for Signal Management as an artifact to satisfy the expected artifacts (Signal management SOP; safety review board minutes)."
+  ],
+  "recommendations": [
+    "Develop and attach a Signal Management SOP and a standardized template for Signal Review Minutes to capture triggers, review cadence, escalation, and CAPA links.",
+    "Implement a formal CAPA process within the RM framework (including initiation criteria, investigation, root cause analysis, corrective/preventive actions, verification/closure criteria, and linkage to the Risk Management File).",
+    "Map trigger events to RM artifacts: ensure triggers (e.g., new safety information, post-market data, design changes) automatically generate RM updates and CAPA records where appropriate.",
+    "Provide templates or references to RM updates (Hazard Analysis updates, Risk Management Plan revisions, and Risk Management Reports) tied to signal findings and CAPA resolutions; include example escalation paths in the SOP.",
+    "Consider including a dedicated section or appendix describing signal flow from production/post-production information (5.12) to hazard re-evaluation and risk control updates (5.6–5.10)."
+  ]
+}

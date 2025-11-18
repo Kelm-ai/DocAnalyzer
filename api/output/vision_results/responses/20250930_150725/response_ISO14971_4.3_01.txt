@@ -1,0 +1,22 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.45,
+  "rationale": "The document cites competence requirements for risk management personnel (5.1.8) and references an external GMP Training Program (QAP011), plus notes documenting team expertise (5.6.1.5) and cross-functional task assignments (5.1.9, 2.1). However, there is no explicit Training Matrix, no documented CVs/individual experience records, and no clearly defined role-based competency profiles within the provided excerpts. Therefore, acceptance criteria are not fully demonstrated, only partially evidenced.",
+  "evidence": [
+    "5.1.8. \"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them. These shall include, where appropriate, knowledge and experience of the particular combination product (or similar products) and its use, the technologies involved, or the risk management techniques. Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\" (Section 5.1.8)",
+    "2.1. Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP. All functional leads/managers are responsible for ensuring compliance with the applicable segments of this procedure that are within their areas of responsibility. (Section 2.1)",
+    "5.6.1.5. \"Risk analyses shall be conducted with the support of a team composed of subject matter experts with expertise on the subject being analyzed. Expertise provided by each team member shall be documented.\" (Section 5.6.1.5)",
+    "5.1.9. \"Risk management tasks may be performed by representatives of several functions, each contributing their specialist knowledge.\" (Section 5.1.9)"
+  ],
+  "gaps": [
+    "No explicit Training Matrix or Training Records are shown in the provided material.",
+    "No CVs/individual experience records for personnel performing risk management tasks are presented.",
+    "No explicit, separate role-based competency profiles defined (beyond general responsibility statements)."
+  ],
+  "recommendations": [
+    "Provide or attach a Training Matrix mapping personnel to required risk management trainings, with completion statuses and dates.",
+    "Collect and retain CVs or equivalent evidence of education/experience for personnel performing risk management tasks.",
+    "Develop and include role-based Competency Profiles for risk management roles (e.g., Risk Manager, Hazards Analyst, Usability Analyst) specifying required competencies and evidence.",
+    "Ensure the Risk Management File contains documented evidence of personnel qualifications and training in accordance with QMS requirements (e.g., cross-reference to training records)."
+  ]
+}

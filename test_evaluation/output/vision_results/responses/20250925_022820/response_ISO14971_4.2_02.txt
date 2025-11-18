@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "confidence": 0.88,
+  "rationale": "The QAP013.01 Risk Management Program SOP provides a documented policy for establishing criteria for risk acceptability. It cites relevant regulations and standards (e.g., 21 CFR 820.30, ISO 14971:2019, ISO/TR 24971:2020), mandates that criteria for risk acceptability be defined in the Risk Management Plan (RMP), includes explicit guidance on evaluation of overall residual risk, and contains quantitative/qualitative tables (P1, P2, Severity, Risk Index, Required Actions) that operationalize acceptability decisions. The SOP also addresses use for specific products or product families (RMP may be developed for a product family) and specifies storage/traceability in the document management system and the Risk Management File, making the policy available to teams. These elements meet the acceptance criteria that an approved policy exists, regulatory/standard inputs are cited, principles for product families are provided, and accessibility is addressed.",
+  "evidence": [
+    "Header: Document Number QAP013.01, Title: RISK MANAGEMENT PROGRAM, Effective Date: 26Jun2024 (controlled SOP).",
+    "References section: '21CFR820.30', 'ISO 14971: 2019', 'ISO TR 24971:2020', 'ISO 62366:2005'.",
+    "Roles / Functional Area Management: 'Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and considers available information such as the general acknowledged state of the art and known stakeholder concerns.'",
+    "Quality Assurance responsibilities: 'Defines and documents criteria for risk acceptability in the Risk Management Plan according to the process established in this SOP.'",
+    "Section 5.2.3.1–5.2.3.3 and 5.2.5: Risk Management Plan must include scope, responsibilities and 'Categories of risk and criteria for risk acceptability... The risk acceptance criteria are based on: the risk presented by the current standard of care; the potential health benefits; the generally acknowledged state of the art.'",
+    "Section 5.2.6: 'The evaluation method and criteria for acceptability for the overall residual risk... shall be clearly defined and documented in the risk management plan.'",
+    "Tables 1–5 (P1 probabilities, P2 probabilities, Overall P matrix, Severity table, Risk Index table) and Table 6 (Required Actions based on Residual Risk) provide operational criteria and guidance for residual risk evaluation and actions.",
+    "Section 5.2.10: 'The risk management plan may be developed for a specific product or for a family of similar products, as appropriate.'",
+    "Section 5.3.4 & 5.3.5: Risk Management File contents include Risk Management Plan and are to be controlled in the document management system (QAP001).",
+    "Section 5.11.1.6: 'Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.'"
+  ],
+  "gaps": [
+    "The SOP explicitly states (Section 1.3) that it 'does not define the threshold for acceptable risk' and delegates detailed thresholds to the Risk Management Plan—no example numeric thresholds or firm default criteria are given at the SOP level.",
+    "No approval signature block or explicit top-management approval record is visible within the provided pages (although an Effective Date is present).",
+    "While the SOP requires RMPs to define acceptability criteria and to be stored in the Risk Management File, the actual Risk Management Plan(s) or evidence that each RMP references this policy were not provided for review.",
+    "The SOP lists relevant regulations/standards but does not map specific regulatory requirements to acceptance criteria or markets (e.g., EU MDR vs. FDA) — teams may need clearer, market-specific guidance.",
+    "No explicit cross-reference examples showing how 'device-family' principles are translated into RMP-level thresholds or templates are provided in the appendices."
+  ],
+  "recommendations": [
+    "Record and display formal approval evidence (top management signature or approval record) and version control metadata within the SOP/property header or an approval page to demonstrate explicit authorized status.",
+    "Ensure each Risk Management Plan (RMP) explicitly references QAP013.01 and records the specific residual risk thresholds, including any numeric examples or default values where feasible, so thresholds are consistently applied across products and families.",
+    "Provide a short guidance appendix or template showing how to translate SOP-level principles into device-family-specific acceptability thresholds (e.g., examples for high-risk, medium-risk product families) to reduce ambiguity for teams.",
+    "Include a mapping table or annex that links specific regulatory requirements/markets (e.g., FDA, EU MDR, other jurisdictions) to the acceptability criteria or indicates where in the RMP/Regulatory strategy those inputs must be captured.",
+    "During periodic reviews, verify and document that all active RMPs reference the Risk Acceptability Policy and record the responsible approver and the location of the RMP in the document management system; retain an index of RMPs for traceability.",
+    "Provide training and a short quick-reference for teams describing where the policy lives (document management path), how to incorporate it into an RMP, and who to contact for questions regarding thresholds or benefit-risk decisions."
+  ]
+}

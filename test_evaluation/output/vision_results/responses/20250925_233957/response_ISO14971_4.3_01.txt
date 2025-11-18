@@ -1,0 +1,26 @@
+{
+  "status": "FAIL",
+  "confidence": 0.78,
+  "rationale": "The SOP requires competent personnel and references a training program, but it provides no objective evidence of a training matrix, training records, CVs/experience files, or defined role-based competency profiles. Some partial elements exist (requirement to document team expertise and complete training before analysis), but the acceptance criteria explicitly call for concrete artifacts which are not present in the provided document.",
+  "evidence": [
+    "Section 5.1.8: \"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\"",
+    "Section 2, Responsibilities – Functional Area Management: \"Ensures provision of adequate resources and assignment of competent personnel for risk management\"",
+    "Section 2, Responsibilities – Quality Assurance: \"Completes all required training and qualification activities prior to conducting formal risk analysis\"",
+    "Section 5.6.1.5: \"Risk analyses shall be conducted with the support of a team ... Expertise provided by each team member shall be documented.\"",
+    "Section 5.1.7: \"Documented records, including evidence of decisions and actions taken, shall be maintained...\""
+  ],
+  "gaps": [
+    "No training matrix presented or referenced location for it",
+    "No training records or objective evidence of completed training provided",
+    "No CVs/resumes or documented experience dossiers included or referenced",
+    "No role-based competency profiles or job descriptions defining competencies",
+    "QAP011 (GMP Training Program) is referenced but not provided to verify matrices/records"
+  ],
+  "recommendations": [
+    "Provide the training matrix covering risk management roles and required trainings; include links or repository references.",
+    "Submit training records (e.g., LMS reports) demonstrating completed and current training for personnel performing risk management tasks.",
+    "Maintain and present CVs/resumes or qualification summaries for team members involved in risk management; link these to roles.",
+    "Define and document role-based competency profiles (knowledge, skills, education, experience) in job descriptions or a competency matrix, and reference them in this SOP.",
+    "Augment this SOP or cross-reference to QAP011 to explicitly state where objective evidence of competence (matrices, records, CVs) is stored and how it is maintained."
+  ]
+}

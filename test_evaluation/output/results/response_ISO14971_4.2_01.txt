@@ -1,0 +1,27 @@
+{
+  "status": "FAIL",
+  "confidence": 0.8,
+  "rationale": "Acceptance criterion 1 (Documented management commitment) is not satisfied. The SOP establishes top-management responsibilities and references management reviews, but provides no objective records (e.g., management review minutes, resourcing decisions) demonstrating commitment in practice. Acceptance criterion 2 (Defined roles) is satisfied; roles and responsibilities for top management and functions are clearly defined. Acceptance criterion 3 (Training plans) is satisfied at the procedural level via explicit training/competence requirements and reference to the GMP Training Program. Because not all acceptance criteria are met, overall status is FAIL.",
+  "evidence": [
+    "Page 4, Roles/Functional Area Management: \"Assures adequate resources and support to carry out this process.\"",
+    "Page 4, Roles/Functional Area Management: \"Ensures provision of adequate resources and assignment of competent personnel for risk management\" and \"Reviews suitability of the risk management process at planned intervals to ensure continuing effectiveness of the risk management process and documents any decisions and actions taken\"",
+    "Page 7–8, Section 5.1.6: \"management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX- YYY, Management Responsibility.\"",
+    "Page 8, Section 5.1.8: \"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them... Appropriate competence and training program requirements are described in QAP011 , GMP Training Program.\"",
+    "Page 5, Quality Assurance responsibilities: \"Completes all required training and qualification activities prior to conducting formal risk analysis\"",
+    "Page 19, Section 5.11.1.6: \"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\"",
+    "Page 20, Section 5.13.3: \"The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility.\""
+  ],
+  "gaps": [
+    "No Management Review records (e.g., minutes, action items) evidencing top-management review of the risk management process and decisions.",
+    "No documented resourcing decisions or resource plan approving personnel/budget allocation to risk management.",
+    "No organizational chart or documented assignment linking named, competent personnel to risk management roles.",
+    "No training records or training matrix demonstrating personnel competence (only a reference to QAP011)."
+  ],
+  "recommendations": [
+    "Provide recent Management Review minutes (per XX-YYY) that include review of the risk management process, adequacy of resources, and resulting action items/decisions.",
+    "Submit a resource plan or documented resourcing decision (e.g., headcount/budget approval memo) showing top-management allocation of adequate resources for risk management.",
+    "Provide an organizational chart and role assignment records identifying the competent personnel responsible for risk management activities (e.g., Risk Management Lead, cross-functional team).",
+    "Provide training/competence records (training matrix, CVs, qualification logs) demonstrating that assigned personnel meet competence requirements defined in QAP011 and this SOP.",
+    "Link the above artifacts to the Risk Management Plan and Risk Management File to demonstrate traceability to Clause 4.2."
+  ]
+}

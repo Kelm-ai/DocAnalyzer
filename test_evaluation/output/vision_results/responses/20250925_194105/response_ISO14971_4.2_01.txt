@@ -1,0 +1,28 @@
+{
+  "status": "FAIL",
+  "confidence": 0.78,
+  "rationale": "The SOP demonstrates procedural commitment by top management to provide resources and competent personnel, defines roles, and references a training program. However, there is no explicit evidence of actual management review records, resourcing decisions, org charts, or training plans/records. Thus, key acceptance criteria for documented management commitment are unmet.",
+  "evidence": [
+    "Section 2, Responsibilities (Functional Area Management): \"Assures adequate resources and support to carry out this process.\" and \"Ensures provision of adequate resources and assignment of competent personnel for risk management\" and \"Reviews suitability of the risk management process at planned intervals... and documents any decisions and actions taken.\"",
+    "Section 4.28, Definitions: \"Top Management: A person or group of people who directs and controls an organization at the highest level, having the power to delegate authority and provide resources within the organization.\"",
+    "Section 5.1.6: \"management shall regularly review the outputs of processes... in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.\"",
+    "Section 5.1.8: \"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\"",
+    "Section 2, Responsibilities (Quality Assurance): \"Completes all required training and qualification activities prior to conducting formal risk analysis.\"",
+    "Section 5.11.1.6: \"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\"",
+    "Section 5.13.3: \"The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility.\""
+  ],
+  "gaps": [
+    "No management review minutes or records demonstrating actual review of the risk management process and any resourcing decisions.",
+    "No organization chart or documented role-to-person assignments evidencing the assignment of competent personnel.",
+    "No resource plans or budget allocations demonstrating provision of adequate resources.",
+    "No training plans or training records for personnel involved in risk management (only a reference to QAP011).",
+    "No evidence of top management sign-off or approvals (e.g., signatures) beyond procedural statements (e.g., no signed Risk Management Report included)."
+  ],
+  "recommendations": [
+    "Provide recent Management Review records/minutes (per XX-YYY) showing the risk management process was reviewed, with documented decisions and actions on resources and competency.",
+    "Submit an organization chart and RACI or responsibility matrix mapping defined roles to named, qualified individuals.",
+    "Provide a resource plan or documented resourcing decisions (headcount, budget, tools) allocated to risk management activities.",
+    "Provide training plans/matrices specific to risk management personnel, with completion records and competency assessments (cross-referenced to QAP011).",
+    "Include a signed example of a Risk Management Report showing top management approval when benefit-risk justification is required."
+  ]
+}

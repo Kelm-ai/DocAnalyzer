@@ -1,0 +1,30 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.88,
+  "rationale": "The QAP013.01 Risk Management Program SOP explicitly establishes, documents and requires maintenance of an ongoing risk management process across the product lifecycle, integrates with product realization (Design Control), requires a Risk Management Plan and Risk Management File, includes a process flow (Figure 1), and addresses risk analysis, evaluation, control and production/post-production activities. These elements satisfy ISO 14971:2019 Clause 4.1 requirements in principle. A small number of administrative/traceability gaps were identified (placeholder references, and clarification that risk acceptability criteria must be captured in individual Risk Management Plans) which should be resolved to ensure fully auditable linkage to the QMS and unambiguous acceptance criteria.",
+  "evidence": [
+    "1.1: \"The purpose of this Standard Operating Procedure (SOP) is to establish, implement, document and maintain an ongoing process for risk management...\"",
+    "1.2: \"This SOP applies to the commercial and investigational (clinical) combination products ... throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.\"",
+    "5.1.2: \"Risk management is integrated within QAP012, Design Control as part of product realization.\"",
+    "5.3.5: \"The contents of the risk management file ... shall be controlled and maintained in the document management system in accordance with QAP001, Format, Content, Approval and Issuance of Controlled Documents.\"",
+    "5.12.1: \"Information relevant to the combination product shall be actively collected and reviewed in the production and post-production phases...\"",
+    "5.2.3: \"For the particular combination product (or product family) being considered, a risk management plan shall be documented and shall include the following, at a minimum: The scope ... lifecycle phases ...\"",
+    "Figure 1 (attachment checked): Risk Management Overview shows 'Risk analysis' → 'Risk evaluation' → 'Risk control' → 'Evaluation of overall residual risk' → 'Risk management review' → 'Production and post-production activities' (process flow present).",
+    "References: SOP cites \"ISO 14971: 2019\" and ISO/TR 24971 guidance (see References and multiple in-text citations)."
+  ],
+  "gaps": [
+    "Several cross‑references use placeholder identifiers (e.g., \"XX-XXX, Supplier Qualification and Management\" and \"XX-YYY, Management Responsibility\"). These should be updated to the actual controlled document numbers to ensure traceability within the QMS.",
+    "SOP states it \"does not define the threshold for acceptable risk (or risk index)\" (1.3) and defers acceptability criteria to the Risk Management Plan(s). The SOP therefore relies on the existence and implementation of per‑product Risk Management Plans; an auditor should verify that each product's Risk Management Plan documents explicit risk acceptance criteria and top management approval as required by 5.2.6 and 5.2.3.2.2.",
+    "Although the SOP provides risk matrices and tables (P1/P2, Severity, Risk Index, Table 6 actions), it does not explicitly state which Risk Index colors/levels are 'acceptable' versus 'unacceptable' without consulting the Risk Management Plan. Ensure the RM Plan(s) map Green/Yellow/Red to acceptability decisions and required approvals.",
+    "The SOP references other QMS procedures (QAP001, QAP011, QAP012) — verify those referenced procedures are available, current, and properly linked (document control) so implementation can be evidenced.",
+    "Some formatting and minor table text appears truncated/formatting issues in the provided excerpt (e.g., Table 2 first line formatting). Confirm final controlled document contains correctly formatted tables and no transcription errors."
+  ],
+  "recommendations": [
+    "Replace all placeholder cross‑references (XX-XXX, XX-YYY, etc.) with the actual controlled document identifiers and ensure active hyperlinks or index entries to those documents are present in the QMS so traceability is immediate during audits.",
+    "Require and verify that every product-specific Risk Management Plan (as mandated by 5.2.3 & 5.2.14) explicitly records the risk acceptance criteria, the method for evaluating the overall residual risk, and the signature/approval of top management or documented delegation for acceptance decisions, per ISO 14971 clause 4.1 expectations.",
+    "Clarify in the SOP (or in a mandatory template for the Risk Management Plan) how the Risk Index (Green/Yellow/Red) maps to acceptability (e.g., Green = acceptable with routine review; Yellow = acceptable only with further controls/benefit‑risk justification; Red = unacceptable unless benefit‑risk justification approved by top management), or point auditable RM Plan location where this mapping must be defined.",
+    "Ensure QAP001, QAP011, QAP012 and referenced management responsibility and supplier procedures are present, controlled, and verifiably linked in the RM File/DHF. During the next internal audit, sample 1–2 product Risk Management Files to confirm the SOP is implemented as written (e.g., RM Plan content, RM File traceability, verification evidence for risk controls, periodic review records).",
+    "Correct any formatting errors in the controlled SOP (tables, P2/P1 table entries) to prevent misinterpretation of probability/severity ranges; reissue the corrected controlled version and note the correction in Revision History.",
+    "Maintain evidence of implementation (examples): at least one completed product Risk Management Plan, associated Risk Management File with hazard analyses/FMEAs, Risk Management Report with top management approval, and examples of post‑production data reviews supporting residual risk reassessment."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "status": "PASS",
+  "confidence": 0.89,
+  "rationale": "All acceptance criteria are clearly met. A controlled SOP exists with document control metadata and revision history; scope explicitly covers the full product life cycle; the process flow is depicted by Figure 1 and reinforced by a life‑cycle list of elements; and the procedure is integrated with related QMS processes (Design Control, Document Control, Management Review, Training, Supplier Management, and Post‑Market/Complaint Handling). The SOP defines and implements risk analysis, risk evaluation, risk control, and production/post‑production activities, and mandates maintaining a Risk Management File throughout the life cycle.",
+  "evidence": [
+    "Front matter/header: \"Document Number: QAP013.01 ... Title: RISK MANAGEMENT PROGRAM ... Effective Date: 26Jun2024 ... Subsection: Procedures ... 7. Revision History ... A New Document\"",
+    "Section 1.1: \"establish, implement, document and maintain an ongoing process for risk management ... in accordance with ... ISO 14971:2019\"",
+    "Section 1.2 (Scope): \"applies ... throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.\"",
+    "Section 5.1.2: \"Risk management is integrated within QAP012, Design Control as part of product realization.\"",
+    "Section 5.1.4: \"The risk management process includes the following elements throughout the product life cycle: ... Identifying hazards and hazardous situations ... Estimating and evaluating the associated risks ... Controlling risk and monitoring the effectiveness ... Risk reviews driven by new information ... Periodic review of identified risks.\"",
+    "Section 5.1.5 and Figure 1: \"Figure 1 illustrates the systemic representation of the risk management process.\" [Figure 1. Risk Management Overview diagram present]",
+    "Section 5.6 heading and 5.6.1.1: \"Risk Analysis ... Identify all reasonably foreseeable and/or known hazards ... Estimate the probability of the occurrence and severity of the harms ... Identify the risk controls ... Estimate the reduction or elimination ...\"",
+    "Section 5.8 heading and 5.8.1: \"Risk Evaluation ... evaluate estimated risks to determine whether the risk is acceptable, using criteria for risk acceptability defined in the risk management plan.\"",
+    "Section 5.9 heading and 5.9.1.1–5.9.1.2: \"Risk Control ... When risk reduction is required ... Risk reduction shall be achieved by any combination of designing for inherent safety and/or implementation of protective measures.\"",
+    "Section 5.12 heading and 5.12.1: \"Production and Post-Production Activities ... Information ... shall be actively collected and reviewed in the production and post-production phases ... Post Market Surveillance and Complaint Handling Process.\"",
+    "Section 5.13 heading and 5.13.1: \"Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis ...\"",
+    "Section 5.3.1: \"a risk management file shall be established and maintained throughout the product lifecycle.\"",
+    "Section 5.3.5: \"contents of the risk management file ... shall be controlled and maintained in the document management system in accordance with QAP001\"",
+    "Section 5.5.1–5.5.3: \"Verification ... Refer to QAP012, Design Control ... Verification that the risk control is effective is conducted in accordance with QAP012\"",
+    "Section 5.1.6: \"in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.\"",
+    "Section 1.4: \"evaluated and approved in accordance with XX-XXX, Supplier Qualification and Management.\"",
+    "Section 5.1.8: \"training program requirements are described in QAP011, GMP Training Program.\"",
+    "Section 3 (References): \"Viking QAP012 Design Control\"; \"ISO 14971: 2019\"",
+    "Table 6 (Section 5.9.4.3): \"Required Action Based on Residual Risk Evaluation ... Red • Benefit-risk analysis ... • Technical analysis ... • Residual risk disclosure ... Yellow • Investigate further risk controls ... • Benefit-risk analysis ... Green • Overall benefit-risk analysis within the Risk Management Report\""
+  ],
+  "gaps": [
+    "Some QMS cross-references use placeholder numbers (e.g., \"XX-XXX, Supplier Qualification and Management\" and \"XX-YYY, Management Responsibility\").",
+    "References list includes a likely typo/outdated entries (\"ISO 12971: 2020\" instead of ISO/TR 24971:2020; \"ISO 62366: 2005\" rather than the current IEC 62366-1 edition).",
+    "Figure 1 content is referenced and present, but the diagram text is not fully legible in the provided image; consider ensuring the figure is clearly readable in the controlled PDF."
+  ],
+  "recommendations": [
+    "Replace placeholder QMS document numbers (XX-XXX, XX-YYY) with actual controlled document identifiers and add the specific document number for the Post Market Surveillance and Complaint Handling Process.",
+    "Correct and update the References section (use ISO/TR 24971:2020 instead of \"ISO 12971: 2020\"; update usability reference to IEC 62366-1 current edition).",
+    "Ensure Figure 1 is high-resolution/legible in the controlled document, or add a text-based flow description alongside the figure to clearly show Risk Analysis, Risk Evaluation, Risk Control, and Production/Post-Production feedback loops.",
+    "Optionally add a pointer to the approved Risk Management Plan template/location that contains the risk acceptability criteria to reinforce traceability."
+  ]
+}

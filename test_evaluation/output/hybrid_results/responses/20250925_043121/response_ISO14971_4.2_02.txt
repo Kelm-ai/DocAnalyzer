@@ -1,0 +1,28 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.86,
+  "rationale": "The QAP013.01 Risk Management Program documents a policy-level approach that requires risk acceptability criteria to be defined and documented in product Risk Management Plans (RMPs) and ties the basis for criteria to regulations/standards and the state of the art. Evidence in the SOP shows the organization has the necessary policy elements (roles, criteria basis, and requirement to document overall residual risk acceptability). However, the supplied materials do not include a distinct, approved/ signed 'Risk Acceptability Policy' artifact or example RMP entries showing product/family-specific thresholds or consistent principles for how thresholds are set across device families. ISO 14971:2019 clause 4.2 requires a defined and documented policy for establishing risk acceptability; the SOP meets the requirement in part (by delegating to RMPs) but the absence of a clearly identifiable, approved policy artifact and evidence of implementation/consistent application across products is a gap.",
+  "evidence": [
+    "\"Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and considers available information such as the general acknowledged state of the art and known stakeholder concerns.\"",
+    "\"The risk acceptance criteria are based on the following decisions: 5.2.5.1. The risk presented by the current standard of care 5.2.5.2. The potential health benefits of using the combination product 5.2.5.3. The generally acknowledged state of the art defined in recognized consensus standards\"",
+    "\"The evaluation method and criteria for acceptability for the overall residual risk, considering all the impact of all risks together, shall be clearly defined and documented in the risk management plan.\"",
+    "\"This SOP does not define the threshold for acceptable risk (or risk index) since this threshold will change based on the intended use and expected benefit of using the combination product.\"",
+    "\"References: • 21CFR820.30 • ISO 14971: 2019 • ISO 12971 : 2020 • Viking QAP012 Design Control • ISO 62366: 2005\"",
+    "Cross-checked the supplied attachments/images: no separate, standalone 'Risk Acceptability Policy' document or management approval/signature was located within the provided materials."
+  ],
+  "gaps": [
+    "No distinct, standalone 'Risk Acceptability Policy' artifact (approved and signed) was provided or referenced in the supplied materials; the SOP delegates criteria definition to RMPs but does not present the consolidated policy as an approved document.",
+    "No evidence of top management sign-off or approval for a company-level risk acceptability policy was included in the provided files.",
+    "No example RMP contents or templates showing product- or product-family-specific acceptability thresholds or documented principles for setting thresholds across device families (to ensure consistent application) were supplied.",
+    "While the SOP requires RMPs to define the evaluation method for overall residual risk, there is no mandatory template or minimal required content in the SOP to ensure consistent documentation of the method across RMPs.",
+    "No traceable index or pointer in the supplied materials to where organization-level risk acceptability criteria (if they exist) are stored for easy access by project teams was shown."
+  ],
+  "recommendations": [
+    "Provide or reference a clearly labelled, organization-level 'Risk Acceptability Policy' document (or explicitly identify QAP013.01 as the approved policy) with documented top-management approval (signature/date) and make it accessible in the document management system. If QAP013.01 is intended to serve as the policy, add a formal approval block and a clear statement that it is the organization's Risk Acceptability Policy.",
+    "Ensure each Risk Management Plan (RMP) includes a mandatory section or template fields for: (a) product or product-family-specific acceptability thresholds (numeric or qualitative), (b) the regulatory/standard/stakeholder inputs used to set thresholds, and (c) the method for evaluating overall residual risk (reference to calculation, decision rules and when to perform benefit–risk analysis).",
+    "Add guidance/examples in the SOP or an appendix showing how to derive thresholds for different device risk profiles or families (e.g., life-supporting vs. non-life-supporting) to promote consistent application across teams.",
+    "Record and retain evidence of top-management review/approval of risk acceptability criteria at the organization level and for any RMPs where residual-risk thresholds exceed default green/yellow/red actions; place these approvals in the Risk Management File.",
+    "Create a central index/registry (or a documented cross-reference) in the document management system that points to the approved Risk Acceptability Policy and all approved RMPs so teams can readily find the criteria and any product-specific deviations.",
+    "During the next management review or internal audit, verify implementation: check a sample of RMPs to confirm they contain the required acceptability criteria, cite the standards/regulations/stakeholder inputs used, and document the evaluation method for overall residual risk."
+  ]
+}

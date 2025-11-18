@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "confidence": 0.88,
+  "rationale": "The submitted QAP013.01 Risk Management Program SOP provides a documented, organization-level policy framework for establishing risk acceptability criteria and specifies where those criteria must be defined and maintained (in the Risk Management Plan and Risk Management File). The SOP explicitly cites relevant regulatory and standards inputs (ISO 14971:2019, ISO 13485:2016, 21 CFR 820.30, ISO/TR 24971 guidance) as sources to be considered when establishing criteria. The SOP assigns responsibility to Top Management and Quality functions to define and document acceptability thresholds and requires that the evaluation method and criteria for overall residual risk be documented in the Risk Management Plan. The document is controlled (has effective date and document number) and requires that the Risk Management Plan / File be included in the Design History File and the document management system, making criteria accessible to teams. These elements meet the acceptance criteria: an approved policy/framework exists, regulatory/standards inputs are cited, principles for product families are addressed (RMP may be product- or family-level), and accessibility/ownership are specified.",
+  "evidence": [
+    "Page 1 header: Document Number QAP013.01; Effective Date: 26Jun2024 (shows controlled/issued SOP).",
+    "Page 4, Role Responsibility (Functional Area Management): \"Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and considers available information such as the general acknowledged state of the art and known stakeholder concerns.\"",
+    "Page 9, 5.2.3.1: \"The scope of the planned risk management activities... identifying and describing the combination product (or product family)...\" (supports product-family application).",
+    "Page 9, 5.2.3.2.2: \"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\"",
+    "Page 9, 5.2.5: \"Categories of risk and criteria for risk acceptability... The risk acceptance criteria are based on the following decisions: 5.2.5.1. The risk presented by the current standard of care; 5.2.5.2. The potential health benefits of using the combination product; 5.2.5.3. The generally acknowledged state of the art defined in recognized consensus standards.\"",
+    "Page 9, 5.2.6: \"The evaluation method and criteria for acceptability for the overall residual risk... shall be clearly defined and documented in the risk management plan.\"",
+    "Page 10, 5.3.4 & 5.3.6: Risk Management File deliverables include Risk Management Plan; \"The risk management file shall be maintained in the associated combination product design history file (DHF).\" (supports accessibility and traceability).",
+    "Page 5, References: lists 21CFR820.30, ISO 14971:2019, ISO 62366:2005 (demonstrates cited regulatory/standard inputs).",
+    "Page 5 and 8, responsibilities & 5.1.6: requirements for management review and periodic review (shows governance and review process)."
+  ],
+  "gaps": [
+    "No explicitly titled, standalone 'Risk Acceptability Policy' document is shown in the excerpt — the policy functionality appears embedded in this SOP (QAP013.01) and in individual Risk Management Plans; the acceptance criteria expected a discrete 'Risk Acceptability Policy' artifact.",
+    "The excerpt does not show an explicit approval signature block or record of formal approval (roles imply approval and Effective Date is present, but an explicit approval/owner stamp is not in the provided pages).",
+    "The SOP states (1.3) that it \"does not define the threshold for acceptable risk (or risk index)\"; while this is reasonable, there are no example thresholds or template risk-acceptability tables for teams to follow in RMPs within the excerpt (other than the Risk Index matrix used in risk estimation).",
+    "Although product-family considerations are referenced (5.2.10), the SOP does not include a concrete, templated mechanism or examples for how RMPs should document device-family-specific acceptability principles (e.g., when and how to set different thresholds by risk class or intended use).",
+    "No explicit cross-reference has been shown to a specific RMP template or repository location to demonstrate ease of access for teams (the DHF/document management link is present but no file path or template reference is shown)."
+  ],
+  "recommendations": [
+    "Clarify and record formal approval: add or capture an explicit approval block (approver names, roles, signatures/date) within QAP013.01 (or link to approval record) so auditors can see a discrete approval artifact.",
+    "If the organization prefers a separate Risk Acceptability Policy document, create and reference it from QAP013.01; otherwise add a clear statement in the SOP that QAP013.01 serves as the corporate Risk Acceptability Policy, with version/approval metadata and owner.",
+    "Provide an RMP template or annex that includes a required section for documented risk acceptability criteria (including examples or a template table), and require RMPs to state applicable regulatory/standard inputs and device-family-specific thresholds where relevant.",
+    "Add explicit, permanent links (document IDs/locations) to the RMP template and the controlled repository (document management system / DHF location) so teams can quickly locate the documented criteria.",
+    "Capture and retain records showing Top Management decisions on acceptable thresholds (as required by 5.2.3.2.2) in a controlled, auditable location (e.g., signed RMP, management review minutes), and reference those records in the SOP or RMP template."
+  ]
+}

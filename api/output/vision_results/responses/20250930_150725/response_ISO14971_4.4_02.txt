@@ -1,0 +1,24 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.65,
+  "rationale": "The document establishes responsibilities and approvals for risk management (Section 2; 5.2; 5.11) and instructs on identifying reviewers/contributors (5.2.3.2.1) and thresholds/approvals (5.2.3.2.2; 5.11.1.6). However, there is no explicit RACI chart mapping each activity to named owners/approvers, and no formal per-activity ownership table or signature blocks are shown, which are required by the Acceptance Criteria for ISO14971-4.4-02.",
+  "evidence": [
+    "Section 2. Responsibilities: 'Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP. All functional leads/managers are responsible for ensuring compliance with the applicable segments of this procedure that are within their areas of responsibility.'",
+    "5.2 Risk Management Plan, 5.2.3.2.1: 'Identification by function or area of expertise the necessary reviewers, contributors, and personnel responsible for risk management execution throughout the product lifecycle'.",
+    "5.2 Risk Management Plan, 5.2.3.2.2: 'Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.'",
+    "5.11 Risk Management Report, 5.11.1.6: 'Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.'",
+    "Figure 1. Risk Management Overview (in 5.1) shows a process diagram but does not constitute a RACI chart."
+  ],
+  "gaps": [
+    "No formal RACI chart is present to assign Responsible/Accountable/Consulted/Informed for each risk management activity.",
+    "No per-activity ownership mapping with named individuals or roles beyond general function-level responsibilities.",
+    "No visible signature blocks or documented approvals per activity or document in the Risk Management Plan or Risk Management File."
+  ],
+  "recommendations": [
+    "Add a formal RACI matrix in the Risk Management Plan mapping each risk management activity (hazard identification, risk estimation, risk control, residual risk evaluation, etc.) to Responsible, Accountable, Consulted, and Informed roles.",
+    "Define and capture named owners/approvers for each activity (e.g., hazard analysis owner, risk estimation owner, risk control owner) with specific individuals or role assignments.",
+    "Include signature blocks or an approval log to record formal approvals for risk management documents (RMP, Hazards Analysis, Risk Management Report) in the Risk Management File.",
+    "Ensure the Risk Management Plan clearly documents per-activity ownership, linkage to the RMP, and is aligned with QMS/ISO14971 requirements.",
+    "Periodically review and update the RACI and approvals as part of management reviews to maintain traceability and compliance."
+  ]
+}

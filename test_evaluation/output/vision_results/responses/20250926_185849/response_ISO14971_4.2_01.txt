@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "confidence": 0.86,
+  "rationale": "The document provides explicit evidence of top-management commitment to risk management, including resource assignment, defined roles, training requirements, and management approvals/reviews. Key items include: (1) resources and competent personnel assignment for risk management in Section 2.1; (2) top-management involvement in risk management approval and review processes in Sections 5.11.1.6 and 5.13.3; and (3) training competence references in Section 5.1.8 and 2.1. The acceptance criteria are met by documented management commitment, defined roles, and training considerations within the SOP.",
+  "evidence": [
+    "Section 2.1 Role Responsibility: 'Ensures adequate resources and assignment of competent personnel for risk management'.",
+    "Section 2.1 Role Responsibility: 'Completes all required training and qualification activities prior to conducting formal risk analysis'.",
+    "Section 5.2.3.2.2: 'Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.'",
+    "Section 5.11.1.6: 'Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.'",
+    "Section 5.13.3: 'The risk management process shall be reviewed as part of the management review ... At a minimum, the review shall include: 5.13.3.1. Risk management process ...'",
+    "Section 5.1.8: 'Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them. ... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.'"
+  ],
+  "gaps": [
+    "No explicit management review minutes, resource plans, or an organizational chart are provided in the excerpt to serve as direct artifacts of management commitment.",
+    "No detailed, site-specific training plan document is included; references to QAP011 indicate a plan exists, but explicit training plan content is not shown in the excerpt."
+  ],
+  "recommendations": [
+    "Attach or reference actual management review minutes and any resource allocation decisions to demonstrate documented management commitment (per acceptance criteria).",
+    "Provide a formal organizational chart or resource plan showing top-management roles and allocated risk-management resources.",
+    "Include the detailed training plan for risk management personnel (per QAP011) with schedules, competencies, and qualification steps."
+  ]
+}

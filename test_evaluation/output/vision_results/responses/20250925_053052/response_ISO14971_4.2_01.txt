@@ -1,0 +1,29 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.75,
+  "rationale": "The SOP (QAP013.01) provides clear policy-level evidence that top management is responsible for and committed to risk management (defined roles, statements that management will provide resources and assign competent personnel, and references to management review). It also references a training program (QAP011) and requires personnel to have appropriate competence. However, the acceptance criteria request documented management commitment artifacts (for example, management review minutes, resourcing decisions), resource plans, org charts, or training plans/records. Those concrete artifacts are not present in this document: the SOP states responsibilities and references other procedures but does not itself contain management review minutes, resource allocation decisions, organisational charts, or training records. Therefore evidence is partial — roles and policy are present (PASS), training program is referenced (partial PASS), but documented management commitment artifacts and resource plans are not included (missing).",
+  "evidence": [
+    "Section 2 Responsibilities: \"Assures adequate resources and support to carry out this process.\"",
+    "Section 2 Responsibilities: \"Ensures provision of adequate resources and assignment of competent personnel for risk management\" (Functional Area Management role description)",
+    "Section 2 Responsibilities (Roles table): multiple defined roles and responsibilities for Functional Area Management, Clinical Development, Quality Assurance Management, Quality Assurance, and Regulatory Affairs (defines responsibilities and authorities for risk management activities).",
+    "Section 5.1.6: \"As a check on the effectiveness of the risk management processes defined, management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.\"",
+    "Section 5.1.8: \"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\"",
+    "Section 5.2.3.2 and 5.2.3.2.1: \"Assignment of responsibilities and authorities for the execution of specific risk management activities throughout the product lifecycle shall include: Identification by function or area of expertise the necessary reviewers, contributors, and personnel responsible for risk management execution throughout the product lifecycle.\"",
+    "Section 5.11.1.6: \"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\""
+  ],
+  "gaps": [
+    "No documented management review minutes or signed management review records are included in this document (the SOP references XX-YYY but does not contain minutes).",
+    "No explicit resource plan, resourcing decisions, or evidence of allocation of budget/people/time for risk management are included.",
+    "No organisational chart (org chart) or named assignment of personnel to the risk management responsibilities is provided; the SOP defines roles by function but does not show assignment of specific personnel or positions.",
+    "Training plan and training records are not included here; the SOP references QAP011 (GMP Training Program) but does not include the actual training plan, completion records, or qualifications demonstrating assigned personnel are competent.",
+    "No evidence of management approval signatures or dated resourcing decisions tied to a specific product risk management plan or risk management file within this document."
+  ],
+  "recommendations": [
+    "Provide copies of recent management review minutes (per XX-YYY) that explicitly document review of the risk management process, decisions, and any resourcing commitments related to risk management for the product family.",
+    "Include or link the resource plan(s) or resourcing decision records that show allocation of personnel, time and budget for risk management activities in the Risk Management File.",
+    "Add an org chart or a section in the Risk Management Plan that lists named personnel (or job titles) assigned to risk management tasks, including evidence of delegation/assignment and dates.",
+    "Include the training plan and evidence of completed training/qualification records (from QAP011) for personnel who perform or approve risk analyses; add a reference in the Risk Management File to those records.",
+    "Record top-management approval (signature/date) of the Risk Management Plan and Risk Management Report where required (Section 5.11.1.6) and store in the Risk Management File to demonstrate documented top-management commitment.",
+    "When referencing external procedures (XX-YYY, QAP011), ensure the Risk Management File contains hyperlinks or copies and a cross-reference index so auditors can retrieve the related evidence (management review records, training records, resource plans) readily."
+  ]
+}

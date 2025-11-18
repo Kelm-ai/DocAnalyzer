@@ -1,0 +1,27 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.62,
+  "rationale": "The document provides evidence of information review and escalation mechanisms within the Risk Management process (e.g., 5.12.3 review of information for safety, 5.12.4 activities triggered by conditions, 5.13 periodic reviews, 5.11.1 pre-release risk management review). This supports signals review activity, triggers, and updates to risk-related documents (hazard analysis, risk management plan, risk analyses, risk management report) as part of the RM file (5.3.4) and post-market information review (5.12). However, explicit artifacts and processes for signal management minutes, a dedicated signal management SOP, safety review board minutes, and a CAPA mechanism integrated with RM are not present in the provided text. The acceptance criteria ask for explicit signal review minutes and CAPA as needed, which are not evidenced in the excerpt. See references below.",
+  "evidence": [
+    "5.12.3 The information collected shall be reviewed for possible relevance to safety, especially with respect to the following: 5.12.3.1 Previously unrecognized hazards or hazardous situations are present.",
+    "5.12.4.1 The risk management file shall be reviewed to determine if reassessment of risks and/or assessment of new risks is necessary.",
+    "5.12.4.2 If a residual risk is no longer acceptable, the impact on previous implemented risk control measures shall be evaluated and should be considered as an input for modification of the combination product.",
+    "5.13.1 Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team.",
+    "5.11.1 Prior to release for clinical usage or commercial production of the combination product, the applicant shall review the execution of the risk management plan. This review shall ensure the following, at a minimum: 5.11.1.1 The risk management plan has been appropriately implemented; 5.11.1.2 The risk management process has been appropriately implemented.",
+    "5.3.4 The risk management file shall consist of Hazard Analysis, Risk Management Plan, Risk Analyses (internal and external), Benefit Risk Analysis (when applicable), Risk Management Report(s), Post-production Risk Management Report(s) (when appropriate), and any supporting documents required by the risk management plan.",
+    "5.9.4.3 The actions required, based on the residual risk evaluation, are defined in Table 6."
+  ],
+  "gaps": [
+    "No explicit Signal Management SOP referenced or provided.",
+    "No explicit 'signal review minutes' or Safety Review Board minutes documented.",
+    "No explicit CAPA (Corrective and Preventive Action) process described or integrated with the RM process.",
+    "Triggers for escalation are described in general RM terms but lack explicit, documented minutes or a dedicated escalation workflow."
+  ],
+  "recommendations": [
+    "Add a Signal Management SOP that ties post-market information and new safety signals to the RM process, with defined minutes and escalation paths.",
+    "Implement an explicit CAPA process within the RM framework (assign responsibilities, documentation, and closure criteria) and link CAPA outcomes to risk management updates (hazard analysis, RM plan, risk analyses, and RM reports).",
+    "Establish a governance body (e.g., Safety Review Board) with defined meeting cadence and minutes, and link decisions to RM updates and CAPA actions.",
+    "Document explicit triggers for RM escalation (e.g., new hazard, increased residual risk, change in state of the art) and ensure minutes reflect decisions and actions taken.",
+    "Ensure all post-market and production/post-production information is systematically reviewed and requires update/downgrade/retirement of risks with traceability in the risk management file."
+  ]
+}

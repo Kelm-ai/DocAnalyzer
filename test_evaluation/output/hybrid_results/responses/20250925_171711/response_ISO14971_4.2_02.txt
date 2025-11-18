@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "confidence": 0.88,
+  "rationale": "QAP013.01 functions as the organization’s risk acceptability policy. It assigns management responsibility to define and document risk acceptability criteria, requires that criteria be based on regulations, relevant standards, state of the art, and stakeholder concerns, and mandates product- or family-specific criteria within each Risk Management Plan (RMP). It also provides guidance for evaluating overall residual risk and action-based acceptability via the risk index and Table 6. The document is a controlled, effective SOP, ensuring accessibility to teams through the document management system.",
+  "evidence": [
+    "Cover/Contents: Effective Date 26Jun2024; controlled SOP QAP013.01 (Page 1).",
+    "Section 2, Responsibilities (Page 4): \"Defines and documents criteria for risk acceptability in the Risk Management Procedure... based upon applicable national or regional regulations and relevant International Standards and considers... state of the art and known stakeholder concerns.\"",
+    "Section 2, Responsibilities (Page 5): \"Quality Assurance... Defines and documents criteria for risk acceptability in the Risk Management Plan according to the process established in this SOP.\"",
+    "Section 3, References (Page 5): cites regulatory/standard inputs: \"21CFR820.30; ISO 14971:2019; ISO 12971:2020 [sic]; Viking QAP012 Design Control; ISO 62366:2005\" and Purpose references \"ISO/TR 24971:2020\".",
+    "Section 5.2.5 (Page 9): \"Categories of risk and criteria for risk acceptability... The risk acceptance criteria are based on... standard of care... potential health benefits... generally acknowledged state of the art defined in recognized consensus standards.\"",
+    "Section 5.2.6 (Page 9): \"The evaluation method and criteria for acceptability for the overall residual risk... shall be clearly defined and documented in the risk management plan.\"",
+    "Section 5.7.4.3 (Page 14): When probability cannot be estimated: \"assume... P1 = 1... P2 = 1... If these assumptions result in an unacceptable risk, conduct a benefit risk analysis...\"",
+    "Table 5 and Table 6 (Pages 16–18): Risk Index matrix and \"Required Action Based on Residual Risk Evaluation\" (e.g., Red: benefit‑risk analysis, disclosure; Yellow: further controls, benefit‑risk; Green: overall benefit‑risk in report).",
+    "Section 5.10 (Page 19): \"evaluate the overall residual risk... using the method and the criteria for acceptability... defined in the risk management plan.\"",
+    "Section 5.11.1.6 (Page 19): \"Top management... must approve the risk management report if the benefit risk assessment is needed to justify release... according to established risk thresholds.\"",
+    "Section 5.2.10 (Page 10): \"The risk management plan may be developed for a specific product or for a family of similar products.\"",
+    "Section 5.3.5 (Page 10): \"The contents of the risk management file... shall be controlled and maintained in the document management system...\"",
+    "Section 1.3 (Page 3): \"This SOP does not define the threshold for acceptable risk... since this threshold will change based on the intended use and expected benefit...\""
+  ],
+  "gaps": [
+    "The SOP states it does not define risk acceptability thresholds at the procedure level; while it prescribes defining them in each RMP, it does not explicitly label Green/Yellow/Red as Acceptable/ALARP/Unacceptable.",
+    "No explicit statement that top management formally approves the risk acceptability policy itself (though top management approval is required when benefit‑risk justifies release).",
+    "Reference list includes a likely typo: \"ISO 12971:2020\" instead of ISO/TR 24971:2020 (the guidance document).",
+    "Methodology for determining overall residual risk is delegated to the RMP without a standard default method described in the SOP."
+  ],
+  "recommendations": [
+    "Add a concise, explicit Risk Acceptability Policy section that maps the Risk Index colors to acceptability categories (e.g., Green = acceptable, Yellow = conditionally acceptable with further controls/benefit‑risk, Red = unacceptable unless justified) and references required actions.",
+    "State explicitly that top management approves the Risk Acceptability Policy and any subsequent revisions.",
+    "Correct the reference list to ISO/TR 24971:2020 and ensure consistency with mentions elsewhere in the SOP.",
+    "Provide a default organization‑level method for overall residual risk evaluation (e.g., cumulative residual risk assessment plus clinical benefit justification), with allowance for RMP‑specific tailoring.",
+    "Ensure each RMP explicitly cites this SOP section as the Risk Acceptability Policy and documents product- or family-specific thresholds and overall residual risk criteria."
+  ]
+}

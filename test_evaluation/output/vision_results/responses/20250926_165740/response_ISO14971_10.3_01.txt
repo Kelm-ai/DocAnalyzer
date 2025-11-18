@@ -1,0 +1,24 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.6,
+  "rationale": "The PD-002 Risk Management Procedure includes information review and escalation elements (triggers, periodic reviews, RM updates) but does not explicitly define signal management minutes or a CAPA process. Therefore, acceptance criteria are partially satisfied but not fully evidenced in the document.",
+  "evidence": [
+    "8.2.11 Unplanned risk management activities (ad hoc) may be required during the product lifecycle.",
+    "8.12.3.1 If any of these conditions occur, the risk management file shall be reviewed to determine if reassessment of risks and/or assessment of new risks is necessary.",
+    "8.12.4 The results of any production and post-production evaluation(s) shall be recorded in the affected documents in the risk management file which include the Risk Management Plan, Hazards Analysis, FMEAs, and Risk Management Report.",
+    "9.1 Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team and documented in the Risk Management Plan or when events that may impact the original risk management decision occur.",
+    "8.11.1 Prior to release for clinical usage or commercial production of the combination product, the Applicant shall review the execution of the risk management plan.",
+    "8.3 The risk management file shall provide traceability to each identified hazard to the following: Risk analysis, Risk evaluation, Implementation and verification of the risk control measures, Results of the evaluation of residual risks."
+  ],
+  "gaps": [
+    "No explicit Signal Management Standard Operating Procedure (SOP) or signal review minutes documented in this RM procedure.",
+    "No explicit CAPA (corrective and preventive actions) workflow linked to risk management activities.",
+    "No stated requirement for a Safety Review Board/minutes or formal escalation pathway beyond general RM reviews."
+  ],
+  "recommendations": [
+    "Add a Signal Management SOP (e.g., PD-XXX Signal Management) requiring regular signal review meetings and minutes, with linkage to RM updates.",
+    "Incorporate a CAPA framework tied to risk management (root cause, corrective actions, preventive actions, closure metrics) referenced in QA-021/QA-019 as applicable.",
+    "Create explicit cross-references in the Risk Management Plan and Risk Management Report to CAPA actions and to updates of Hazards Analysis and FMEAs when signals trigger changes.",
+    "Establish a formal Safety Review Board or equivalent escalation body with documented sign-off for significant risk escalations or CAPA approvals."
+  ]
+}

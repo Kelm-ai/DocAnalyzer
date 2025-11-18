@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "confidence": 0.93,
+  "rationale": "The supplied document (QAP013.01 RISK MANAGEMENT PROGRAM) is an established SOP that documents a complete risk management process covering the product lifecycle, includes a process flow (Figure 1) showing the required elements (risk analysis, risk evaluation, risk control, production/post-production), and contains multiple explicit cross-references to QMS procedures. Individual acceptance criteria are satisfied as follows: (1) Procedure(s) exist and are controlled — the document is an SOP (QAP013.01) and states the risk management file and its contents are controlled in the document management system per QAP001. (2) Scope includes life-cycle coverage — Section 1.2 and 5.1.4 explicitly state applicability across development, transfer, manufacturing, production and post-production/discontinuation. (3) Process map/flow shows required elements — Figure 1 (Risk Management Overview) is present and its elements match the required risk management steps. (4) References to related QMS processes are clear — the SOP references QAP012 (Design Control), QAP001 (Document Control), QAP011 (GMP Training), Management Review Process (placeholder XX-YYY) and other QMS inputs. Therefore PASS is supported with explicit citations.",
+  "evidence": [
+    "Header: \"Document Number: QAP013.01 Title: RISK MANAGEMENT PROGRAM Effective Date: 26Jun2024\" (document header supplied).",
+    "1.1 Purpose: \"The purpose of this Standard Operating Procedure (SOP) is to establish, implement, document and maintain an ongoing process for risk management at Viking Therapeutics...\" (Section 1.1).",
+    "Scope (1.2): \"This SOP applies to the commercial and investigational (clinical) combination products ... throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.\"",
+    "5.1.4 Elements of this procedure: lists activities \"throughout the product life cycle\" including identification, estimation/evaluation, control, monitoring, reviews and periodic review (Section 5.1.4).",
+    "Document control statement (5.3.5): \"The contents of the risk management file (documents, records, trace items, etc.) shall be controlled and maintained in the document management system in accordance with QAP001, Format, Content, Approval and Issuance of Controlled Documents.\"",
+    "Integration with product realization (5.1.2): \"Risk management is integrated within QAP012, Design Control as part of product realization. The Risk Management File and related activities shall be reviewed when design changes are implemented...\"",
+    "Training/competence (5.1.8): \"Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\"",
+    "Figure 1 (transcribed from image) — caption: \"Figure 1. Risk Management Overview\". Transcribed flow elements visible in the figure: \"Risk analysis -> Risk evaluation -> Risk control -> Evaluation of overall residual risk -> Risk management review -> Production and post-production activities\". Side labels: \"Risk management plan\" (left) and \"Risk management / Risk assessment\" (right). (Section 5.1.5 and embedded figure).",
+    "Risk Management Plan requirements (5.2.3.1): \"The scope of the planned risk management activities, identifying and describing the combination product (or product family), intended use, interfaces with external systems or processes, and the lifecycle phases for which each element of the plan is applicable.\"",
+    "Risk management file composition (5.3.4): lists deliverables required in the file: \"Hazard Analysis; Risk Management Plan; Risk Analyses (internal and external); Benefit Risk Analysis; Risk Management Report(s); Post-production Risk Management Report(s); supporting/referenced documents\".",
+    "Periodic Reviews and production/post-production (5.12 and 5.13): procedures for active collection and review of production/post-production information and annual/plan-driven periodic review of risk management documentation."
+  ],
+  "gaps": [
+    "The extract contains placeholders for some QMS procedure references (e.g., \"XX-XXX, Supplier Qualification and Management\" and \"XX-YYY, Management Responsibility\") rather than concrete document numbers; replace placeholders with actual document IDs for traceability.",
+    "No explicit 'Quality Manual' document title is cited; while multiple QMS procedures are referenced (QAP001, QAP011, QAP012), the expected artifact 'quality manual' is not named in the provided text.",
+    "The provided excerpt does not show an approval/signature block or document approver names and dates (though effective date and revision history are present). If an approval block exists elsewhere, include it in the risk management file for completeness."
+  ],
+  "recommendations": [
+    "Replace placeholder references (XX-XXX, XX-YYY) with the actual QMS procedure/document numbers so cross-references are unambiguous.",
+    "If a corporate Quality Manual exists, add a direct reference to it (document number/title) in the References section to satisfy the 'quality manual/QMS cross-references' expected artifact explicitly.",
+    "Include (or attach) the document approval/authorization block (approver name, role, signature/date) within the SOP or metadata so reviewers can verify controlled approval.",
+    "Ensure the Figure 1 flowchart file is stored in the document management system alongside the SOP (path or index reference) and the Risk Management Plan template and Risk Management File index are linked or referenced for auditors."
+  ]
+}

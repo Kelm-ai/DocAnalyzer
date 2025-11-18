@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "confidence": 0.85,
+  "rationale": "The PDF contains an approved policy for risk acceptability embedded within the Risk Management Procedure (PD-002) and shows formal approval. It cites regulatory inputs (ISO 13485, ISO 14971) and defines principles for risk acceptability, including consideration of product families and residual risk. It also references training and organizational roles to ensure accessibility to teams. Evidence citations are provided to each criterion.",
+  "evidence": [
+    "Page 3: 'Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and consider available information such as the general acknowledged state of the art and known stakeholder concerns.'",
+    "Page 12: 'For the particular combination product (or product family) being considered, a Risk Management Plan shall be documented and shall include the following, at a minimum: 8.2.3.1 The scope of the planned risk management activities, identifying and describing the combination product (or product family), intended use, interfaces with external systems or processes, and the lifecycle phases for which each element of the plan is applicable'.",
+    "Page 13: '8.2.5 Categories of risk and criteria for risk acceptability, in accordance with this procedure, including criteria for accepting risks when the probability of occurrence of harm cannot be estimated. The risk acceptance criteria is based on the following decisions: • The risk presented by the current standard of care • The potential health benefits of using the combination product • The generally acknowledged state of the art defined in recognized consensus standards'.",
+    "Page 5: '4.0 References' showing inputs from [1] ISO 13485:2016 and [2] EN ISO 14971:2019/A11:2021.",
+    "Page 1: 'APPROVAL PAGE' indicating an approved document with Prepared By and Approved By sections."
+  ],
+  "gaps": [
+    "The risk acceptability policy appears embedded within PD-002 rather than as a standalone 'Risk Acceptability Policy' document. No separate policy artifact name is identified beyond the procedure.",
+    "While QA-019 Training is referenced to support access/competence, explicit evidence of published distribution or intranet access for the policy is not shown in the excerpt."
+  ],
+  "recommendations": [
+    "Create a standalone Risk Acceptability Policy document explicitly titled 'Risk Acceptability Policy' aligned to ISO 14971:2019 and ISO 13485:2016, and ensure it is approved, versioned, and published in the QMS with cross-references from the Risk Management Procedure and Risk Management Plans.",
+    "Add explicit links in the policy to Risk Management Plans (RMPs) and Risk Management Files (RMF) to ensure traceability of acceptability criteria across products and product families.",
+    "Publish the policy on the intranet/QMS portal and confirm distribution to teams via QA-019 Training or a ready-to-access policy bulletin to improve visibility and accessibility."
+  ]
+}

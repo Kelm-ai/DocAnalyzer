@@ -1,0 +1,30 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.75,
+  "rationale": "The QAP013.01 'RISK MANAGEMENT PROGRAM' document (Effective Date 26Jun2024) meets most of the acceptance criteria: an SOP exists (document header and Revision History), the scope explicitly covers the entire product lifecycle, a process flow (Figure 1 Risk Management Overview) depicts the required elements (risk analysis, risk evaluation, risk control, production & post-production activities), and multiple cross-references to QMS procedures (e.g., QAP012 Design Control, QAP001 Format/Content/Approval, QAP011 Training, Post Market Surveillance / Complaint Handling) are present. However, some cross-references use placeholder identifiers (e.g., 'XX-XXX', 'XX-YYY') rather than actual document numbers, and the file as provided does not show an explicit document approval/signature block within the text (only a Revision History entry). Because the referenced QAP001 is cited for document control (which supports that the SOP is controlled), but a few QMS cross-references remain unspecified placeholders, overall conformance is strong but not fully verifiable from the provided file alone -> FLAGGED.",
+  "evidence": [
+    "Header: 'Document Number: QAP013.01 Title: RISK MANAGEMENT PROGRAM Effective Date: 26Jun2024' (document header)",
+    "Section 1.1 Purpose: 'The purpose of this Standard Operating Procedure (SOP) is to establish, implement, document and maintain an ongoing process for risk management ...' (Section 1.1)",
+    "Section 1.2 Scope: 'This SOP applies to the commercial and investigational (clinical) combination products ... throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.' (Section 1.2)",
+    "Section 5.1.4: 'The risk management process includes the following elements throughout the product life cycle: 5.1.4.1. Identifying hazards and hazardous situations ... 5.1.4.2. Estimating and evaluating the associated risks 5.1.4.3. Controlling risk and monitoring the effectiveness of the risk control measures ... 5.1.4.6. Periodic review of identified risks.' (Section 5.1.4)",
+    "Figure 1 (caption): 'Figure 1. Risk Management Overview' — visual process map showing boxes for Risk analysis → Risk evaluation → Risk control → Evaluation of overall residual risk → Risk management review → Production and post-production activities (see provided Figure 1 image). (Section 5.1.5 / Figure 1)",
+    "Section 5.3.5: 'The contents of the risk management file (documents, records, trace items, etc.) shall be controlled and maintained in the document management system in accordance with QAP001, Format, Content, Approval and Issuance of Controlled Documents.' (Section 5.3.5)",
+    "Section 5.1.2: 'Risk management is integrated within QAP012, Design Control as part of product realization. The Risk Management File and related activities shall be reviewed when design changes are implemented ...' (Section 5.1.2)",
+    "Section 5.5.1: 'Verification that a risk control has been implemented into the design is conducted in accordance with the Design Verification procedure. Refer to QAP012, Design Control for more information.' (Section 5.5.1)",
+    "Section 5.1.8 and Section 5.3.6: 'Appropriate competence and training program requirements are described in QAP011, GMP Training Program.' and 'The risk management file shall be maintained in the associated combination product design history file (DHF).' (Sections 5.1.8, 5.3.6)",
+    "References Section (Section 3): lists 'ISO 14971: 2019', 'Viking QAP012 Design Control', 'ISO 62366: 2005' and other standards/procedures (Section 3)",
+    "Revision History: 'REV A New Document' (Section 7 Revision History)"
+  ],
+  "gaps": [
+    "Several cross-references use placeholder identifiers (e.g., 'XX-XXX, Supplier Qualification and Management' in Section 1.4; 'XX-YYY, Management Responsibility' in Sections 5.1.6 and 5.13.3). These placeholders mean some QMS links are not fully specified in this document.",
+    "The provided file does not show an explicit document approval signature block or approver name/date (only a Revision History entry). While QAP001 is cited for document control, the approving authority and signature are not visible in the supplied content.",
+    "Figure 1 is present as an embedded image; if a separate high-resolution process flowchart is required as an 'artifact', a separate/standalone flowchart file is not attached here (only the embedded figure).",
+    "Although many QMS cross‑references are explicit (QAP001, QAP012, QAP011), references to the Post Market Surveillance and Complaint Handling Process are not given a document number in-text."
+  ],
+  "recommendations": [
+    "Replace placeholder cross-reference IDs (XX-XXX, XX-YYY) with the actual QMS document numbers to make cross-references unambiguous and auditable.",
+    "Include or attach the document control/approval block (approver name, title, signature, date) in the SOP file or ensure the QMS document management system record clearly shows approval metadata, and reference that location in the SOP.",
+    "Provide a separate high-resolution process flowchart (e.g., PNG/PDF) as an artifact in the risk management file in addition to the embedded Figure 1, to satisfy the 'process flowchart' expected artifact requirement.",
+    "If not already present in the QMS index, ensure QAP013.01 is referenced in the Quality Manual or QMS mapping and that the referenced procedures (QAP001, QAP012, QAP011, Post Market Surveillance/Complaint Handling) are linked by document number in the risk management file for traceability."
+  ]
+}

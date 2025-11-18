@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "confidence": 0.78,
+  "rationale": "The document explicitly requires and describes periodic reviews of risk management activities and management oversight, including inputs/outputs and updates to risk management artifacts. The acceptance criteria are addressed by the stated periodic review requirements (9.1–9.3), management oversight (8.1.6), and documentation of reviews prior to release (8.11.1–8.11.2), as well as risk management plan updates (8.2.14) and file control (8.3.5). These elements collectively demonstrate periodic reviews, action tracking via documented reviews, and updates to risk management artifacts as part of the process.",
+  "evidence": [
+    "9.1 Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team and documented in the Risk Management Plan or when events that may impact the original risk management decision occur. (Section 9.0 Periodic Reviews)",
+    "9.2 Periodic review of Risk Management Reports shall be conducted, when elements in the risk management file change, to assess the acceptability of residual risks and the overall residual risk of the combination product. (Section 9.0 Periodic Reviews)",
+    "9.3 The risk management process shall be reviewed as part of the management review following requirements in QA-026, Management Responsibility. At a minimum, the review shall include the following. • Risk management process • Summaries of responses for critical and high risks • Risk profile(s). (Section 9.0 Periodic Reviews)",
+    "8.1.6 As a check on the effectiveness of the risk management processes defined, management shall regularly review the outputs of processes, products, services and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in QA-026, Management Responsibility. (Section 8.1.6)",
+    "8.11.1 Prior to release for clinical usage or commercial production of the combination product, the Applicant shall review the execution of the risk management plan. This review shall ensure the following, at a minimum. (The Risk Management Plan has been appropriately implemented is the first bullet.) (Section 8.11.1)",
+    "8.11.2 The results of this review shall be documented and maintained in the risk management report and included in the risk management file. (Section 8.11.2)",
+    "8.2.14 The risk management plan shall be included as part of the risk management file. If the plan changes during the product lifecycle, a record of the changes shall be maintained in the risk management file. (Section 8.2.14)",
+    "8.3.5 The contents of the risk management file (documents, records, trace items, etc.) shall be controlled and maintained in the document management system in accordance with QA-018, QA-021 and QA-024. (Section 8.3.5)",
+    "11.0 Revision History Version # | DCR # | Summary of Changes | Effective Date. (Section 11.0)"
+  ],
+  "gaps": [
+    "No explicit Management Review Records or CAPA/Change Control tickets are included as attachments or exemplars in the provided document extract; the SOP references these artifacts (QA-026, CAPA/Change Control concepts) but does not provide concrete records.",
+    "While the procedure references CAPA/Change Control and management review, there is no visible sample or cited instance of an actual CAPA ticket or management review record within the provided pages."
+  ],
+  "recommendations": [
+    "Attach or link actual Management Review Records (in QA-026 format) and CAPA/change control tickets to demonstrate evidence of periodic reviews and action tracking.",
+    "Include a sample or template of the Management Review Record and CAPA form within the SOP or as an appendix to ensure auditable traceability of inputs, outputs, and actions.",
+    "Add explicit cross-references to where periodic review outputs and corrective actions are stored (e.g., RM File, CAPA system, change control logs) to strengthen traceability."
+  ]
+}

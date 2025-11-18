@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "confidence": 0.82,
+  "rationale": "The document contains explicit requirements for planned periodic reviews of the risk management process, documentation of decisions/actions, inputs/outputs, and updates to risk management documentation. These are evidenced in: responsibilities for periodic review, periodic review requirements, management review integration, and documented records. The expected artifacts (Management Review records; CAPA/Change control tickets) are supported by references to management reviews, risk management plans, risk management files, and change control-related references within the procedure.",
+  "evidence": [
+    "Section 2.1: 'Reviews suitability of the risk management process at planned intervals to ensure continuing effectiveness of the risk management process and documents any decisions and actions taken.'",
+    "Section 5.13.1: 'Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team and documented in the risk management plan or when events that may impact the original risk management decision occur.'",
+    "Section 5.13.3: 'The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility. At a minimum, the review shall include: 5.13.3.1. Risk management process 5.13.3.2. Summaries of responses for critical and high risks 5.13.3.3. Risk profile(s)'",
+    "Section 5.1.6: 'Management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.'",
+    "Section 5.1.7: 'Documented records, including evidence of decisions and actions taken, shall be maintained to ensure and demonstrate the effective planning, operation, and control of this process.'",
+    "Section 5.11.1: 'Prior to release for clinical usage or commercial production of the combination product, the applicant shall review the execution of the risk management plan... the overall residual risk acceptability and overall benefit risk analysis have been determined.'",
+    "Section 5.2.14: 'The risk management plan shall be included as part of the risk management file. If the plan changes during the product lifecycle, a record of the changes shall be maintained in the risk management file.'",
+    "Section 5.3.4: 'The risk management file consists of the following deliverables, at a minimum: 5.3.4.1. Hazard Analysis 5.3.4.2. Risk Management Plan 5.3.4.3. Risk Analyses (internal and external) 5.3.4.4. Benefit Risk Analysis (when applicable) 5.3.4.5. Risk Management Report(s) 5.3.4.6. Post-production Risk Management Report(s) (when appropriate)'",
+    "Section 5.12.4: 'If any of these conditions occur, the following activities shall be performed: 5.12.4.1. The risk management file shall be reviewed to determine if reassessment of risks and/or assessment of new risks is necessary.'",
+    "Section 5.12.5: 'The results of any production and post-production evaluation(s) shall be recorded in the affected documents in the risk management file which include the risk management plan, hazards analysis, FMEAs, and risk management report.'"
+  ],
+  "gaps": [
+    "Explicit CAPA/Change control tickets as artifacts are not named; the procedure references change control but does not explicitly mandate or document CAPA tickets as risk-management artifacts."
+  ],
+  "recommendations": [
+    "Add explicit references to CAPA/change-control tickets as artifacts within the risk management file, and define templates or records for management review records.",
+    "Ensure traceability from inputs to outputs of periodic reviews (e.g., link risk inputs, decisions, actions, and closure in a formal Management Review Record).",
+    "Include a cross-reference to CAPA/change-control workflows and ensure alignment with ISO 14971/ISO 13485 expectations for post-market updates."
+  ]
+}

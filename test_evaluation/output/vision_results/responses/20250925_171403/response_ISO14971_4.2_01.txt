@@ -1,0 +1,30 @@
+{
+  "status": "FAIL",
+  "confidence": 0.78,
+  "rationale": "Two of three acceptance criteria are addressed procedurally (defined roles; training program references), but there is no explicit evidence of top‑management commitment such as management review records or resourcing decisions. The SOP describes that management shall review the process and provide resources, and that records shall be maintained, but no actual management review minutes, approvals, org charts, or resource plans are included.",
+  "evidence": [
+    "Section 2. Responsibilities: Functional Area Management (Product Development, Clinical Development, Regulatory Affairs and Quality Assurance Management) — \"Assures adequate resources and support to carry out this process.\" and \"Ensures provision of adequate resources and assignment of competent personnel for risk management\" and \"Reviews suitability of the risk management process at planned intervals... and documents any decisions and actions taken\"",
+    "Section 2. Responsibilities: Quality Assurance Management — \"Overall responsibility for effective execution and oversight of risk management process...\" and \"Overall responsibility for the Quality Management System (QMS), including the risk management process\"",
+    "Section 2. Responsibilities: Quality Assurance — \"Completes all required training and qualification activities prior to conducting formal risk analysis\"",
+    "Section 5.1.6 — \"management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.\"",
+    "Section 5.1.7 — \"Documented records, including evidence of decisions and actions taken, shall be maintained...\"",
+    "Section 5.1.8 — \"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\"",
+    "Section 5.11.1.6 — \"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\"",
+    "Section 5.13.3 — \"The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility.\"",
+    "Section 4.28 — Definition of Top Management: \"A person or group of people who directs and controls an organization at the highest level, having the power to delegate authority and provide resources within the organization.\""
+  ],
+  "gaps": [
+    "No management review records or minutes demonstrating top-management review of the risk management process were provided.",
+    "No explicit resourcing decisions or evidence of resource allocation by top management (e.g., budgets, staffing approvals).",
+    "No organizational chart or documented assignment of specific competent personnel (names/roles) to risk management responsibilities.",
+    "No training plan details or matrix for risk management personnel (only a reference to QAP011; the plan itself and training records are not included).",
+    "No approval/signature page showing top‑management approval of this SOP or related policies."
+  ],
+  "recommendations": [
+    "Provide recent Management Review records/minutes (per XX-YYY) showing top‑management review of the risk management process, decisions taken, and follow-up actions.",
+    "Submit documented resourcing evidence (e.g., org chart with named roles for risk management, appointment letters/RACI, staffing plans, or budget allocations) to demonstrate adequate resources and assignment of competent personnel.",
+    "Include the QAP011 GMP Training Program or a summarized training plan and a training matrix/records showing that personnel performing risk management have completed required training.",
+    "Attach evidence of top‑management approval (e.g., controlled document approval page with signatures) for this SOP and/or a risk management policy statement confirming commitment.",
+    "Maintain these artifacts in the Risk Management File or a linked Quality Records repository, and reference them explicitly in the SOP or Risk Management Plan."
+  ]
+}

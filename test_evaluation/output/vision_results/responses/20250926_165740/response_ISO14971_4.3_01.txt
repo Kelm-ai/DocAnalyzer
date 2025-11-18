@@ -1,0 +1,26 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.58,
+  "rationale": "The document references competence and training requirements and assigns risk-management roles, but it does not provide explicit evidence of a Training Matrix, CVs/experience records, or formal role-based competency profiles within the PD. Evidence shows reliance on QA-019 for training and emphasizes competent personnel in sections 8.1.8 and 3.x, but explicit artifacts required by ISO14971-4.3 (training matrix, CVs, competency profiles) are not present in the attached document.",
+  "evidence": [
+    "8.1.8 Persons performing risk management tasks shall have the knowledge and experience appropriate to the tasks assigned to them. These shall include, where appropriate, knowledge and experience of the particular combination product (or similar products) and its use, the technologies involved, or the risk management techniques. Appropriate competence and training program requirements are described in QA-019, Training Program [8].",
+    "3.0 Responsibilities; 3.1 Altimmune Product Development and Quality Assurance are responsible for ensuring compliance with this procedure. All functional leads/managers are responsible for ensuring compliance with the applicable segments of this procedure that are within their areas of responsibility.",
+    "Quality Assurance Management (section 4.0) includes: 'Overall responsibility for establishing, implementing, maintaining and reviewing the effectiveness of the risk management process' and 'Ensures provision of adequate resources and assignment of competent personnel for risk management'.",
+    "8.1.7 Documented records, including evidence of decisions and actions taken, shall be maintained to ensure and demonstrate the effective planning, operation and control of this process.",
+    "References to QA-019 Training Program (competence requirements) and the existence of training-related templates/templates for RM planning (PD-002-T01, PD-002-T02) are present but no dedicated Training Matrix, CVs/experience records, or role-based competency profiles are included in this PD."
+  ],
+  "gaps": [
+    "No explicit Training Matrix embedded in PD-002 (ISO14971-4.3-01 criterion not demonstrably met).",
+    "No CVs/experience records for personnel performing RM tasks are present in the document.",
+    "No formal role-based competency profiles defined within PD-002 (only high-level role responsibilities are shown).",
+    "No attached or visible training records or attestations of training completion within the RM file.",
+    "Only references to QA-019 (Training Program) and generic training requirements; no direct artifact of competencies shown in this PD."
+  ],
+  "recommendations": [
+    "Attach or create a Training Matrix mapping RM roles to required competencies, training modules, and completion status (e.g., RM Analyst, RM Plan Owner, RM Reviewer, RM Manager).",
+    "Collect and attach CVs/experience summaries for personnel performing RM tasks, or maintain a cross-reference in the RM File linking personnel to their qualifications.",
+    "Develop and attach role-based competency profiles detailing required education, training, experience, and skills for each RM role, aligned with ISO14971-4.3-01.",
+    "Include or attach the actual QA-019 Training Program content within the RM workflow, ensuring evidence of training completion is captured and traceable to individuals and RM activities.",
+    "Integrate training records into the Risk Management File (RMF) or provide clear links/references to where training evidence is stored."
+  ]
+}

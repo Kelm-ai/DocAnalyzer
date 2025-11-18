@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "confidence": 0.84,
+  "rationale": "The document demonstrates top management commitment through defined roles and resource allocation, explicit top-management responsibilities, and training references. It also establishes management review requirements and top-management approval of risk management outputs, satisfying the criteria for documented commitment, defined roles, and training plans. Evidence is drawn from multiple sections: Section 2 (Responsibilities); Section 5.2.3.2.2; Section 5.1.8; Section 5.11.1.6; and Section 5.13.3, with Figure 1 illustrating the risk management overview.",
+  "evidence": [
+    "Section 2.1: \"Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP. All functional leads/managers are responsible for ensuring compliance with the applicable segments of this procedure that are within their areas of responsibility.\"",
+    "Role Responsibility (Functional Area Management): \"Assures adequate resources and assignment of competent personnel for risk management\"",
+    "Role Responsibility (Functional Area Management): \"Reviews suitability of the risk management process at planned intervals to ensure continuing effectiveness of the risk management process and documents any decisions and actions taken\"",
+    "Role Responsibility (Quality Assurance Management): \"Assures adequate resources and assignment of competent personnel for risk management\"",
+    "Section 5.2.3.2.2: \"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\"",
+    "Section 5.1.8: \"Risk management tasks may be performed by representatives of several functions, each contributing their specialist knowledge. Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\"",
+    "Section 5.11.1.6: \"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\"",
+    "Section 5.13.3: \"The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility. At a minimum, the review shall include: 5.13.3.1. Risk management process 5.13.3.2. Summaries of responses for critical and high risks 5.13.3.3. Risk profile(s)\"",
+    "Figure 1. Risk Management Overview"
+  ],
+  "gaps": [
+    "The document references management review minutes, org charts, and resource plans as expected artifacts, but none are provided in the excerpt.",
+    "No explicit management review minutes, organizational charts, or a stand-alone resource plan are shown within the provided text."
+  ],
+  "recommendations": [
+    "Include actual management review minutes or summaries in the Risk Management File to demonstrate documented management commitment (per 5.13.1-5.13.3).",
+    "Attach or include current organizational charts (org charts) showing top-management roles and reporting lines related to risk management (as part of the defined roles in Section 2).",
+    "Provide a documented resource plan or explicit resourcing decisions specific to risk management (aligned with 2.1 and 5.2.3.2.2) within the Risk Management File or as an annex to the Risk Management Plan.",
+    "If training plans exist in QAP011, ensure a cross-reference or a summarized training plan is included in the Risk Management File to satisfy the training plan acceptance criterion."
+  ]
+}

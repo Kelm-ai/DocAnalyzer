@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "confidence": 0.93,
+  "rationale": "All acceptance criteria for ISO 14971:2019 Clause 4.1 are met: a controlled SOP exists; the scope covers the full life cycle; the process includes risk analysis, risk evaluation, risk control, and production/post‑production activities; a process overview/flow is provided; and clear cross‑references to related QMS processes are included. Minor editorial gaps (placeholder SOP numbers; one typo in references) do not impact conformity.",
+  "evidence": [
+    "Controlled SOP exists: Header shows controlled document details: “Document Number: QAP013.01… Effective Date: 26Jun2024” (Page 1)",
+    "Establish, implement, document, maintain process: “establish, implement, document and maintain an ongoing process for risk management… including identifying hazards… estimating and evaluating… controlling… monitoring the effectiveness…” (Section 1.1, Page 3)",
+    "Life‑cycle scope: “applies… throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.” (Section 1.2, Page 3)",
+    "Integration with product realization: “Risk management is integrated within QAP012, Design Control as part of product realization.” (Section 5.1.2, Page 7)",
+    "Process map/flow present: “Figure 1 illustrates the systemic representation of the risk management process.” (Section 5.1.5, Page 7; Figure 1 shown: Risk Management Overview)",
+    "Required process elements included: Risk Analysis (Section 5.6, Pages 11–14), Risk Evaluation (Section 5.8, Page 16), Risk Control (Section 5.9, Pages 16–18), Production and Post‑Production Activities (Section 5.12, Pages 19–20), Periodic Reviews (Section 5.13, Page 20)",
+    "QMS cross‑references (product realization and controls): QAP012 Design Control (Sections 3, 5.1.2, 5.5.1, 5.5.3, 5.2.4.1); QAP001 Document Control (Section 5.3.5); QAP011 GMP Training Program (Section 5.1.8); Management Review (XX‑YYY) (Sections 5.1.6, 5.13.3); Supplier Qualification (XX‑XXX) (Section 1.4); Post‑Market Surveillance and Complaint Handling Process (Section 5.12.1)",
+    "Document control of RM File: “shall be controlled and maintained in the document management system in accordance with QAP001…” (Section 5.3.5, Page 10)",
+    "Responsibilities and maintenance by management: “Ensures risk management policies are established and followed… Reviews suitability of the risk management process at planned intervals…” (Responsibilities table, Page 4–5)"
+  ],
+  "gaps": [
+    "Placeholder document numbers are used for related QMS procedures (e.g., “XX‑XXX, Supplier Qualification and Management” and “XX‑YYY, Management Responsibility”), which reduces clarity.",
+    "References list includes a probable typo “ISO 12971: 2020” instead of “ISO/TR 24971:2020.”",
+    "Post‑Market Surveillance and Complaint Handling Process is referenced but not identified by a specific SOP/document number."
+  ],
+  "recommendations": [
+    "Replace all placeholder references (XX‑XXX, XX‑YYY) with the current, controlled SOP numbers/titles for Supplier Qualification/Management and Management Responsibility.",
+    "Correct the reference list to ISO/TR 24971:2020 (and ensure consistency throughout the document).",
+    "Add the controlled document number/title for the Post‑Market Surveillance and Complaint Handling SOP to strengthen QMS cross‑reference clarity.",
+    "Retain Figure 1 in the controlled document and ensure it continues to depict all required risk management process elements across the life cycle."
+  ]
+}

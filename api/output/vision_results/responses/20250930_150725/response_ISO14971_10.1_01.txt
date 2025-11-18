@@ -1,0 +1,29 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.65,
+  "rationale": "The document provides evidence of a risk management and post-production information flow (PMS-like activity) and references post-market surveillance data sources, but it does not present a stand-alone PMS Plan or explicit PMS procedures. Critical PMS artifacts (PMS Plan, complaint handling SOP, vigilance/field action procedures, and defined data pipelines) are not clearly defined as separate documents within the text. Evidence shows active/incl. production and post-production data review and sources, but lacks explicit PMS ownership, procedures, and tooling beyond general references.",
+  "evidence": [
+    "5.12 Production and Post-Production Activities: 'Information relevant to the combination product shall be actively collected and reviewed in the production and post-production phases to comply with post market surveillance regulations as well as to use the data to provide input to the risk management file for the device being marketed. This information is collected in the Post Market Surveillance and Complaint Handling Process.'",
+    "5.12.2 The information collected shall entail at a minimum: 5.12.2.1 Production data; 5.12.2.2 User data; 5.12.2.3 Installation/use/maintenance data; 5.12.2.4 Supply chain data; 5.12.2.5 Publicly available information; 5.12.2.6 State of the art.",
+    "5.2.8.1 The risk management plan should include documentation of decisions, based on risk analysis, about what sort of post-market surveillance is appropriate for the combination product.",
+    "5.11.1.Prior to release for clinical usage or commercial production: 'The risk management plan has been appropriately implemented... Appropriate methods to collect and review the information in the production and post-production phases have been determined and are in place.'",
+    "2.1. Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP.",
+    "5.3.5 The contents of the risk management file shall be controlled and maintained in the document management system in accordance with QAP001.",
+    "5.12.4 If any of these conditions occur, the following activities shall be performed: risk management file reviewed; reassessment; actions regarding products on the market; etc."
+  ],
+  "gaps": [
+    "No explicit PMS Plan document identified (name and scope not provided).",
+    "No standalone Complaint Handling SOP text or Vigilance/Field Action Procedures within the provided excerpt.",
+    "No detailed description of data pipelines, data governance, or IT tooling specific to post-market data collection and processing.",
+    "PMS responsibilities beyond general risk mgmt roles are not clearly assigned (e.g., PMS Lead, QA liaison, Regulatory Affairs owner).",
+    "Artifacts listed in requirements (PMS Plan; complaint handling SOP; vigilance/field action procedures; data pipelines) are not clearly present as separate controlled documents in the excerpt."
+  ],
+  "recommendations": [
+    "Develop and document a formal Post-Market Surveillance (PMS) Plan specifying scope, data sources (active and passive), data flow, responsibilities, and acceptance criteria.",
+    "Create an explicit Complaint Handling SOP and a Vigilance/Field Action Procedures document, aligned with regulatory expectations and integrated with the Risk Management File.",
+    "Define and publish data pipelines and IT tooling for PMS data collection, storage, processing, and analysis (including data governance, privacy, and traceability).",
+    "Assign clear PMS responsibilities (e.g., PMS Lead, QA, Regulatory Affairs) and map them to sections of the PMS Plan and related SOPs.",
+    "Map PMS activities to existing QMS documents (e.g., reference QAP001 for document control, QAP012 for design control) and ensure traceability in the Risk Management File.",
+    "Include explicit references to how PMS outputs feed ongoing risk assessment, risk control decisions, and risk management reviews (5.12, 5.11, 5.13) with periodic management review integration."
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.58,
+  "rationale": "The document establishes a requirement that personnel performing risk management tasks have appropriate knowledge and experience and references a dedicated GMP Training Program (QAP011). It also assigns responsibility for risk management competence to QA and product development leadership. However, there is no visible training matrix, CVs/experience records, or explicit role-based competency profiles within the provided text. Evidence shows competence requirements exist and are to be addressed, but the specific artifacts required by ISO14971-4.3-01 (training matrix, CVs/experience, role-based competency profiles) are not present in the visible sections.",
+  "evidence": [
+    "5.1.8. Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them. These shall include, where appropriate, knowledge and experience of the particular combination product (or similar products) and its use, the technologies involved, or the risk management techniques. Appropriate competence and training program requirements are described in QAP011, GMP Training Program.",
+    "2.1. Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP. All functional leads/managers are responsible for ensuring compliance with the applicable segments of this procedure that are within their areas of responsibility.",
+    "5.1.9. Risk management tasks may be performed by representatives of several functions, each contributing their specialist knowledge."
+  ],
+  "gaps": [
+    "No explicit training matrix shown.",
+    "No CVs or documented experience records for risk management personnel in the visible sections.",
+    "No role-based competency profiles defined or attached to personnel roles within the Risk Management process.",
+    "No visible training records, job descriptions, or competency matrices provided as artifacts in the document text excerpt."
+  ],
+  "recommendations": [
+    "Provide a formal training matrix linking each risk management role to required training modules and completion status.",
+    "Capture and attach CVs or equivalent competency statements demonstrating relevant education, training, and experience for individuals performing risk management tasks.",
+    "Define and include role-based competency profiles (e.g., for QA, Clinical Development, Regulatory Affairs, etc.) with criteria and assessment methods, and store them in the Risk Management File.",
+    "Include job descriptions for all risk management roles and reference these in the training program and competency documentation."
+  ]
+}

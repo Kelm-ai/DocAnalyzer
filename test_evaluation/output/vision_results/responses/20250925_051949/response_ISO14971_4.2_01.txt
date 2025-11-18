@@ -1,0 +1,27 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.8,
+  "rationale": "The SOP (QAP013.01) contains documented statements of top-management responsibilities and commitment (including assurance of resources and assignment of competent personnel) and it defines roles and responsibilities for Product Development, Clinical Development, Regulatory Affairs and Quality Assurance. It also references a training program (QAP011) that defines competence/training requirements. However, the document does not contain explicit management review minutes, resourcing decisions, organizational charts, resource plans, or an embedded training plan or training matrix. Because the acceptance criteria request documented management commitment artifacts (e.g., management review minutes, resourcing decisions), defined roles, and training plans, and while roles are defined and commitment statements are present, the absence of the explicit artifacts and records (or inclusion only by reference) makes one or more criteria partially satisfied or uncertain. Per the mandatory method, when any criterion is partially satisfied or uncertain the overall verdict is FLAGGED.",
+  "evidence": [
+    "Section 2 Responsibilities - Role Responsibility: Functional Area Management: \"Assures adequate resources and support to carry out this process.\"; \"Ensures provision of adequate resources and assignment of competent personnel for risk management\" (Section 2, Responsibilities).",
+    "Section 2 Responsibilities - Role Responsibility: Quality Assurance Management: \"Overall responsibility for effective execution and oversight of risk management process...\" (Section 2, Responsibilities).",
+    "5.1.6: \"As a check on the effectiveness of the risk management processes defined, management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.\" (Section 5.1.6).",
+    "5.1.8: \"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\" (Section 5.1.8).",
+    "5.2.3.2.2: \"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\" (Section 5.2.3.2.2).",
+    "5.11.1.6: \"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\" (Section 5.11.1.6)."
+  ],
+  "gaps": [
+    "No management review minutes or documented management review records are included in this document (references exist to XX-YYY Management Review Process but the minutes/records themselves are not present).",
+    "No explicit evidence of resourcing decisions or resource plans (e.g., budgets, staffing/resource allocation documents) is provided.",
+    "No organizational chart (org chart) or explicit assignment records showing named competent personnel are included—only role descriptions by function are present.",
+    "Training plan details and training records are not included; QAP011 is referenced but the actual training plan/matrix and completed training records demonstrating assignment of competent personnel are not provided here.",
+    "No explicit management approval signatures or dated approvals of the SOP’s resource commitments (e.g., signed management decision records or meeting actions) are embedded in this file."
+  ],
+  "recommendations": [
+    "Provide management review records (meeting minutes) that explicitly document top-management reviews of the risk management process (references in 5.1.6 / 5.13.3) and any decisions or actions relating to resource allocation or risk acceptability thresholds.",
+    "Attach or reference concrete resourcing artifacts (resource plans, budget approvals, staffing plans) demonstrating allocation of adequate resources to risk management activities.",
+    "Include an organizational chart (org chart) and/or named role assignment records that show who is assigned responsibility (not just functional role descriptions) for risk-management activities and evidence of delegation/authority.",
+    "Supply the referenced training plan (QAP011, GMP Training Program) or extract the relevant training matrix and competence criteria into the risk management file; include evidence of completed training/qualification for personnel performing risk management.",
+    "Add explicit management approval signatures or dated approval records for the Risk Management Plan and Risk Management Report (see 5.11.1.6) to demonstrate top-management sign-off when benefit-risk assessment is used to justify release.",
+    "If some artifacts exist in other controlled documents (e.g., XX-YYY Management Responsibility, QAP011), provide cross-referenced file paths or attach excerpts so the risk management file contains or points to the expected artifacts (management review minutes, resource plans, org chart, training records)."
+}

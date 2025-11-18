@@ -1,0 +1,30 @@
+{
+  "status": "FLAGGED",
+  "confidence": 0.67,
+  "rationale": "The SOP shows policy-level top management commitments to provide adequate resources and assign competent personnel, defines roles, and references training and management review processes. However, objective evidence of actual top-management commitment (e.g., management review minutes, resource allocation decisions, org charts, specific training plans/records) is not included. Thus, acceptance criteria are only partially met.",
+  "evidence": [
+    "Section 2, Responsibilities (Functional Area Management): \"Assures adequate resources and support to carry out this process.\" and \"Ensures provision of adequate resources and assignment of competent personnel for risk management\"",
+    "Section 2, Responsibilities (Functional Area Management): \"Reviews suitability of the risk management process at planned intervals to ensure continuing effectiveness of the risk management process and documents any decisions and actions taken\"",
+    "Section 5.1.6: \"management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.\"",
+    "Section 5.1.8: \"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them... Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\"",
+    "Section 2, Responsibilities (Quality Assurance): \"Completes all required training and qualification activities prior to conducting formal risk analysis\"",
+    "Section 5.2.3.2.1: \"Assignment of responsibilities and authorities... Identification by function or area of expertise the necessary reviewers, contributors, and personnel responsible for risk management execution throughout the product lifecycle\"",
+    "Section 5.2.3.2.2: \"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\"",
+    "Section 5.11.1.6: \"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\"",
+    "Section 5.13.3: \"The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility.\"",
+    "Section 4.28, Definition: \"Top Management: A person or group of people who directs and controls an organization at the highest level, having the power to delegate authority and provide resources within the organization.\""
+  ],
+  "gaps": [
+    "No management review records/minutes demonstrating top management review of the risk management process (referenced XX-YYY Management Responsibility is not provided).",
+    "No evidence of actual resource allocation decisions or resource plans approved by top management.",
+    "No organizational chart or documented assignment/appointment of responsible person(s) for risk management showing top management designation.",
+    "No training plan, matrix, or training records from QAP011 demonstrating personnel competence (only a reference to the training program)."
+  ],
+  "recommendations": [
+    "Provide recent Management Review records/minutes that include review of the risk management process and decisions/actions (per Section 5.1.6 and 5.13.3).",
+    "Submit an organizational chart and a formal designation letter/memo from top management appointing responsible risk management roles (e.g., Risk Management process owner/coordinator).",
+    "Produce resource plans or documented resourcing decisions (e.g., approved headcount, budget, or time allocation) that evidence top management provision of adequate resources.",
+    "Include a training plan/matrix and representative training records from QAP011 showing personnel assigned to risk management have completed required competency training.",
+    "Link the Risk Management Plan(s) to approvals by top management where thresholds or acceptance criteria are established (per Section 5.2.3.2.2) to demonstrate active top management involvement."
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "confidence": 0.90,
+  "rationale": "The submitted SOP (QAP013.01 Risk Management Program) establishes, implements, documents, and maintains an ongoing risk management process covering the product lifecycle, and includes the required elements of risk analysis, risk evaluation, risk control, and production & post-production activities. The document contains a process flowchart (Figure 1 Risk Management Overview) showing the sequence of risk analysis → risk evaluation → risk control → evaluation of overall residual risk → risk management review → production and post-production activities. The SOP defines a Risk Management Plan and Risk Management File, specifies lifecycle scope (development, transfer, manufacturing, surveillance, discontinuation), integrates with Design Control (QAP012) and other QMS procedures (QAP001, QAP011), and specifies periodic review and post‑production activities. These elements satisfy the acceptance criteria that procedures exist and are controlled, lifecycle coverage is defined, a process map is present, and QMS cross‑references are provided.",
+  "evidence": [
+    "Section 1.1 Purpose: 'establish, implement, document and maintain an ongoing process for risk management ... in accordance with ... ISO 14971:2019 ... ISO/TR 24971:2020.'",
+    "Section 1.2 Scope: 'applies ... throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.'",
+    "Section 5.1.4: lists process elements: identifying hazards; estimating/evaluating risks; controlling risk and monitoring effectiveness; monitoring risk control measures; risk reviews; periodic review of identified risks.",
+    "Figure 1 (Risk Management Overview): graphical flow showing Risk analysis → Risk evaluation → Risk control → Evaluation of overall residual risk → Risk management review → Production and post-production activities (visible in embedded image).",
+    "Section 5.2 (Risk Management Plan): detailed mandatory contents including scope, assignment of responsibilities, review requirements, risk acceptability criteria, verification/validation, production/post-production information methods and review cadence.",
+    "Section 5.3 (Risk Management File): requirement to establish and maintain a risk management file, required contents (Hazard Analysis, RMP, Risk Analyses, Benefit-Risk Analysis, Reports), and control via QAP001 'Format, Content, Approval and Issuance of Controlled Documents.'",
+    "Section 5.12 (Production and Post-Production Activities): describes collection and review of production/post-production information and linkage to complaint handling and PMS processes.",
+    "References and integration: explicit cross‑references to QAP012 Design Control (Section 5.1.2, 5.5), QAP001 document control (5.3.5), QAP011 training (5.1.8), and management review XX-YYY (5.1.6, 5.13.3).",
+    "Tables and method: detailed tables for P1, P2, overall P, Severity (Table 4), and Risk Index (Table 5) showing a documented method for risk estimation and evaluation."
+  ],
+  "gaps": [
+    "Several cross-reference placeholders remain as 'XX-XXX' or 'XX-YYY' (e.g., Supplier Qualification and Management XX-XXX; Management Responsibility XX-YYY). These should be resolved to actual controlled procedure numbers to satisfy the 'clear references to related QMS processes' criterion.",
+    "Inconsistent citation of guidance standard: the References list includes 'ISO 12971: 2020' while other places refer to 'ISO/TR 24971:2020' — this appears to be a typographical or citation error and should be corrected for clarity.",
+    "No explicit, visible approval block, controlled-document metadata (approver signatures, version control) shown in the excerpt; while the SOP references QAP001 for document control, explicit evidence of the SOP being approved and issued under the QMS (e.g., approver, revision history entries beyond 'A New Document') is limited in the provided pages.",
+    "The acceptance-criteria asked for a 'quality manual/QMS cross‑references' — the SOP references multiple QMS procedures, but an explicit link to the organization’s Quality Manual (if required by the QMS) is not shown in the extract.",
+    "Although Figure 1 is present, a formal process map with inputs/outputs, owners for each process block, and references to where records are stored (specific system locations) could be made more explicit to improve traceability."
+  ],
+  "recommendations": [
+    "Replace placeholder references (e.g., 'XX-XXX', 'XX-YYY') with the actual controlled procedure/document numbers so cross‑references to supplier qualification and management review are unambiguous.",
+    "Correct the standards citation inconsistency (confirm and use 'ISO/TR 24971:2020' or the correct identifier) in the References section to avoid confusion.",
+    "Ensure the SOP document control header includes explicit approval metadata (approver names/titles, signature/date, controlled revision history entries) or provide a clear link to the QMS record that shows approval and issuance under QAP001.",
+    "Add an explicit reference to the Quality Manual (or a statement where the Risk Management SOP sits within the QMS hierarchy) to demonstrate clear QMS integration per acceptance criteria.",
+    "Enhance the process map/flow (or accompanying table) to show process owners for each stage, inputs/outputs and records location (e.g., Risk Management File location, DHF linkage), and where verification evidence is stored to strengthen traceability.",
+    "Document and correct any remaining typographical inconsistencies in referenced procedures and standards; perform a document cross-reference audit to ensure all referenced QMS procedures exist and are current."
+  ]
+}

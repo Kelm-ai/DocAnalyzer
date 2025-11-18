@@ -1,0 +1,319 @@
+{
+  "document_info": {
+    "file_name": "tmpu5u9nnb5.pdf",
+    "file_path": "/private/var/folders/74/gmbqttjd55jdp5rkths5nhj80000gn/T/tmpu5u9nnb5.pdf",
+    "file_size_bytes": 724940,
+    "uploaded_file_id": "file-AaE5EymHfS966gWS7BNczs",
+    "content_hash": "45a2637b23af0c79117408aca590af18dc85f965683b9369ce51ca2bd36c6fd7",
+    "file_id_cache_hit": true,
+    "model": "gpt-5-nano-2025-08-07",
+    "evaluated_at": "2025-09-30T15:07:25.389463",
+    "run_id": "20250930_150725"
+  },
+  "evaluation_summary": {
+    "total_requirements": 10,
+    "compliance_score": 50.0,
+    "status_counts": {
+      "PASS": 5,
+      "FAIL": 0,
+      "FLAGGED": 5,
+      "NOT_APPLICABLE": 0,
+      "ERROR": 0
+    },
+    "total_tokens_used": 215465,
+    "estimated_cost_usd": 1.0773
+  },
+  "requirements_results": [
+    {
+      "status": "FLAGGED",
+      "confidence": 0.65,
+      "rationale": "The document provides evidence of a risk management and post-production information flow (PMS-like activity) and references post-market surveillance data sources, but it does not present a stand-alone PMS Plan or explicit PMS procedures. Critical PMS artifacts (PMS Plan, complaint handling SOP, vigilance/field action procedures, and defined data pipelines) are not clearly defined as separate documents within the text. Evidence shows active/incl. production and post-production data review and sources, but lacks explicit PMS ownership, procedures, and tooling beyond general references.",
+      "evidence": [
+        "5.12 Production and Post-Production Activities: 'Information relevant to the combination product shall be actively collected and reviewed in the production and post-production phases to comply with post market surveillance regulations as well as to use the data to provide input to the risk management file for the device being marketed. This information is collected in the Post Market Surveillance and Complaint Handling Process.'",
+        "5.12.2 The information collected shall entail at a minimum: 5.12.2.1 Production data; 5.12.2.2 User data; 5.12.2.3 Installation/use/maintenance data; 5.12.2.4 Supply chain data; 5.12.2.5 Publicly available information; 5.12.2.6 State of the art.",
+        "5.2.8.1 The risk management plan should include documentation of decisions, based on risk analysis, about what sort of post-market surveillance is appropriate for the combination product.",
+        "5.11.1.Prior to release for clinical usage or commercial production: 'The risk management plan has been appropriately implemented... Appropriate methods to collect and review the information in the production and post-production phases have been determined and are in place.'",
+        "2.1. Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP.",
+        "5.3.5 The contents of the risk management file shall be controlled and maintained in the document management system in accordance with QAP001.",
+        "5.12.4 If any of these conditions occur, the following activities shall be performed: risk management file reviewed; reassessment; actions regarding products on the market; etc."
+      ],
+      "gaps": [
+        "No explicit PMS Plan document identified (name and scope not provided).",
+        "No standalone Complaint Handling SOP text or Vigilance/Field Action Procedures within the provided excerpt.",
+        "No detailed description of data pipelines, data governance, or IT tooling specific to post-market data collection and processing.",
+        "PMS responsibilities beyond general risk mgmt roles are not clearly assigned (e.g., PMS Lead, QA liaison, Regulatory Affairs owner).",
+        "Artifacts listed in requirements (PMS Plan; complaint handling SOP; vigilance/field action procedures; data pipelines) are not clearly present as separate controlled documents in the excerpt."
+      ],
+      "recommendations": [
+        "Develop and document a formal Post-Market Surveillance (PMS) Plan specifying scope, data sources (active and passive), data flow, responsibilities, and acceptance criteria.",
+        "Create an explicit Complaint Handling SOP and a Vigilance/Field Action Procedures document, aligned with regulatory expectations and integrated with the Risk Management File.",
+        "Define and publish data pipelines and IT tooling for PMS data collection, storage, processing, and analysis (including data governance, privacy, and traceability).",
+        "Assign clear PMS responsibilities (e.g., PMS Lead, QA, Regulatory Affairs) and map them to sections of the PMS Plan and related SOPs.",
+        "Map PMS activities to existing QMS documents (e.g., reference QAP001 for document control, QAP012 for design control) and ensure traceability in the Risk Management File.",
+        "Include explicit references to how PMS outputs feed ongoing risk assessment, risk control decisions, and risk management reviews (5.12, 5.11, 5.13) with periodic management review integration."
+      ],
+      "requirement_id": "ISO14971-10.1-01",
+      "requirement_title": "System for P&PP monitoring",
+      "requirement_clause": "10.1",
+      "tokens_used": 21501
+    },
+    {
+      "status": "PASS",
+      "confidence": 0.82,
+      "rationale": "The document shows explicit, ongoing collection and review of information from the sources listed in ISO14971-10.2-01: production/post-production data, user feedback, supply chain inputs, publicly available information, and state of the art, with periodic reviews and consideration of similar devices. Evidence is found in the Risk Management procedures (Section 5: 5.12 Production and Post-Production Activities; 5.12.1\u20135.12.2.6; 5.13 Periodic Reviews) and cross-references to supplier qualification/management (1.4) and post-market inputs (5.12.1, 5.12.2, 5.12.3, 5.12.4). The acceptance criteria are therefore satisfied with explicit citations.",
+      "evidence": [
+        "5.12.1 Information relevant to the combination product shall be actively collected and reviewed in the production and post-production phases to comply with post market surveillance regulations as well as to use the data to provide input to the risk management file for the device being marketed.",
+        "5.12.2 Information collected and reviewed about the combination product shall entail the following considerations, at a minimum: 5.12.2.1 Information generated during production and monitoring of the production process; 5.12.2.2 Information generated by the user; 5.12.2.4 Information generated by the supply chain; 5.12.2.5 Publicly available information; 5.12.2.6 Information related to the generally acknowledged state of the art.",
+        "5.12.4 If any of these conditions occur, the risk management file shall be reviewed to determine if reassessment of risks and/or assessment of new risks is necessary.",
+        "5.13 Periodic Reviews: Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team and documented in the risk management plan or when events that may impact the original risk management decision occur.",
+        "5.7.4.2.1 The risk analysis shall identify and document hazards and, for each hazard, the reasonably foreseeable sequences of events or causes; review of the same or similar combination products (internally or externally), adverse event databases, publications, and other sources.",
+        "1.4 Where Viking Therapeutics is the product applicant, Viking Therapeutics is responsible for ensuring appropriate risk management processes are applied by design partners and contract manufacturers. Partners, consultants, contract manufacturers or suppliers performing cGMP activities shall be evaluated and approved in accordance with XX-XXX, Supplier Qualification and Management."
+      ],
+      "gaps": [],
+      "recommendations": [
+        "Consider adding explicit cadence/logs for literature/signal reviews (e.g., quarterly literature reviews, annual state-of-the-art assessments) to strengthen alignment with 5.12.3 and 5.13 and to create traceable literature-review logs.",
+        "Include explicit records or templates for supplier quality records and post-market data (e.g., supplier QA reports, service logs, complaint databases) in the risk management file to satisfy the expected artifacts more clearly.",
+        "Document dedicated post-market surveillance logs and signal-tracking outputs (e.g., a structured Post-Market Surveillance Log) to demonstrate routine ingestion of external information and ties to risk management decisions."
+      ],
+      "requirement_id": "ISO14971-10.2-01",
+      "requirement_title": "Information collection - sources",
+      "requirement_clause": "10.2",
+      "tokens_used": 21502
+    },
+    {
+      "status": "FLAGGED",
+      "confidence": 0.62,
+      "rationale": "The document provides evidence of information review and escalation mechanisms within the Risk Management process (e.g., 5.12.3 review of information for safety, 5.12.4 activities triggered by conditions, 5.13 periodic reviews, 5.11.1 pre-release risk management review). This supports signals review activity, triggers, and updates to risk-related documents (hazard analysis, risk management plan, risk analyses, risk management report) as part of the RM file (5.3.4) and post-market information review (5.12). However, explicit artifacts and processes for signal management minutes, a dedicated signal management SOP, safety review board minutes, and a CAPA mechanism integrated with RM are not present in the provided text. The acceptance criteria ask for explicit signal review minutes and CAPA as needed, which are not evidenced in the excerpt. See references below.",
+      "evidence": [
+        "5.12.3 The information collected shall be reviewed for possible relevance to safety, especially with respect to the following: 5.12.3.1 Previously unrecognized hazards or hazardous situations are present.",
+        "5.12.4.1 The risk management file shall be reviewed to determine if reassessment of risks and/or assessment of new risks is necessary.",
+        "5.12.4.2 If a residual risk is no longer acceptable, the impact on previous implemented risk control measures shall be evaluated and should be considered as an input for modification of the combination product.",
+        "5.13.1 Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team.",
+        "5.11.1 Prior to release for clinical usage or commercial production of the combination product, the applicant shall review the execution of the risk management plan. This review shall ensure the following, at a minimum: 5.11.1.1 The risk management plan has been appropriately implemented; 5.11.1.2 The risk management process has been appropriately implemented.",
+        "5.3.4 The risk management file shall consist of Hazard Analysis, Risk Management Plan, Risk Analyses (internal and external), Benefit Risk Analysis (when applicable), Risk Management Report(s), Post-production Risk Management Report(s) (when appropriate), and any supporting documents required by the risk management plan.",
+        "5.9.4.3 The actions required, based on the residual risk evaluation, are defined in Table 6."
+      ],
+      "gaps": [
+        "No explicit Signal Management SOP referenced or provided.",
+        "No explicit 'signal review minutes' or Safety Review Board minutes documented.",
+        "No explicit CAPA (Corrective and Preventive Action) process described or integrated with the RM process.",
+        "Triggers for escalation are described in general RM terms but lack explicit, documented minutes or a dedicated escalation workflow."
+      ],
+      "recommendations": [
+        "Add a Signal Management SOP that ties post-market information and new safety signals to the RM process, with defined minutes and escalation paths.",
+        "Implement an explicit CAPA process within the RM framework (assign responsibilities, documentation, and closure criteria) and link CAPA outcomes to risk management updates (hazard analysis, RM plan, risk analyses, and RM reports).",
+        "Establish a governance body (e.g., Safety Review Board) with defined meeting cadence and minutes, and link decisions to RM updates and CAPA actions.",
+        "Document explicit triggers for RM escalation (e.g., new hazard, increased residual risk, change in state of the art) and ensure minutes reflect decisions and actions taken.",
+        "Ensure all post-market and production/post-production information is systematically reviewed and requires update/downgrade/retirement of risks with traceability in the risk management file."
+      ],
+      "requirement_id": "ISO14971-10.3-01",
+      "requirement_title": "Information review & escalation",
+      "requirement_clause": "10.3",
+      "tokens_used": 22285
+    },
+    {
+      "status": "PASS",
+      "confidence": 0.88,
+      "rationale": "The document provides a formal Risk Management Program (QAP013.01) with lifecycle coverage and integration with the QMS, including risk management planning, the risk management file, hazard analysis, risk estimation/evaluation, risk control, and production/post-production activities. A process map/flow is presented (Figure 1) and the text describes the lifecycle elements (5.1.4). It also references related QMS processes (e.g., QAP012 Design Control) and lists the required artifacts (Risk Management Plan, Risk Management File, Hazard Analysis, Risk Management Report, etc.) and post-production activities (5.12, 5.13). Key evidence is cited from the document sections: scope, lifecycle elements, process map, QMS integration, and artifacts.",
+      "evidence": [
+        "\"1.2 Scope: This SOP applies to the commercial and investigational (clinical) combination products designed, manufactured, and distributed under Current Good Manufacturing Practice (cGMP) conditions throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.\"",
+        "\"5.1.4. The risk management process includes the following elements throughout the product life cycle: 5.1.4.1 Identifying hazards and hazardous situations associated with the combination product; 5.1.4.2 Estimating and evaluating the associated risks; 5.1.4.3 Controlling risk and monitoring the effectiveness of the risk control measures; 5.1.4.4 Monitoring the effectiveness of the risk control measures; 5.1.4.5 Risk reviews driven by new information; 5.1.4.6 Periodic review of identified risks.\"",
+        "\"Figure 1. Risk Management Overview\"",
+        "\"5.2.1. Planning involves specifying processes and associated resources to meet specific objectives.\"",
+        "\"5.1.2. Risk management is integrated within QAP012, Design Control as part of product realization.\"",
+        "\"5.3.4. The risk management file shall consist of the following deliverables, at a minimum: 5.3.4.1 Hazard Analysis; 5.3.4.2 Risk Management Plan; 5.3.4.3 Risk Analyses (internal and external); 5.3.4.5 Risk Management Report(s); 5.3.4.6 Post-production Risk Management Report(s) (when appropriate).\"",
+        "\"5.12.1. Information relevant to the combination product shall be actively collected and reviewed in the production and post-production phases to comply with post market surveillance regulations as well as to use the data to provide input to the risk management file for the device being marketed. This information is collected in the Post Market Surveillance and Complaint Handling Process.\"",
+        "\"5.13.1.Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team and documented in the risk management plan or when events that may impact the original risk management decision occur.\"",
+        "\"2.1. Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP.\""
+      ],
+      "gaps": [],
+      "recommendations": [
+        "Consider adding a formal cross-reference to the Quality Manual (QMS) sections and update cross-references to XX-YYY Management Responsibility and XX-XXX Supplier Qualification as placeholders.",
+        "Provide a standalone process map/flow diagram in a controlled document to explicitly show input/output interlinks among risk management, design control, production, and post-market surveillance.",
+        "Ensure training records per QAP011 GMP Training are linked to risk management activities (per 5.1.8-5.1.9)."
+      ],
+      "requirement_id": "ISO14971-4.1-01",
+      "requirement_title": "Risk management process established",
+      "requirement_clause": "4.1",
+      "tokens_used": 20916
+    },
+    {
+      "status": "PASS",
+      "confidence": 0.84,
+      "rationale": "The document demonstrates top management commitment through defined roles and resource allocation, explicit top-management responsibilities, and training references. It also establishes management review requirements and top-management approval of risk management outputs, satisfying the criteria for documented commitment, defined roles, and training plans. Evidence is drawn from multiple sections: Section 2 (Responsibilities); Section 5.2.3.2.2; Section 5.1.8; Section 5.11.1.6; and Section 5.13.3, with Figure 1 illustrating the risk management overview.",
+      "evidence": [
+        "Section 2.1: \"Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP. All functional leads/managers are responsible for ensuring compliance with the applicable segments of this procedure that are within their areas of responsibility.\"",
+        "Role Responsibility (Functional Area Management): \"Assures adequate resources and assignment of competent personnel for risk management\"",
+        "Role Responsibility (Functional Area Management): \"Reviews suitability of the risk management process at planned intervals to ensure continuing effectiveness of the risk management process and documents any decisions and actions taken\"",
+        "Role Responsibility (Quality Assurance Management): \"Assures adequate resources and assignment of competent personnel for risk management\"",
+        "Section 5.2.3.2.2: \"Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.\"",
+        "Section 5.1.8: \"Risk management tasks may be performed by representatives of several functions, each contributing their specialist knowledge. Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\"",
+        "Section 5.11.1.6: \"Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.\"",
+        "Section 5.13.3: \"The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility. At a minimum, the review shall include: 5.13.3.1. Risk management process 5.13.3.2. Summaries of responses for critical and high risks 5.13.3.3. Risk profile(s)\"",
+        "Figure 1. Risk Management Overview"
+      ],
+      "gaps": [
+        "The document references management review minutes, org charts, and resource plans as expected artifacts, but none are provided in the excerpt.",
+        "No explicit management review minutes, organizational charts, or a stand-alone resource plan are shown within the provided text."
+      ],
+      "recommendations": [
+        "Include actual management review minutes or summaries in the Risk Management File to demonstrate documented management commitment (per 5.13.1-5.13.3).",
+        "Attach or include current organizational charts (org charts) showing top-management roles and reporting lines related to risk management (as part of the defined roles in Section 2).",
+        "Provide a documented resource plan or explicit resourcing decisions specific to risk management (aligned with 2.1 and 5.2.3.2.2) within the Risk Management File or as an annex to the Risk Management Plan.",
+        "If training plans exist in QAP011, ensure a cross-reference or a summarized training plan is included in the Risk Management File to satisfy the training plan acceptance criterion."
+      ],
+      "requirement_id": "ISO14971-4.2-01",
+      "requirement_title": "Top management commitment",
+      "requirement_clause": "4.2",
+      "tokens_used": 20750
+    },
+    {
+      "status": "PASS",
+      "confidence": 0.78,
+      "rationale": "The attached Risk Management SOP (QAP013.01) explicitly defines a policy framework for risk acceptability, ties it to regulatory/standard inputs, covers risk acceptability criteria applicable to products and product families, and prescribes how acceptability criteria are defined in Risk Management Plans and applied to residual risk. It also documents how risk acceptability decisions feed into overall risk management and product release. Evidence includes responsibilities assigning top-management control over acceptability thresholds, explicit criteria for acceptability (standard of care, health benefits, state of the art), and requirement to document acceptability criteria in the Risk Management Plan; it also references ISO 14971 and other standards. See citations below.",
+      "evidence": [
+        "2. Responsibilities (Role Responsibility) - 'Defines and documents criteria for risk acceptability in the Risk Management Procedure. This provides a framework that ensures that criteria are based upon applicable national or regional regulations and relevant International Standards and considers available information such as the general acknowledged state of the art and known stakeholder concerns.'",
+        "2. Responsibilities (Role Responsibility) - 'Top Management ... establish acceptable thresholds for residual risk acceptance within this procedure.'",
+        "Quality Assurance responsibilities include: 'Defines and documents criteria for risk acceptability in the Risk Management Plan according to the process established in this SOP.'",
+        "3. References - 'ISO 14971: 2019' (and other standards/regulatory inputs) cited as inputs to the policy.",
+        "5.2.3.2.2 - 'Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.'",
+        "5.2.3.2.1 - 'Identification by function or area of expertise the necessary reviewers, contributors, and personnel responsible for risk management execution throughout the product lifecycle.'",
+        "5.2.3.2.3 - 'When a product exceeds risk acceptability thresholds, but still has clinical benefit as designed, a benefit risk analysis is required to justify acceptance of risk.'",
+        "5.2.3.2.4 - 'Risk management responsibilities may be shared with design partners, consultants, contract manufacturers or suppliers, if applicable.'",
+        "5.2.5 - 'Categories of risk and criteria for risk acceptability, in accordance with this procedure, including criteria for accepting risks when the probability of occurrence of harm cannot be estimated. The risk acceptance criteria are based on the following decisions: 5.2.5.1 The risk presented by the current standard of care; 5.2.5.2 The potential health benefits of using the combination product; 5.2.5.3 The generally acknowledged state of the art defined in recognized consensus standards.'",
+        "5.2.6 - 'The evaluation method and criteria for acceptability for the overall residual risk, considering all the impact of all risks together, shall be clearly defined and documented in the risk management plan.'",
+        "5.9.4.1 - 'After the risk control measures are implemented, the applicant shall evaluate the residual risk using the criteria for risk acceptability defined in the risk management plan.'",
+        "5.9.5.1-5.9.5.4 - 'A benefit-risk analysis shall be performed to determine the acceptability of each individual risk and the overall residual risk of the combination product.'",
+        "5.1.3-5.1.7 - The process is described as ongoing, with periodic reviews and communication of risk management activities (supporting accessibility to teams).",
+        "5.1.11 - 'Major risks shall be communicated to Senior Product Development and Quality Assurance Management.'",
+        "5.11.1.6 - 'Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.'",
+        "1.3 - 'This SOP does not define the threshold for acceptable risk (or risk index) since this threshold will change based on the intended use and expected benefit of using the combination product.'"
+      ],
+      "gaps": [
+        "Explicit, standalone 'Risk Acceptability Policy' document title and its formal approval status are not clearly shown as a separate document; the policy is embedded within the SOP and referenced via responsibilities and plan requirements.",
+        "Accessibility/distribution statement confirming that the policy is readily accessible to all teams is not explicitly stated (though the SOP describes communication of risk management activities).",
+        "No explicit citation within the artifact to a standalone Risk Management Plan (RMP) document that contains the formal risk acceptability criteria, aside from references to \u2018risk management plan\u2019 in sections like 5.2.6 and 5.9.4.1; the exact cross-reference mapping to RMPs is not shown in the extracted content."
+      ],
+      "recommendations": [
+        "Consider publishing a standalone Risk Acceptability Policy document (or clearly labeling the existing document as the policy) with an explicit approval signature/date and a distribution list to satisfy the 'Approved policy exists' criteria.",
+        "Add an explicit statement within the SOP or an accompanying document confirming accessibility: e.g., 'Policy is accessible to all relevant teams via the QMS portal; training is provided.'",
+        "Ensure cross-references in risk management plans (RMPs) explicitly cite the Risk Acceptability Policy and show how product-family specific criteria are applied; include a short example mapping (product family \u2192 risk criteria \u2192 acceptability thresholds).",
+        "Include a brief cross-reference table in the SOP linking key acceptability criteria (standard of care, health benefit, state of the art) to applicable product families or categories to satisfy the 'principles defined for specific device families' requirement more explicitly."
+      ],
+      "requirement_id": "ISO14971-4.2-02",
+      "requirement_title": "Policy for risk acceptability",
+      "requirement_clause": "4.2",
+      "tokens_used": 23352
+    },
+    {
+      "status": "PASS",
+      "confidence": 0.82,
+      "rationale": "The document contains explicit requirements for planned periodic reviews of the risk management process, documentation of decisions/actions, inputs/outputs, and updates to risk management documentation. These are evidenced in: responsibilities for periodic review, periodic review requirements, management review integration, and documented records. The expected artifacts (Management Review records; CAPA/Change control tickets) are supported by references to management reviews, risk management plans, risk management files, and change control-related references within the procedure.",
+      "evidence": [
+        "Section 2.1: 'Reviews suitability of the risk management process at planned intervals to ensure continuing effectiveness of the risk management process and documents any decisions and actions taken.'",
+        "Section 5.13.1: 'Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team and documented in the risk management plan or when events that may impact the original risk management decision occur.'",
+        "Section 5.13.3: 'The risk management process shall be reviewed as part of the management review following requirements in XX-YYY, Management Responsibility. At a minimum, the review shall include: 5.13.3.1. Risk management process 5.13.3.2. Summaries of responses for critical and high risks 5.13.3.3. Risk profile(s)'",
+        "Section 5.1.6: 'Management shall regularly review the outputs of processes, products, services, and the quality system, and make improvements as needed, in accordance with the Management Review Process specified in XX-YYY, Management Responsibility.'",
+        "Section 5.1.7: 'Documented records, including evidence of decisions and actions taken, shall be maintained to ensure and demonstrate the effective planning, operation, and control of this process.'",
+        "Section 5.11.1: 'Prior to release for clinical usage or commercial production of the combination product, the applicant shall review the execution of the risk management plan... the overall residual risk acceptability and overall benefit risk analysis have been determined.'",
+        "Section 5.2.14: 'The risk management plan shall be included as part of the risk management file. If the plan changes during the product lifecycle, a record of the changes shall be maintained in the risk management file.'",
+        "Section 5.3.4: 'The risk management file consists of the following deliverables, at a minimum: 5.3.4.1. Hazard Analysis 5.3.4.2. Risk Management Plan 5.3.4.3. Risk Analyses (internal and external) 5.3.4.4. Benefit Risk Analysis (when applicable) 5.3.4.5. Risk Management Report(s) 5.3.4.6. Post-production Risk Management Report(s) (when appropriate)'",
+        "Section 5.12.4: 'If any of these conditions occur, the following activities shall be performed: 5.12.4.1. The risk management file shall be reviewed to determine if reassessment of risks and/or assessment of new risks is necessary.'",
+        "Section 5.12.5: 'The results of any production and post-production evaluation(s) shall be recorded in the affected documents in the risk management file which include the risk management plan, hazards analysis, FMEAs, and risk management report.'"
+      ],
+      "gaps": [
+        "Explicit CAPA/Change control tickets as artifacts are not named; the procedure references change control but does not explicitly mandate or document CAPA tickets as risk-management artifacts."
+      ],
+      "recommendations": [
+        "Add explicit references to CAPA/change-control tickets as artifacts within the risk management file, and define templates or records for management review records.",
+        "Ensure traceability from inputs to outputs of periodic reviews (e.g., link risk inputs, decisions, actions, and closure in a formal Management Review Record).",
+        "Include a cross-reference to CAPA/change-control workflows and ensure alignment with ISO 14971/ISO 13485 expectations for post-market updates."
+      ],
+      "requirement_id": "ISO14971-4.2-03",
+      "requirement_title": "Suitability review of the process",
+      "requirement_clause": "4.2",
+      "tokens_used": 22864
+    },
+    {
+      "status": "FLAGGED",
+      "confidence": 0.45,
+      "rationale": "The document cites competence requirements for risk management personnel (5.1.8) and references an external GMP Training Program (QAP011), plus notes documenting team expertise (5.6.1.5) and cross-functional task assignments (5.1.9, 2.1). However, there is no explicit Training Matrix, no documented CVs/individual experience records, and no clearly defined role-based competency profiles within the provided excerpts. Therefore, acceptance criteria are not fully demonstrated, only partially evidenced.",
+      "evidence": [
+        "5.1.8. \"Persons performing risk management tasks have the knowledge and experience appropriate to the tasks assigned to them. These shall include, where appropriate, knowledge and experience of the particular combination product (or similar products) and its use, the technologies involved, or the risk management techniques. Appropriate competence and training program requirements are described in QAP011, GMP Training Program.\" (Section 5.1.8)",
+        "2.1. Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP. All functional leads/managers are responsible for ensuring compliance with the applicable segments of this procedure that are within their areas of responsibility. (Section 2.1)",
+        "5.6.1.5. \"Risk analyses shall be conducted with the support of a team composed of subject matter experts with expertise on the subject being analyzed. Expertise provided by each team member shall be documented.\" (Section 5.6.1.5)",
+        "5.1.9. \"Risk management tasks may be performed by representatives of several functions, each contributing their specialist knowledge.\" (Section 5.1.9)"
+      ],
+      "gaps": [
+        "No explicit Training Matrix or Training Records are shown in the provided material.",
+        "No CVs/individual experience records for personnel performing risk management tasks are presented.",
+        "No explicit, separate role-based competency profiles defined (beyond general responsibility statements)."
+      ],
+      "recommendations": [
+        "Provide or attach a Training Matrix mapping personnel to required risk management trainings, with completion statuses and dates.",
+        "Collect and retain CVs or equivalent evidence of education/experience for personnel performing risk management tasks.",
+        "Develop and include role-based Competency Profiles for risk management roles (e.g., Risk Manager, Hazards Analyst, Usability Analyst) specifying required competencies and evidence.",
+        "Ensure the Risk Management File contains documented evidence of personnel qualifications and training in accordance with QMS requirements (e.g., cross-reference to training records)."
+      ],
+      "requirement_id": "ISO14971-4.3-01",
+      "requirement_title": "Competence of personnel",
+      "requirement_clause": "4.3",
+      "tokens_used": 19981
+    },
+    {
+      "status": "FLAGGED",
+      "confidence": 0.6,
+      "rationale": "The SOP shows lifecycle coverage and requirement to include lifecycle scope in the Risk Management Plan, but it does not provide explicit evidence of a named device with version in the RMP, nor a lifecycle applicability matrix mapping plan elements to lifecycle phases. Therefore, criteria are partially supported but not fully evidenced.",
+      "evidence": [
+        "Page 1, Section 1.2: 'Scope This SOP applies to the commercial and investigational (clinical) combination products designed, manufactured, and distributed under Current Good Manufacturing Practice (cGMP) conditions throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.'",
+        "5.2.3.1: 'The scope of the planned risk management activities, identifying and describing the combination product (or product family), intended use, interfaces with external systems or processes, and the lifecycle phases for which each element of the plan is applicable'",
+        "5.2.14: 'The risk management plan shall be included as part of the risk management file. If the plan changes during the product lifecycle, a record of the changes shall be maintained in the risk management file.'",
+        "5.3.1: 'For the combination product being considered, a risk management file shall be established and maintained throughout the product lifecycle.'",
+        "5.3.4: 'The risk management file consists of the following deliverables, at a minimum: 5.3.4.1. Hazard Analysis 5.3.4.2. Risk Management Plan 5.3.4.3. Risk Analyses (internal and external) 5.3.4.4. Benefit Risk Analysis (when applicable) 5.3.4.5. Risk Management Report(s) 5.3.4.6. Post-production Risk Management Report(s) (when appropriate) 5.3.4.7. Any supporting or referenced documents or records of activities required by the risk management plan'"
+      ],
+      "gaps": [
+        "No explicit device name and version for the Risk Management Plan (RMP) is evidenced in the provided text.",
+        "No lifecycle applicability matrix/table mapping RMP elements to lifecycle phases is shown in the provided text.",
+        "Expected artifact 'RMP vX' and a dedicated lifecycle applicability table are not demonstrated in the current excerpt."
+      ],
+      "recommendations": [
+        "Provide an actual Risk Management Plan document (RMP) with a defined device name/identifier and a version (e.g., RMP vX for [Device Name]), including version control.",
+        "Include a lifecycle applicability matrix in the RMP that maps each plan element (scope, responsibilities, risk assessment, risk control, verification/validation, post-market activities, etc.) to specific lifecycle phases (development, design transfer, manufacturing, production, post-production, etc.).",
+        "Add or reference a standalone lifecycle applicability table to clearly satisfy ISO14971-4.4(a) by showing how each element applies across lifecycle phases."
+      ],
+      "requirement_id": "ISO14971-4.4-01",
+      "requirement_title": "RMP scope & lifecycle coverage",
+      "requirement_clause": "4.4(a)",
+      "tokens_used": 21418
+    },
+    {
+      "status": "FLAGGED",
+      "confidence": 0.65,
+      "rationale": "The document establishes responsibilities and approvals for risk management (Section 2; 5.2; 5.11) and instructs on identifying reviewers/contributors (5.2.3.2.1) and thresholds/approvals (5.2.3.2.2; 5.11.1.6). However, there is no explicit RACI chart mapping each activity to named owners/approvers, and no formal per-activity ownership table or signature blocks are shown, which are required by the Acceptance Criteria for ISO14971-4.4-02.",
+      "evidence": [
+        "Section 2. Responsibilities: 'Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP. All functional leads/managers are responsible for ensuring compliance with the applicable segments of this procedure that are within their areas of responsibility.'",
+        "5.2 Risk Management Plan, 5.2.3.2.1: 'Identification by function or area of expertise the necessary reviewers, contributors, and personnel responsible for risk management execution throughout the product lifecycle'.",
+        "5.2 Risk Management Plan, 5.2.3.2.2: 'Top management of Product Development, Clinical Development, Regulatory Affairs and Quality Assurance establish acceptable thresholds for residual risk acceptance within this procedure.'",
+        "5.11 Risk Management Report, 5.11.1.6: 'Top management of Product Development, Clinical Development, Regulatory Affairs, and QA must approve the risk management report if the benefit risk assessment is needed to justify release of the product according to established risk thresholds.'",
+        "Figure 1. Risk Management Overview (in 5.1) shows a process diagram but does not constitute a RACI chart."
+      ],
+      "gaps": [
+        "No formal RACI chart is present to assign Responsible/Accountable/Consulted/Informed for each risk management activity.",
+        "No per-activity ownership mapping with named individuals or roles beyond general function-level responsibilities.",
+        "No visible signature blocks or documented approvals per activity or document in the Risk Management Plan or Risk Management File."
+      ],
+      "recommendations": [
+        "Add a formal RACI matrix in the Risk Management Plan mapping each risk management activity (hazard identification, risk estimation, risk control, residual risk evaluation, etc.) to Responsible, Accountable, Consulted, and Informed roles.",
+        "Define and capture named owners/approvers for each activity (e.g., hazard analysis owner, risk estimation owner, risk control owner) with specific individuals or role assignments.",
+        "Include signature blocks or an approval log to record formal approvals for risk management documents (RMP, Hazards Analysis, Risk Management Report) in the Risk Management File.",
+        "Ensure the Risk Management Plan clearly documents per-activity ownership, linkage to the RMP, and is aligned with QMS/ISO14971 requirements.",
+        "Periodically review and update the RACI and approvals as part of management reviews to maintain traceability and compliance."
+      ],
+      "requirement_id": "ISO14971-4.4-02",
+      "requirement_title": "Responsibilities & authorities",
+      "requirement_clause": "4.4(b)",
+      "tokens_used": 20896
+    }
+  ],
+  "generated_at": "2025-09-30T15:08:14.329085"
+}

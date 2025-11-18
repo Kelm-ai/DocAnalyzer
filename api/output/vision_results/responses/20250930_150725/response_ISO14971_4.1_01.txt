@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "confidence": 0.88,
+  "rationale": "The document provides a formal Risk Management Program (QAP013.01) with lifecycle coverage and integration with the QMS, including risk management planning, the risk management file, hazard analysis, risk estimation/evaluation, risk control, and production/post-production activities. A process map/flow is presented (Figure 1) and the text describes the lifecycle elements (5.1.4). It also references related QMS processes (e.g., QAP012 Design Control) and lists the required artifacts (Risk Management Plan, Risk Management File, Hazard Analysis, Risk Management Report, etc.) and post-production activities (5.12, 5.13). Key evidence is cited from the document sections: scope, lifecycle elements, process map, QMS integration, and artifacts.",
+  "evidence": [
+    "\"1.2 Scope: This SOP applies to the commercial and investigational (clinical) combination products designed, manufactured, and distributed under Current Good Manufacturing Practice (cGMP) conditions throughout the product lifecycle phases, including product development, technology and design transfer, manufacturing, product surveillance and product discontinuation.\"",
+    "\"5.1.4. The risk management process includes the following elements throughout the product life cycle: 5.1.4.1 Identifying hazards and hazardous situations associated with the combination product; 5.1.4.2 Estimating and evaluating the associated risks; 5.1.4.3 Controlling risk and monitoring the effectiveness of the risk control measures; 5.1.4.4 Monitoring the effectiveness of the risk control measures; 5.1.4.5 Risk reviews driven by new information; 5.1.4.6 Periodic review of identified risks.\"",
+    "\"Figure 1. Risk Management Overview\"",
+    "\"5.2.1. Planning involves specifying processes and associated resources to meet specific objectives.\"",
+    "\"5.1.2. Risk management is integrated within QAP012, Design Control as part of product realization.\"",
+    "\"5.3.4. The risk management file shall consist of the following deliverables, at a minimum: 5.3.4.1 Hazard Analysis; 5.3.4.2 Risk Management Plan; 5.3.4.3 Risk Analyses (internal and external); 5.3.4.5 Risk Management Report(s); 5.3.4.6 Post-production Risk Management Report(s) (when appropriate).\"",
+    "\"5.12.1. Information relevant to the combination product shall be actively collected and reviewed in the production and post-production phases to comply with post market surveillance regulations as well as to use the data to provide input to the risk management file for the device being marketed. This information is collected in the Post Market Surveillance and Complaint Handling Process.\"",
+    "\"5.13.1.Periodic reviews of risk management documentation shall be conducted as a post market activity on an annual basis or as specified by the team and documented in the risk management plan or when events that may impact the original risk management decision occur.\"",
+    "\"2.1. Viking Therapeutics Product Development and Quality Assurance (QA) are responsible for ensuring compliance with this SOP.\""
+  ],
+  "gaps": [],
+  "recommendations": [
+    "Consider adding a formal cross-reference to the Quality Manual (QMS) sections and update cross-references to XX-YYY Management Responsibility and XX-XXX Supplier Qualification as placeholders.",
+    "Provide a standalone process map/flow diagram in a controlled document to explicitly show input/output interlinks among risk management, design control, production, and post-market surveillance.",
+    "Ensure training records per QAP011 GMP Training are linked to risk management activities (per 5.1.8-5.1.9)."
+  ]
+}

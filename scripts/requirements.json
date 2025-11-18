@@ -1,0 +1,344 @@
+[
+  {
+    "id": "ISO14971-4.1-01",
+    "clause": "4.1",
+    "title": "Risk management process established",
+    "requirement_text": "Establish, implement, document, and maintain an ongoing risk management process covering the entire device life cycle. Include risk analysis, risk evaluation, risk control, and production & post\u2011production activities. Integrate with product realization as appropriate.",
+    "acceptance_criteria": "Procedure(s) exist and are controlled; scope includes life\u2011cycle coverage; process map/flow shows required elements; references to related QMS processes are clear.",
+    "expected_artifacts": "Risk Management SOP; process flowchart; quality manual/QMS cross\u2011references.",
+    "guidance_notes": "TR24971 clarifies the process can be within a QMS but is not required; ensure linkage to ISO 13485 processes as relevant."
+  },
+  {
+    "id": "ISO14971-4.2-01",
+    "clause": "4.2",
+    "title": "Top management commitment",
+    "requirement_text": "Provide evidence of top\u2011management commitment: adequate resources and assignment of competent personnel.",
+    "acceptance_criteria": "Documented management commitment (e.g., management review minutes, resourcing decisions); defined roles; training plans.",
+    "expected_artifacts": "Management Review records; org charts; resource plans.",
+    "guidance_notes": "TR24971 details the emphasis on top management and periodic suitability review."
+  },
+  {
+    "id": "ISO14971-4.2-02",
+    "clause": "4.2",
+    "title": "Policy for risk acceptability",
+    "requirement_text": "Define and document a policy for establishing criteria for risk acceptability, aligned with regulations, relevant standards, state of the art, and stakeholder concerns; include guidance on overall residual risk.",
+    "acceptance_criteria": "Approved policy exists; cites regulatory/standard inputs; defines principles for specific device families where needed; accessible to teams.",
+    "expected_artifacts": "Risk Acceptability Policy document; references within RMPs.",
+    "guidance_notes": "TR24971 Annex C provides detailed guidance and examples for setting the policy and criteria."
+  },
+  {
+    "id": "ISO14971-4.2-03",
+    "clause": "4.2",
+    "title": "Suitability review of the process",
+    "requirement_text": "Review the suitability and effectiveness of the risk management process at planned intervals; record decisions and actions.",
+    "acceptance_criteria": "Evidence of periodic reviews (inputs/outputs, action tracking); updates to procedures as needed.",
+    "expected_artifacts": "Management Review records; CAPA/Change control tickets.",
+    "guidance_notes": "TR24971 lists aspects to review (procedure effectiveness, criteria adequacy, feedback loop effectiveness)."
+  },
+  {
+    "id": "ISO14971-4.3-01",
+    "clause": "4.3",
+    "title": "Competence of personnel",
+    "requirement_text": "Ensure persons performing risk management tasks are competent (education, training, skills, experience) and maintain objective evidence of competence.",
+    "acceptance_criteria": "Training matrix and records exist; CVs/experience captured; role\u2011based competency profiles defined.",
+    "expected_artifacts": "Training records; job descriptions; competency matrices.",
+    "guidance_notes": "Annex A & TR24971 include example competencies by function; such records need not be inside the RMF."
+  },
+  {
+    "id": "ISO14971-4.4-01",
+    "clause": "4.4(a)",
+    "title": "RMP scope & lifecycle coverage",
+    "requirement_text": "RMP identifies the device and the life\u2011cycle phases for which each element applies.",
+    "acceptance_criteria": "RMP names device and versions; matrices mapping plan elements to life\u2011cycle phases.",
+    "expected_artifacts": "Risk Management Plan (RMP) vX; lifecycle applicability table.",
+    "guidance_notes": "Annex A explains why scope is critical for objectivity."
+  },
+  {
+    "id": "ISO14971-4.4-02",
+    "clause": "4.4(b)",
+    "title": "Responsibilities & authorities",
+    "requirement_text": "Assign responsibilities and authorities for all risk management activities.",
+    "acceptance_criteria": "Named owners/approvers for each activity; RACI chart in plan.",
+    "expected_artifacts": "RMP section with RACI; signatures/approvals.",
+    "guidance_notes": "TR24971 shows typical roles and knowledge areas."
+  },
+  {
+    "id": "ISO14971-4.4-03",
+    "clause": "4.4(c)",
+    "title": "Review of RM activities",
+    "requirement_text": "Define requirements for reviews of RM activities (e.g., design reviews, periodic RM check\u2011ins).",
+    "acceptance_criteria": "Planned reviews with frequency/triggers; meeting minutes stored; issues tracked to closure.",
+    "expected_artifacts": "Design review minutes; RM review logs.",
+    "guidance_notes": "Align reviews with design controls and PMS feedback."
+  },
+  {
+    "id": "ISO14971-4.4-04",
+    "clause": "4.4(d)",
+    "title": "Criteria for risk acceptability",
+    "requirement_text": "Define criteria for risk acceptability, including cases where probability of occurrence of harm cannot be estimated.",
+    "acceptance_criteria": "Risk criteria table/matrix defined; rules for \u2018probability unknown\u2019 documented; applies per device scope.",
+    "expected_artifacts": "Risk criteria appendix in RMP; risk matrix legend.",
+    "guidance_notes": "TR24971 offers qualitative/semi\u2011quantitative scales and cautions about matrix design & rationale."
+  },
+  {
+    "id": "ISO14971-4.4-05",
+    "clause": "4.4(e)",
+    "title": "Method for overall residual risk",
+    "requirement_text": "Define the method and criteria for evaluating overall residual risk, in relation to benefits of intended use.",
+    "acceptance_criteria": "Documented method (e.g., aggregation + expert/clinical judgement); criteria defined; sources of benefit evidence identified.",
+    "expected_artifacts": "Overall Residual Risk Method section; clinical/benefit evidence list.",
+    "guidance_notes": "TR24971 gives examples of methods and evidence sources."
+  },
+  {
+    "id": "ISO14971-4.4-06",
+    "clause": "4.4(f)",
+    "title": "Verification planning",
+    "requirement_text": "Plan verification of implementation and effectiveness of risk control measures.",
+    "acceptance_criteria": "Verification strategy linked to each control; protocols defined or referenced; pass/fail criteria.",
+    "expected_artifacts": "Verification protocol(s); V&V plan; test reports.",
+    "guidance_notes": "Annex A stresses early planning of verification resources."
+  },
+  {
+    "id": "ISO14971-4.4-07",
+    "clause": "4.4(g)",
+    "title": "P&PP information collection & review",
+    "requirement_text": "Define methods to collect and review production and post\u2011production information and feed back into RM.",
+    "acceptance_criteria": "Defined sources, cadence, ownership, analysis methods, escalation routes.",
+    "expected_artifacts": "PMS plan; complaint handling SOP; literature search plan.",
+    "guidance_notes": "TR24971 aligns with ISO 13485 \u00a7\u00a77\u20138 and ISO/TR 20416 PMS guidance."
+  },
+  {
+    "id": "ISO14971-4.4-08",
+    "clause": "4.4(h)",
+    "title": "Plan change control",
+    "requirement_text": "Maintain a record of changes to the RMP over the device life cycle.",
+    "acceptance_criteria": "Version history present; changes justified and approved; RMF updated.",
+    "expected_artifacts": "RMP revision log; change control tickets.",
+    "guidance_notes": "Annex A notes change records facilitate audit and review."
+  },
+  {
+    "id": "ISO14971-4.5-01",
+    "clause": "4.5",
+    "title": "Risk Management File (RMF) & traceability",
+    "requirement_text": "Establish and maintain an RMF. Provide traceability from each identified hazard to risk analysis, risk evaluation, implementation & verification of controls, and residual risk evaluation.",
+    "acceptance_criteria": "Traceability matrix complete for all hazards; RMF collects or points to all required records; retrievable in timely fashion.",
+    "expected_artifacts": "RMF index; traceability matrix/baseline; pointers into QMS repositories.",
+    "guidance_notes": "TR24971 clarifies RMF is a logical construct; can point to other systems; recommends a hazard\u2011centric index."
+  },
+  {
+    "id": "ISO14971-5.1-01",
+    "clause": "5.1",
+    "title": "Conduct & record risk analysis",
+    "requirement_text": "Perform risk analysis per 5.2\u20135.5 and record results, including device ID, analysts/organizations, scope, and date.",
+    "acceptance_criteria": "Analysis package includes required identifiers and dates; results trace to RMF.",
+    "expected_artifacts": "Risk Analysis dossier; cover sheet with meta\u2011data.",
+    "guidance_notes": "TR24971 provides technique guidance (e.g., FMEA, FTA); reuse of similar device analyses allowed with justification."
+  },
+  {
+    "id": "ISO14971-5.2-01",
+    "clause": "5.2",
+    "title": "Intended use documented",
+    "requirement_text": "Document intended use considering indication, patient population, body part/tissue, user profile, use environment, and operating principle.",
+    "acceptance_criteria": "Use specification present and consistent across DHF and labeling; stored in RMF.",
+    "expected_artifacts": "Use specification; user needs; intended purpose statement.",
+    "guidance_notes": "TR24971 lists factors and links to usability engineering inputs."
+  },
+  {
+    "id": "ISO14971-5.2-02",
+    "clause": "5.2",
+    "title": "Reasonably foreseeable misuse",
+    "requirement_text": "Document reasonably foreseeable misuse; consider predictable human behaviour and use errors.",
+    "acceptance_criteria": "Misuse scenarios identified and justified; linkage to HFE/validation or field data.",
+    "expected_artifacts": "Misuse log; HFE reports; post\u2011market signals.",
+    "guidance_notes": "TR24971 explains deriving misuse via simulated/actual use and HFE."
+  },
+  {
+    "id": "ISO14971-5.3-01",
+    "clause": "5.3",
+    "title": "Characteristics related to safety",
+    "requirement_text": "Identify and document qualitative/quantitative characteristics that could affect safety; define limits where appropriate.",
+    "acceptance_criteria": "Characteristics list complete with limits/tolerances; link to essential performance where applicable.",
+    "expected_artifacts": "Characteristics inventory; engineering specs; acceptance limits.",
+    "guidance_notes": "TR24971 offers guiding questions to elicit characteristics."
+  },
+  {
+    "id": "ISO14971-5.4-01",
+    "clause": "5.4",
+    "title": "Hazards & hazardous situations",
+    "requirement_text": "Identify known and foreseeable hazards; for each hazard, identify sequences/combinations of events leading to hazardous situations across life\u2011cycle stages.",
+    "acceptance_criteria": "Comprehensive hazard list with linked hazardous situations; life\u2011cycle coverage; interfaces considered.",
+    "expected_artifacts": "Hazard list; event trees/FTAs; interface analysis.",
+    "guidance_notes": "TR24971 Annexes give examples and techniques; systematic methods recommended."
+  },
+  {
+    "id": "ISO14971-5.5-01",
+    "clause": "5.5",
+    "title": "Risk estimation per hazardous situation",
+    "requirement_text": "For each hazardous situation, estimate the associated risk(s) using available data; define severity and probability approach; handle cases where probability cannot be estimated per policy.",
+    "acceptance_criteria": "Documented rationale, data sources, and calculation/scoring; treatment for \u2018unknown probability\u2019 aligns with RMP.",
+    "expected_artifacts": "Risk estimation tables; datasets; literature review logs.",
+    "guidance_notes": "TR24971 provides example scales and matrices; document rationale and avoid over\u2011granularity."
+  },
+  {
+    "id": "ISO14971-6-01",
+    "clause": "6",
+    "title": "Risk evaluation vs criteria",
+    "requirement_text": "Compare estimated risks against criteria for acceptability; if acceptable, treat as residual risk; otherwise proceed to risk control.",
+    "acceptance_criteria": "Evaluation outcome recorded for each hazardous situation; consistent application of criteria.",
+    "expected_artifacts": "Risk evaluation tables; sign\u2011offs.",
+    "guidance_notes": "TR24971: manufacturer sets criteria in policy/RMP; examples in Annex C."
+  },
+  {
+    "id": "ISO14971-7.1-01",
+    "clause": "7.1",
+    "title": "Risk control option analysis (priority order)",
+    "requirement_text": "Determine risk control measures and select options in priority: (a) inherently safe design/manufacture; (b) protective measures; (c) information for safety and training.",
+    "acceptance_criteria": "Controls chosen reflect priority order unless justified; rationale documented; relevant standards considered.",
+    "expected_artifacts": "Risk control option analysis log; design changes; protective features; IFU/training plans.",
+    "guidance_notes": "TR24971 expands examples for each option and their effect on probability/severity."
+  },
+  {
+    "id": "ISO14971-7.1-02",
+    "clause": "7.1",
+    "title": "Record selected measures & impracticability",
+    "requirement_text": "Record selected measures; if further reduction is not practicable, trigger benefit\u2011risk analysis.",
+    "acceptance_criteria": "Records show selected controls and any impracticability analysis with justification.",
+    "expected_artifacts": "RCA for impracticability; technical assessments.",
+    "guidance_notes": "Align with state of the art and feasibility analysis."
+  },
+  {
+    "id": "ISO14971-7.2-01",
+    "clause": "7.2",
+    "title": "Implement selected measures",
+    "requirement_text": "Implement all selected risk control measures.",
+    "acceptance_criteria": "Links from controls to design outputs/process controls; implementation evidence stored.",
+    "expected_artifacts": "Design outputs; process qualifications.",
+    "guidance_notes": "\u2014"
+  },
+  {
+    "id": "ISO14971-7.2-02",
+    "clause": "7.2",
+    "title": "Verify implementation",
+    "requirement_text": "Verify implementation of each risk control measure.",
+    "acceptance_criteria": "Objective evidence that each control exists as designed (tests/inspection).",
+    "expected_artifacts": "Verification protocols & reports; DHR evidence.",
+    "guidance_notes": "Verification may occur in design verification or process qualification."
+  },
+  {
+    "id": "ISO14971-7.2-03",
+    "clause": "7.2",
+    "title": "Verify effectiveness",
+    "requirement_text": "Verify the effectiveness of risk control measures in reducing risk.",
+    "acceptance_criteria": "Evidence that severity/probability reduction was realized; method appropriate (validation, user testing, etc.).",
+    "expected_artifacts": "Validation reports; user studies; performance tests.",
+    "guidance_notes": "Examples include dose accuracy verification or process qualification linking to risk reduction."
+  },
+  {
+    "id": "ISO14971-7.3-01",
+    "clause": "7.3",
+    "title": "Residual risk evaluation (per HS)",
+    "requirement_text": "After implementing controls, evaluate residual risk for each hazardous situation against acceptability criteria; iterate if not acceptable.",
+    "acceptance_criteria": "Residual risk recorded; next actions defined for non\u2011acceptable risks.",
+    "expected_artifacts": "Residual risk tables; decision logs.",
+    "guidance_notes": "\u2014"
+  },
+  {
+    "id": "ISO14971-7.4-01",
+    "clause": "7.4",
+    "title": "Benefit\u2011risk analysis (BRA)",
+    "requirement_text": "If residual risk is not acceptable and further control is not practicable, perform BRA to determine if benefits outweigh residual risk.",
+    "acceptance_criteria": "BRA present with data/literature; conclusion documented; if benefits do not outweigh risk, modify device or intended use.",
+    "expected_artifacts": "BRA report; clinical/market data; expert panel minutes.",
+    "guidance_notes": "Follow TR24971 guidance for BRA execution and documentation."
+  },
+  {
+    "id": "ISO14971-7.5-01",
+    "clause": "7.5",
+    "title": "Risks arising from controls",
+    "requirement_text": "Review whether risk controls introduce new hazards or affect previously estimated risks; manage any new/increased risks.",
+    "acceptance_criteria": "Assessment documented post\u2011implementation; new risks fed back into analysis.",
+    "expected_artifacts": "Change impact assessments; updated analyses.",
+    "guidance_notes": "\u2014"
+  },
+  {
+    "id": "ISO14971-7.6-01",
+    "clause": "7.6",
+    "title": "Completeness of risk control",
+    "requirement_text": "Review risk control activities for completeness across all identified hazardous situations.",
+    "acceptance_criteria": "Checklist completed; evidence that all planned controls were implemented and verified.",
+    "expected_artifacts": "Completeness review record; sign\u2011off.",
+    "guidance_notes": "\u2014"
+  },
+  {
+    "id": "ISO14971-8-01",
+    "clause": "8",
+    "title": "Overall residual risk evaluation",
+    "requirement_text": "After implementing and verifying all controls, evaluate overall residual risk in relation to benefits, using method/criteria defined in RMP.",
+    "acceptance_criteria": "Documented overall evaluation with conclusion acceptable/not; references to supporting evidence.",
+    "expected_artifacts": "Overall residual risk evaluation memo; clinical benefit dossier.",
+    "guidance_notes": "TR24971 provides guidance on methods and disclosure of significant residual risks."
+  },
+  {
+    "id": "ISO14971-8-02",
+    "clause": "8",
+    "title": "Disclosure of significant residual risks",
+    "requirement_text": "Inform users of significant residual risks in accompanying documentation.",
+    "acceptance_criteria": "Labeling/IFU includes residual risk disclosures; cross\u2011referenced in RMF.",
+    "expected_artifacts": "IFU, labeling change history; RMF cross\u2011refs.",
+    "guidance_notes": "\u2014"
+  },
+  {
+    "id": "ISO14971-9-01",
+    "clause": "9",
+    "title": "Risk management review & report",
+    "requirement_text": "Prior to commercial release, review execution of the RMP to ensure plan was implemented, overall residual risk is acceptable, and P&PP methods are in place; record results as the Risk Management Report (RMR) and include in RMF; responsibility assigned in RMP.",
+    "acceptance_criteria": "Approved RMR present; confirms criteria; identifies any conditions of release; reviewer has appropriate authority.",
+    "expected_artifacts": "Risk Management Report; RMP section listing responsible reviewer; approvals.",
+    "guidance_notes": "TR24971 notes RMR can be updated when new information emerges."
+  },
+  {
+    "id": "ISO14971-10.1-01",
+    "clause": "10.1",
+    "title": "System for P&PP monitoring",
+    "requirement_text": "Establish, document, and maintain a system to actively collect and review safety\u2011relevant information during production and post\u2011production; consider appropriate collection and processing methods.",
+    "acceptance_criteria": "PMS system/procedures defined; active and passive sources listed; responsibilities and tools defined.",
+    "expected_artifacts": "PMS Plan; complaint handling SOP; vigilance/field action procedures; data pipelines.",
+    "guidance_notes": "TR24971 emphasizes the feedback loop to keep RM continuous; aligns with ISO 13485 and ISO/TR 20416."
+  },
+  {
+    "id": "ISO14971-10.2-01",
+    "clause": "10.2",
+    "title": "Information collection \u2014 sources",
+    "requirement_text": "Collect information as applicable: production/process monitoring; user and servicing feedback; supply chain inputs; publicly available information; and state of the art; also consider similar devices and other products.",
+    "acceptance_criteria": "Evidence of routine ingestion from listed sources; periodic literature/signal review; competitor/alternative therapy monitoring.",
+    "expected_artifacts": "Supplier quality records; service logs; complaint database; literature review logs.",
+    "guidance_notes": "TR24971 explains typical sources and the value of prior experience with similar devices."
+  },
+  {
+    "id": "ISO14971-10.3-01",
+    "clause": "10.3",
+    "title": "Information review & escalation",
+    "requirement_text": "Review collected information for relevance to safety (e.g., new hazards, risks no longer acceptable) and feed back into earlier RM phases with appropriate actions.",
+    "acceptance_criteria": "Signal review minutes; triggers documented; updates to hazard analysis/RMP; CAPA as needed.",
+    "expected_artifacts": "Signal management SOP; safety review board minutes; RM updates.",
+    "guidance_notes": "TR24971 details the continuous feedback loop and alignment with PMS."
+  },
+  {
+    "id": "TR24971-AnnC-01",
+    "clause": "TR \u00a76 & Annex C",
+    "title": "Risk matrices & scales documented",
+    "requirement_text": "If using qualitative or semi\u2011quantitative scales/matrices, document definitions, ranges, and rationale for chosen matrix size and cut\u2011points.",
+    "acceptance_criteria": "Matrix legend and definitions approved; justification for scale choice; avoid excessive levels without data support.",
+    "expected_artifacts": "Risk matrix appendix; probability/severity definitions.",
+    "guidance_notes": "TR24971 includes example 3\u00d73 and 5\u00d75 matrices and warns about data needs for >5 levels."
+  },
+  {
+    "id": "TR24971-Trace-01",
+    "clause": "TR \u00a74.5",
+    "title": "Traceability approach documented",
+    "requirement_text": "Document the traceability method/tool linking hazards \u2192 analysis \u2192 evaluation \u2192 controls \u2192 residual risk \u2192 overall evaluation.",
+    "acceptance_criteria": "Traceability index is complete and stays current through changes; retrievable quickly.",
+    "expected_artifacts": "Traceability matrix; RMF index.",
+    "guidance_notes": "TR24971 recommends a hazard\u2011centric index and keeping it current as devices change."
+  }
+]
