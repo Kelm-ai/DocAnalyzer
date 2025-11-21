@@ -3,17 +3,19 @@
 
 -- ISO Requirements table
 CREATE TABLE IF NOT EXISTS iso_requirements (
-    id TEXT PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     clause TEXT NOT NULL,
     title TEXT NOT NULL,
-    requirement_text TEXT NOT NULL,
-    acceptance_criteria TEXT,
-    expected_artifacts TEXT,
+    requirement_text TEXT,
+    display_order INTEGER NOT NULL DEFAULT 0,
     evaluation_type TEXT,
-    guidance_notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Add comments for documentation
+COMMENT ON COLUMN iso_requirements.requirement_text IS 'Detailed text description of the requirement';
+COMMENT ON COLUMN iso_requirements.display_order IS 'Integer value controlling the display order of requirements in the UI';
 
 -- Document Evaluations table
 CREATE TABLE IF NOT EXISTS document_evaluations (
@@ -41,7 +43,7 @@ CREATE TABLE IF NOT EXISTS document_evaluations (
 CREATE TABLE IF NOT EXISTS requirement_evaluations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_evaluation_id UUID REFERENCES document_evaluations(id) ON DELETE CASCADE,
-    requirement_id TEXT REFERENCES iso_requirements(id),
+    requirement_id UUID REFERENCES iso_requirements(id),
     status TEXT NOT NULL CHECK (status IN ('PASS', 'FAIL', 'FLAGGED', 'PARTIAL', 'NOT_APPLICABLE', 'ERROR')),
     confidence_level TEXT NOT NULL DEFAULT 'low' CHECK (confidence_level IN ('low', 'medium', 'high')),
     evidence_snippets TEXT[],
@@ -87,12 +89,41 @@ CREATE INDEX IF NOT EXISTS idx_requirement_evaluations_status ON requirement_eva
 CREATE INDEX IF NOT EXISTS idx_compliance_reports_doc_id ON compliance_reports(document_evaluation_id);
 CREATE INDEX IF NOT EXISTS idx_processed_documents_filename ON processed_documents(filename);
 
+-- Repeatability testing results
+CREATE TABLE IF NOT EXISTS eval_results (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    batch_id TEXT NOT NULL,
+    config_label TEXT NOT NULL,
+    doc_id TEXT NOT NULL,
+    requirement_id TEXT NOT NULL,
+    run_index INT NOT NULL,
+    model_label TEXT NOT NULL,
+    raw_output JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'eval_results_unique_run'
+    ) THEN
+        ALTER TABLE eval_results
+        ADD CONSTRAINT eval_results_unique_run
+        UNIQUE (batch_id, doc_id, requirement_id, run_index);
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_eval_results_batch ON eval_results(batch_id);
+CREATE INDEX IF NOT EXISTS idx_eval_results_config ON eval_results(config_label);
+CREATE INDEX IF NOT EXISTS idx_eval_results_doc_req ON eval_results(doc_id, requirement_id);
+
 -- Enable Row Level Security (RLS) - optional, adjust based on your needs
 ALTER TABLE iso_requirements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE document_evaluations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE requirement_evaluations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE compliance_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE processed_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE eval_results ENABLE ROW LEVEL SECURITY;
 
 -- Create policies (example - adjust based on your authentication needs)
 CREATE POLICY "Allow read access to iso_requirements" ON iso_requirements FOR SELECT USING (true);
@@ -100,3 +131,4 @@ CREATE POLICY "Allow full access to document_evaluations" ON document_evaluation
 CREATE POLICY "Allow full access to requirement_evaluations" ON requirement_evaluations FOR ALL USING (true);
 CREATE POLICY "Allow full access to compliance_reports" ON compliance_reports FOR ALL USING (true);
 CREATE POLICY "Allow full access to processed_documents" ON processed_documents FOR ALL USING (true);
+CREATE POLICY "Allow full access to eval_results" ON eval_results FOR ALL USING (true);

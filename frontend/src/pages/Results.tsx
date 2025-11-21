@@ -32,6 +32,50 @@ const STATUS_STYLES: Record<string, string> = {
 
 const DEFAULT_STATUS_STYLE = "bg-slate-100 text-slate-700 border border-slate-200"
 
+type ConfidenceLevel = RequirementResult["confidence_level"]
+
+const CONFIDENCE_LEVEL_META: Record<ConfidenceLevel, { label: string; className: string; sort: number }> = {
+  low: {
+    label: "Low",
+    className: "bg-slate-100 text-slate-600 border border-slate-200",
+    sort: 0,
+  },
+  medium: {
+    label: "Medium",
+    className: "bg-amber-50 text-amber-700 border border-amber-200",
+    sort: 1,
+  },
+  high: {
+    label: "High",
+    className: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    sort: 2,
+  },
+}
+
+const DEFAULT_CONFIDENCE_META = {
+  label: "Unknown",
+  className: "bg-slate-100 text-slate-600 border border-slate-200",
+  sort: -1,
+}
+
+function getConfidenceMeta(level?: RequirementResult["confidence_level"]) {
+  if (!level) {
+    return DEFAULT_CONFIDENCE_META
+  }
+  return CONFIDENCE_LEVEL_META[level] ?? DEFAULT_CONFIDENCE_META
+}
+
+function getConfidenceSortValue(row: RequirementResult) {
+  const meta = getConfidenceMeta(row.confidence_level)
+  if (meta.sort >= 0) {
+    return meta.sort
+  }
+  if (typeof row.confidence_score === "number") {
+    return row.confidence_score
+  }
+  return -1
+}
+
 type FeedbackEntry = {
   isHelpful: boolean | null
   comment: string
@@ -54,6 +98,10 @@ function formatPercent(score: number | null | undefined): string {
   }
   const normalized = score > 1 ? score : score * 100
   return `${Math.round(normalized)}%`
+}
+
+function formatConfidenceLabel(level?: RequirementResult["confidence_level"]): string {
+  return getConfidenceMeta(level).label
 }
 
 function truncateText(value: string | null | undefined, length = 140): string {
@@ -307,7 +355,11 @@ export function Results() {
       "Requirement ID": req.requirement_id || "",
       "Title": req.title || "",
       "Status": (req.status || "PENDING").toUpperCase(),
-      "Confidence": req.confidence_score != null ? `${Math.round(req.confidence_score * 100)}%` : "N/A",
+      "Confidence Level": formatConfidenceLabel(req.confidence_level),
+      "Confidence Score": (() => {
+        const formatted = formatPercent(req.confidence_score)
+        return formatted === "—" ? "N/A" : formatted
+      })(),
       "Evaluation Rationale": req.evaluation_rationale || "",
       "Evidence Snippets": req.evidence_snippets?.filter(Boolean).join(" | ") || "",
       "Gaps Identified": req.gaps_identified?.filter(Boolean).join(" | ") || "",
@@ -338,6 +390,30 @@ export function Results() {
             </div>
           </div>
         ),
+        filterFn: (row, _columnId, filterValue) => {
+          const query = String(filterValue ?? "").trim().toLowerCase()
+          if (!query) {
+            return true
+          }
+
+          const {
+            title,
+            requirement_id: requirementId,
+            evaluation_rationale: evaluationRationale,
+            evidence_snippets: evidenceSnippets,
+            gaps_identified: gapsIdentified,
+          } = row.original
+
+          const searchableFields = [
+            title,
+            requirementId,
+            evaluationRationale,
+            ...(Array.isArray(evidenceSnippets) ? evidenceSnippets : []),
+            ...(Array.isArray(gapsIdentified) ? gapsIdentified : []),
+          ].filter((value): value is string => typeof value === "string" && value.length > 0)
+
+          return searchableFields.some((field) => field.toLowerCase().includes(query))
+        },
       },
       {
         accessorKey: "status",
@@ -357,17 +433,25 @@ export function Results() {
         id: "confidence",
         header: "Confidence",
         enableSorting: true,
-        accessorFn: (row) => row.confidence_score ?? -1,
-        sortingFn: (a, b) => {
-          const left = a.original.confidence_score ?? -1
-          const right = b.original.confidence_score ?? -1
-          return left - right
+        accessorFn: (row) => getConfidenceSortValue(row),
+        sortingFn: (a, b) => getConfidenceSortValue(a.original) - getConfidenceSortValue(b.original),
+        cell: ({ row }) => {
+          const meta = getConfidenceMeta(row.original.confidence_level)
+          const percentText = formatPercent(row.original.confidence_score)
+          return (
+            <div className="flex flex-col gap-1">
+              <Badge
+                variant="outline"
+                className={`px-2 py-1 text-xs font-medium ${meta.className}`}
+              >
+                {meta.label} confidence
+              </Badge>
+              {percentText !== "—" ? (
+                <span className="text-xs text-slate-500">{percentText}</span>
+              ) : null}
+            </div>
+          )
         },
-        cell: ({ row }) => (
-          <span className="text-sm text-slate-900">
-            {formatPercent(row.original.confidence_score)}
-          </span>
-        ),
       },
       {
         id: "rationale",
@@ -583,6 +667,12 @@ export function Results() {
   const activeFeedbackEntry = activeRequirement
     ? feedbackMap[activeRequirement.requirement_id] ?? createDefaultFeedbackEntry()
     : createDefaultFeedbackEntry()
+  const activeConfidenceMeta = activeRequirement
+    ? getConfidenceMeta(activeRequirement.confidence_level)
+    : DEFAULT_CONFIDENCE_META
+  const activeConfidencePercent = activeRequirement
+    ? formatPercent(activeRequirement.confidence_score)
+    : "—"
 
   return (
     <div className="space-y-6">
@@ -705,9 +795,17 @@ export function Results() {
                   >
                     {(activeRequirement.status || "").replace(/_/g, " ").toUpperCase()}
                   </Badge>
-                  <span className="text-xs text-slate-500">
-                    Confidence {formatPercent(activeRequirement.confidence_score)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={`px-2 py-1 text-xs font-medium ${activeConfidenceMeta.className}`}
+                    >
+                      {activeConfidenceMeta.label} confidence
+                    </Badge>
+                    {activeConfidencePercent !== "—" ? (
+                      <span className="text-xs text-slate-500">{activeConfidencePercent}</span>
+                    ) : null}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-3">

@@ -8,11 +8,12 @@ import os
 import json
 import uuid
 import asyncio
+import tempfile
 from datetime import datetime
 from typing import List, Dict, Optional, Any, Literal
 from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Depends, Query, Response
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -22,11 +23,6 @@ from dotenv import load_dotenv
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Azure imports
-from azure.storage.blob import BlobServiceClient
-from azure.search.documents import SearchClient
-from azure.core.credentials import AzureKeyCredential
 
 # Local imports
 import sys
@@ -87,7 +83,10 @@ for path in (ROOT_DIR, SCRIPTS_DIR, TEST_EVALUATION_DIR, BASE_DIR):
     if str_path not in sys.path:
         sys.path.append(str_path)
 
-EVALUATION_PIPELINE = os.getenv("EVALUATION_PIPELINE", "vision").lower()
+raw_pipeline = os.getenv("EVALUATION_PIPELINE", "vision").lower()
+if raw_pipeline == "azure":
+    logger.warning("EVALUATION_PIPELINE=azure is no longer supported – defaulting to vision pipeline")
+EVALUATION_PIPELINE = "vision" if raw_pipeline == "azure" else raw_pipeline
 
 # Vision evaluator (optional)
 try:
@@ -142,6 +141,7 @@ async def health_check() -> Dict[str, Any]:
         "status": "ok",
         "pipeline": get_active_pipeline_name(),
         "model": get_active_model_name(),
+        "vision_provider": get_active_provider_name(),
         "timestamp": datetime.utcnow().isoformat(),
     }
 
@@ -168,6 +168,12 @@ def get_active_model_name() -> Optional[str]:
         return getattr(pipeline, "model", None)
     if vision_evaluator is not None:
         return getattr(vision_evaluator, "model", None)
+    return None
+
+
+def get_active_provider_name() -> Optional[str]:
+    if vision_evaluator is not None:
+        return getattr(vision_evaluator, "provider", None)
     return None
 
 
@@ -239,23 +245,20 @@ def _is_valid_uuid(value: str) -> bool:
         return False
 
 
-def _extract_clause(requirement_id: str) -> str:
-    if not requirement_id:
-        return "Unknown"
-    if '-' in requirement_id:
-        try:
-            return requirement_id.split('-')[1].split('.')[0]
-        except IndexError:
-            return "Unknown"
-    return "Unknown"
-
-
 def create_vision_compliance_report(evaluation_id: str, results: List[Dict[str, Any]], summary: Dict[str, Any]) -> None:
     supabase = get_supabase_client()
 
+    # Fetch all requirements to get clause information
+    requirements_response = supabase.table('iso_requirements').select('id, clause').execute()
+    requirement_clauses = {str(req['id']): req.get('clause', 'Unknown') for req in requirements_response.data}
+
     by_clause: Dict[str, Dict[str, int]] = {}
     for record in results:
-        clause = _extract_clause(str(record.get('requirement_id', '')))
+        requirement_id = str(record.get('requirement_id', ''))
+        clause = requirement_clauses.get(requirement_id, 'Unknown')
+        # Extract the main clause number (e.g., "4.1" -> "4")
+        if clause and clause != 'Unknown' and '.' in clause:
+            clause = clause.split('.')[0]
         status = str(record.get('status', '')).upper()
         clause_bucket = by_clause.setdefault(clause, {'pass': 0, 'fail': 0, 'flagged': 0, 'na': 0})
         if status == 'PASS':
@@ -270,7 +273,7 @@ def create_vision_compliance_report(evaluation_id: str, results: List[Dict[str, 
     high_risk = [
         record.get('requirement_id')
         for record in results
-        if str(record.get('status')).upper() == 'FAIL' and '4.' in str(record.get('requirement_id', ''))
+        if str(record.get('status')).upper() == 'FAIL' and requirement_clauses.get(str(record.get('requirement_id', '')), '').startswith('4.')
     ]
 
     key_gaps: List[str] = []
@@ -432,20 +435,16 @@ class ISORequirementResponse(BaseModel):
     id: str
     clause: str
     title: str
-    requirement_text: str
-    acceptance_criteria: Optional[str] = None
-    expected_artifacts: Optional[str] = None
-    guidance_notes: Optional[str] = None
+    requirement_text: Optional[str] = None
+    display_order: int = 0
     evaluation_type: Optional[str] = None
 
 
 class ISORequirementCreate(BaseModel):
     clause: str
     title: str
-    requirement_text: str
-    acceptance_criteria: Optional[str] = None
-    expected_artifacts: Optional[str] = None
-    guidance_notes: Optional[str] = None
+    requirement_text: Optional[str] = None
+    display_order: Optional[int] = None
     evaluation_type: Optional[str] = None
 
 
@@ -453,9 +452,7 @@ class ISORequirementUpdate(BaseModel):
     clause: Optional[str] = None
     title: Optional[str] = None
     requirement_text: Optional[str] = None
-    acceptance_criteria: Optional[str] = None
-    expected_artifacts: Optional[str] = None
-    guidance_notes: Optional[str] = None
+    display_order: Optional[int] = None
     evaluation_type: Optional[str] = None
 
 
@@ -493,7 +490,11 @@ async def startup_event():
             vision_evaluator = VisionResponsesEvaluator()
             if getattr(vision_evaluator, "supabase", None) is None:
                 raise RuntimeError("Vision evaluator requires Supabase credentials; none were provided")
-            logger.info("Vision evaluator initialized successfully")
+            logger.info(
+                "Vision evaluator initialized successfully (provider=%s, model=%s)",
+                getattr(vision_evaluator, "provider", "openai"),
+                getattr(vision_evaluator, "model", None),
+            )
         elif EVALUATION_PIPELINE == "azure":
             if AZURE_PIPELINE_AVAILABLE and CompliancePipeline is not None:
                 config = Config()
@@ -504,13 +505,9 @@ async def startup_event():
         else:
             raise RuntimeError(f"Unsupported EVALUATION_PIPELINE setting: {EVALUATION_PIPELINE}")
 
+        document_intelligence_service = None
         if DOCUMENT_INTELLIGENCE_AVAILABLE:
-            try:
-                document_intelligence_service = DocumentIntelligenceService()
-                logger.info("Document Intelligence service initialized successfully")
-            except Exception as doc_error:
-                document_intelligence_service = None
-                logger.warning(f"Document Intelligence service initialization failed: {doc_error}")
+            logger.info("Document Intelligence service disabled (Azure integration retired)")
         else:
             logger.info("Document Intelligence service dependencies not available")
 
@@ -543,6 +540,7 @@ async def root():
         "document_intelligence": doc_intel_status,
         "configured_pipeline": EVALUATION_PIPELINE,
         "vision_available": VISION_PIPELINE_AVAILABLE,
+        "vision_provider": get_active_provider_name(),
     }
 
 
@@ -565,9 +563,9 @@ async def convert_document_to_markdown(
     strip_comments: bool = Query(True, description="Remove HTML comments from the output"),
     store_in_supabase: bool = Query(False, description="Persist the processed markdown to Supabase")
 ):
-    """Convert an uploaded document to markdown using Azure Document Intelligence"""
+    """Legacy Azure Document Intelligence endpoint (disabled)"""
     if document_intelligence_service is None:
-        raise HTTPException(status_code=503, detail="Document Intelligence service is not configured")
+        raise HTTPException(status_code=503, detail="Document Intelligence service has been retired; use the vision pipeline instead")
 
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
@@ -647,40 +645,39 @@ async def upload_document(
         
         if not file.filename.lower().endswith(('.pdf', '.docx')):
             raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported")
-        
-        # Generate unique filename
-        file_extension = Path(file.filename).suffix
-        unique_filename = f"{uuid.uuid4()}{file_extension}"
-        
-        # Upload to Azure Storage
-        blob_service_client = BlobServiceClient.from_connection_string(
-            os.getenv('AZURE_STORAGE_CONNECTION_STRING')
-        )
-        
-        blob_client = blob_service_client.get_blob_client(
-            container="sc-documents",
-            blob=unique_filename
-        )
-        
-        # Upload file
+
         content = await file.read()
-        blob_client.upload_blob(content, overwrite=True)
-        
-        logger.info(f"Uploaded {file.filename} as {unique_filename}")
-        
+        if not content:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty")
+
+        # Store locally for the vision pipeline (ChatGPT file upload handled inside evaluator)
+        file_extension = Path(file.filename).suffix
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
+            temp_file.write(content)
+            temp_file_path = temp_file.name
+
         # Create document evaluation record
         evaluation_data = {
             'document_name': file.filename,
             'status': 'in_progress',
             'created_at': datetime.utcnow().isoformat()
         }
-        
-        result = get_supabase_client().table('document_evaluations').insert(evaluation_data).execute()
+
+        try:
+            result = get_supabase_client().table('document_evaluations').insert(evaluation_data).execute()
+        except Exception as insert_error:
+            logger.error(f"Failed to create evaluation record: {insert_error}")
+            try:
+                os.remove(temp_file_path)
+            except FileNotFoundError:
+                pass
+            raise HTTPException(status_code=500, detail="Unable to create evaluation record")
+
         evaluation_id = result.data[0]['id']
-        
+
         # Start background evaluation
-        background_tasks.add_task(run_evaluation, evaluation_id, unique_filename)
-        
+        background_tasks.add_task(run_evaluation, evaluation_id, temp_file_path, file.filename)
+
         return {
             "evaluation_id": evaluation_id,
             "filename": file.filename,
@@ -694,10 +691,11 @@ async def upload_document(
 
 
 
-async def run_evaluation(evaluation_id: str, blob_name: str):
+async def run_evaluation(evaluation_id: str, file_path: str, original_filename: Optional[str] = None):
     """Background task to run document evaluation"""
     try:
-        logger.info(f"Starting evaluation for {blob_name}")
+        display_name = original_filename or Path(file_path).name
+        logger.info(f"Starting evaluation for {display_name} (path={file_path})")
         try:
             import openai
             logger.info(
@@ -712,41 +710,18 @@ async def run_evaluation(evaluation_id: str, blob_name: str):
         # Note: Database only allows: pending, in_progress, completed, error
         # The record already has 'in_progress' status, so no need to update here
 
-        # Run evaluation - use the Azure pipeline when available, otherwise fall back to the configured evaluator
-        if pipeline is not None:
-            # Use Azure pipeline
-            await pipeline.evaluate_document(blob_name, evaluation_id)
-        else:
-            # Download blob to temp file and evaluate with configured pipeline
-            from azure.storage.blob import BlobServiceClient
-            import tempfile
+        # Run evaluation using the vision pipeline (uploads to ChatGPT's Files API internally)
+        logger.info(
+            "Active pipeline: %s (provider=%s)",
+            get_active_pipeline_name(),
+            get_active_provider_name(),
+        )
+        if vision_evaluator is None or EVALUATION_PIPELINE != "vision":
+            raise RuntimeError("Vision evaluator pipeline is not configured")
+        summary = await vision_evaluator.evaluate_document(file_path)
+        persist_vision_results(evaluation_id, summary)
 
-            blob_service_client = BlobServiceClient.from_connection_string(
-                os.getenv('AZURE_STORAGE_CONNECTION_STRING')
-            )
-            blob_client = blob_service_client.get_blob_client(
-                container="sc-documents",
-                blob=blob_name
-            )
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(blob_name)[1]) as temp_file:
-                blob_data = blob_client.download_blob()
-                temp_file.write(blob_data.readall())
-                temp_file_path = temp_file.name
-
-            try:
-                logger.info("Active pipeline: %s", get_active_pipeline_name())
-                if vision_evaluator is None or EVALUATION_PIPELINE != "vision":
-                    raise RuntimeError("Vision evaluator pipeline is not configured")
-                summary = await vision_evaluator.evaluate_document(temp_file_path)
-                persist_vision_results(evaluation_id, summary)
-            finally:
-                try:
-                    os.remove(temp_file_path)
-                except FileNotFoundError:
-                    pass
-
-        logger.info(f"Evaluation completed for {blob_name}")
+        logger.info(f"Evaluation completed for {display_name}")
 
     except Exception as e:
         logger.error(f"Evaluation error: {e}")
@@ -756,6 +731,11 @@ async def run_evaluation(evaluation_id: str, blob_name: str):
             'error_message': str(e),
             'completed_at': datetime.utcnow().isoformat()
         }).eq('id', evaluation_id).execute()
+    finally:
+        try:
+            os.remove(file_path)
+        except FileNotFoundError:
+            pass
 
 
 @app.get("/api/requirements", response_model=List[ISORequirementResponse])
@@ -765,6 +745,7 @@ async def list_iso_requirements():
     try:
         response = supabase.table('iso_requirements') \
             .select('*') \
+            .order('display_order') \
             .order('clause') \
             .execute()
     except Exception as error:
@@ -778,20 +759,26 @@ async def list_iso_requirements():
         requirement_id = row.get('id')
         clause = row.get('clause')
         title = row.get('title')
-        requirement_text = row.get('requirement_text')
 
-        if not requirement_id or not clause or not title or not requirement_text:
+        clause_value = str(clause).strip() if clause is not None else ""
+        title_value = str(title).strip() if title is not None else ""
+
+        if not requirement_id or not clause_value or not title_value:
             logger.warning("Skipping malformed requirement row: %s", row)
             continue
 
+        display_order_raw = row.get('display_order')
+        try:
+            display_order_value = int(display_order_raw) if display_order_raw is not None else 0
+        except (TypeError, ValueError):
+            display_order_value = 0
+
         requirements.append(ISORequirementResponse(
             id=str(requirement_id),
-            clause=str(clause),
-            title=str(title),
-            requirement_text=str(requirement_text),
-            acceptance_criteria=row.get('acceptance_criteria'),
-            expected_artifacts=row.get('expected_artifacts'),
-            guidance_notes=row.get('guidance_notes'),
+            clause=clause_value,
+            title=title_value,
+            requirement_text=row.get('requirement_text'),
+            display_order=display_order_value,
             evaluation_type=row.get('evaluation_type'),
         ))
 
@@ -803,14 +790,17 @@ async def create_iso_requirement(payload: ISORequirementCreate):
     """Create a new ISO requirement in Supabase."""
     clause = payload.clause.strip()
     title = payload.title.strip()
-    requirement_text = payload.requirement_text.strip()
+    display_order = payload.display_order if payload.display_order is not None else None
+    requirement_text = _normalize_optional_text(payload.requirement_text)
 
     if not clause:
         raise HTTPException(status_code=400, detail="Clause is required")
     if not title:
         raise HTTPException(status_code=400, detail="Title is required")
-    if not requirement_text:
-        raise HTTPException(status_code=400, detail="Requirement text is required")
+    if display_order is not None and display_order < 0:
+        raise HTTPException(status_code=400, detail="Order must be zero or a positive integer")
+
+    resolved_order = display_order if display_order is not None else 0
 
     requirement_id = str(uuid.uuid4())
     record = {
@@ -818,9 +808,7 @@ async def create_iso_requirement(payload: ISORequirementCreate):
         'clause': clause,
         'title': title,
         'requirement_text': requirement_text,
-        'acceptance_criteria': _normalize_optional_text(payload.acceptance_criteria),
-        'expected_artifacts': _normalize_optional_text(payload.expected_artifacts),
-        'guidance_notes': _normalize_optional_text(payload.guidance_notes),
+        'display_order': display_order if display_order is not None else resolved_order,
         'evaluation_type': _normalize_optional_text(payload.evaluation_type),
         'updated_at': datetime.utcnow().isoformat(),
     }
@@ -847,10 +835,8 @@ async def create_iso_requirement(payload: ISORequirementCreate):
         id=str(saved.get('id', requirement_id)),
         clause=str(saved.get('clause', clause)),
         title=str(saved.get('title', title)),
-        requirement_text=str(saved.get('requirement_text', requirement_text)),
-        acceptance_criteria=saved.get('acceptance_criteria'),
-        expected_artifacts=saved.get('expected_artifacts'),
-        guidance_notes=saved.get('guidance_notes'),
+        requirement_text=saved.get('requirement_text'),
+        display_order=int(saved.get('display_order', record.get('display_order', 0)) or 0),
         evaluation_type=saved.get('evaluation_type'),
     )
 
@@ -873,19 +859,12 @@ async def update_iso_requirement(requirement_id: str, payload: ISORequirementUpd
         updates['title'] = title
 
     if payload.requirement_text is not None:
-        requirement_text = payload.requirement_text.strip()
-        if not requirement_text:
-            raise HTTPException(status_code=400, detail="Requirement text is required")
-        updates['requirement_text'] = requirement_text
+        updates['requirement_text'] = _normalize_optional_text(payload.requirement_text)
 
-    if payload.acceptance_criteria is not None:
-        updates['acceptance_criteria'] = _normalize_optional_text(payload.acceptance_criteria)
-
-    if payload.expected_artifacts is not None:
-        updates['expected_artifacts'] = _normalize_optional_text(payload.expected_artifacts)
-
-    if payload.guidance_notes is not None:
-        updates['guidance_notes'] = _normalize_optional_text(payload.guidance_notes)
+    if payload.display_order is not None:
+        if payload.display_order < 0:
+            raise HTTPException(status_code=400, detail="Order must be zero or a positive integer")
+        updates['display_order'] = payload.display_order
 
     if payload.evaluation_type is not None:
         updates['evaluation_type'] = _normalize_optional_text(payload.evaluation_type)
@@ -924,10 +903,8 @@ async def update_iso_requirement(requirement_id: str, payload: ISORequirementUpd
         id=str(saved.get('id', requirement_id)),
         clause=str(saved.get('clause', updates.get('clause', ''))),
         title=str(saved.get('title', updates.get('title', ''))),
-        requirement_text=str(saved.get('requirement_text', updates.get('requirement_text', ''))),
-        acceptance_criteria=saved.get('acceptance_criteria'),
-        expected_artifacts=saved.get('expected_artifacts'),
-        guidance_notes=saved.get('guidance_notes'),
+        requirement_text=saved.get('requirement_text', updates.get('requirement_text')),
+        display_order=int(saved.get('display_order', updates.get('display_order', 0)) or 0),
         evaluation_type=saved.get('evaluation_type'),
     )
 

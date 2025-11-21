@@ -8,6 +8,55 @@ import { Progress } from "@/components/ui/progress"
 import type { RequirementEvaluation } from "@/lib/types"
 import { mockRequirements } from "@/lib/mockData"
 
+type ConfidenceLevel = NonNullable<RequirementEvaluation["confidence_level"]>
+
+const CONFIDENCE_LABELS: Record<ConfidenceLevel, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+}
+
+const CONFIDENCE_BADGE_CLASSES: Record<ConfidenceLevel, string> = {
+  low: "bg-slate-100 text-slate-600 border border-slate-200",
+  medium: "bg-amber-50 text-amber-700 border border-amber-200",
+  high: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+}
+
+const CONFIDENCE_PERCENT_FALLBACK: Record<ConfidenceLevel, number> = {
+  low: 35,
+  medium: 65,
+  high: 90,
+}
+
+const getConfidenceLabel = (level?: RequirementEvaluation["confidence_level"]) => {
+  if (!level) {
+    return "Unknown"
+  }
+  return CONFIDENCE_LABELS[level]
+}
+
+const getConfidenceBadgeClass = (level?: RequirementEvaluation["confidence_level"]) => {
+  if (!level) {
+    return "bg-slate-100 text-slate-600 border border-slate-200"
+  }
+  return CONFIDENCE_BADGE_CLASSES[level]
+}
+
+const getConfidencePercent = (
+  level?: RequirementEvaluation["confidence_level"],
+  score?: number
+): number | null => {
+  if (typeof score === "number" && Number.isFinite(score)) {
+    const normalized = score <= 1 ? score * 100 : score
+    const clamped = Math.max(0, Math.min(100, normalized))
+    return Math.round(clamped)
+  }
+  if (level) {
+    return CONFIDENCE_PERCENT_FALLBACK[level]
+  }
+  return null
+}
+
 export function RequirementsTable() {
   const [requirements] = useState<RequirementEvaluation[]>(mockRequirements)
   const [searchTerm, setSearchTerm] = useState("")
@@ -49,10 +98,11 @@ export function RequirementsTable() {
 
   const filteredRequirements = useMemo(() => {
     return requirements.filter((req) => {
-      const matchesSearch = searchTerm === "" || 
-        req.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        req.requirement_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        req.id.toLowerCase().includes(searchTerm.toLowerCase())
+      const search = searchTerm.toLowerCase()
+      const matchesSearch = search === "" || 
+        req.title.toLowerCase().includes(search) ||
+        req.id.toLowerCase().includes(search) ||
+        (req.evaluation_type ?? "").toLowerCase().includes(search)
       
       const matchesStatus = statusFilter === "all" || req.status === statusFilter
       const matchesClause = clauseFilter === "all" || req.clause === clauseFilter
@@ -77,19 +127,23 @@ export function RequirementsTable() {
       return
     }
 
-    const exportRows = filteredRequirements.map((req) => ({
-      ID: req.id,
-      Clause: req.clause,
-      Title: req.title,
-      Status: req.status ?? "PENDING",
-      Confidence: req.confidence != null ? `${Math.round(req.confidence * 100)}%` : "N/A",
-      "Requirement Text": req.requirement_text,
-      "Acceptance Criteria": req.acceptance_criteria ?? "",
-      "Expected Artifacts": req.expected_artifacts ?? "",
-      "Evidence Snippets": req.evidence_snippets?.join("\n") ?? "",
-      Gaps: req.gaps?.join("\n") ?? "",
-      Recommendations: req.recommendations?.join("\n") ?? ""
-    }))
+    const exportRows = filteredRequirements.map((req) => {
+      const confidencePercent = getConfidencePercent(req.confidence_level, req.confidence_score)
+      return {
+        ID: req.id,
+        Clause: req.clause,
+        Order: req.display_order ?? "",
+        Title: req.title,
+        "Evaluation Type": req.evaluation_type ?? "",
+        Status: req.status ?? "PENDING",
+        "Confidence Level": getConfidenceLabel(req.confidence_level),
+        "Confidence Score": confidencePercent !== null ? `${confidencePercent}%` : "N/A",
+        Rationale: req.evaluation_rationale ?? "",
+        "Evidence Snippets": req.evidence_snippets?.join("\n") ?? "",
+        Gaps: req.gaps?.join("\n") ?? "",
+        Recommendations: req.recommendations?.join("\n") ?? ""
+      }
+    })
 
     const worksheet = XLSX.utils.json_to_sheet(exportRows)
     const workbook = XLSX.utils.book_new()
@@ -168,6 +222,7 @@ export function RequirementsTable() {
                       <th className="w-10"></th>
                       <th className="text-left p-3 font-medium">ID</th>
                       <th className="text-left p-3 font-medium">Clause</th>
+                      <th className="text-left p-3 font-medium">Order</th>
                       <th className="text-left p-3 font-medium">Title</th>
                       <th className="text-left p-3 font-medium">Status</th>
                       <th className="text-left p-3 font-medium">Confidence</th>
@@ -175,105 +230,150 @@ export function RequirementsTable() {
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.entries(groupedByClause).map(([clause, reqs]) => (
-                      <React.Fragment key={clause}>
-                        <tr className="border-b bg-muted/20">
-                          <td colSpan={7} className="p-2 font-semibold">
-                            Clause {clause}
-                          </td>
-                        </tr>
-                        {reqs.map(req => (
-                          <React.Fragment key={req.id}>
-                            <tr className="border-b hover:bg-muted/10">
-                              <td className="p-3">
-                                <button
-                                  onClick={() => toggleRow(req.id)}
-                                  className="p-1"
-                                >
-                                  {expandedRows.has(req.id) ? (
-                                    <ChevronDown className="h-4 w-4" />
-                                  ) : (
-                                    <ChevronRight className="h-4 w-4" />
-                                  )}
-                                </button>
-                              </td>
-                              <td className="p-3 text-sm font-mono">{req.id}</td>
-                              <td className="p-3 text-sm">{req.clause}</td>
-                              <td className="p-3 text-sm font-medium">{req.title}</td>
-                              <td className="p-3">{getStatusBadge(req.status)}</td>
-                              <td className="p-3">
-                                {req.confidence && (
-                                  <div className="flex items-center space-x-2">
-                                    <Progress
-                                      value={req.confidence * 100}
-                                      className="w-20 h-2"
-                                    />
-                                    <span className="text-xs text-muted-foreground">
-                                      {Math.round(req.confidence * 100)}%
-                                    </span>
-                                  </div>
+                    {Object.entries(groupedByClause).map(([clause, reqs]) => {
+                      return (
+                        <React.Fragment key={clause}>
+                          <tr className="border-b bg-muted/20">
+                            <td colSpan={8} className="p-2 font-semibold">
+                              Clause {clause}
+                            </td>
+                          </tr>
+                          {reqs.map((req) => {
+                            const confidencePercent = getConfidencePercent(
+                              req.confidence_level,
+                              req.confidence_score
+                            )
+                            const hasConfidenceData =
+                              Boolean(req.confidence_level) ||
+                              typeof req.confidence_score === "number"
+
+                            return (
+                              <React.Fragment key={req.id}>
+                                <tr className="border-b hover:bg-muted/10">
+                                  <td className="p-3">
+                                    <button
+                                      onClick={() => toggleRow(req.id)}
+                                      className="p-1"
+                                    >
+                                      {expandedRows.has(req.id) ? (
+                                        <ChevronDown className="h-4 w-4" />
+                                      ) : (
+                                        <ChevronRight className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                  </td>
+                                  <td className="p-3 text-sm font-mono">{req.id}</td>
+                                  <td className="p-3 text-sm">{req.clause}</td>
+                                  <td className="p-3 text-sm">{req.display_order ?? "—"}</td>
+                                  <td className="p-3 text-sm font-medium">{req.title}</td>
+                                  <td className="p-3">{getStatusBadge(req.status)}</td>
+                                  <td className="p-3">
+                                    {hasConfidenceData ? (
+                                      <div className="space-y-1">
+                                        <Badge
+                                          variant="outline"
+                                          className={`px-2 py-0.5 text-xs font-medium ${getConfidenceBadgeClass(req.confidence_level)}`}
+                                        >
+                                          {getConfidenceLabel(req.confidence_level)} confidence
+                                        </Badge>
+                                        {confidencePercent !== null ? (
+                                          <div className="flex items-center space-x-2">
+                                            <Progress
+                                              value={confidencePercent}
+                                              className="w-20 h-2"
+                                            />
+                                            <span className="text-xs text-muted-foreground">
+                                              {confidencePercent}%
+                                            </span>
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">—</span>
+                                    )}
+                                  </td>
+                                  <td className="p-3">
+                                    <Button variant="ghost" size="sm">
+                                      <ExternalLink className="h-4 w-4" />
+                                    </Button>
+                                  </td>
+                                </tr>
+                                {expandedRows.has(req.id) && (
+                                  <tr className="border-b bg-muted/5">
+                                    <td colSpan={8} className="p-4">
+                                      <div className="space-y-4">
+                                        <div>
+                                          <h5 className="font-semibold text-sm mb-1">Requirement</h5>
+                                          <p className="text-sm text-muted-foreground">{req.title}</p>
+                                        </div>
+
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                          <div>
+                                            <h5 className="font-semibold text-sm mb-1">Clause</h5>
+                                            <p className="text-sm text-muted-foreground">{req.clause}</p>
+                                          </div>
+                                          <div>
+                                            <h5 className="font-semibold text-sm mb-1">Order</h5>
+                                            <p className="text-sm text-muted-foreground">{req.display_order ?? "—"}</p>
+                                          </div>
+                                        </div>
+
+                                        {req.evaluation_type ? (
+                                          <div>
+                                            <h5 className="font-semibold text-sm mb-1">Evaluation Type</h5>
+                                            <p className="text-sm text-muted-foreground">{req.evaluation_type}</p>
+                                          </div>
+                                        ) : null}
+
+                                        {req.evaluation_rationale ? (
+                                          <div>
+                                            <h5 className="font-semibold text-sm mb-1">Rationale</h5>
+                                            <p className="text-sm text-muted-foreground">{req.evaluation_rationale}</p>
+                                          </div>
+                                        ) : null}
+
+                                        {req.evidence_snippets && req.evidence_snippets.length > 0 && (
+                                          <div>
+                                            <h5 className="font-semibold text-sm mb-1">Evidence Found</h5>
+                                            <ul className="list-disc list-inside space-y-1">
+                                              {req.evidence_snippets.map((snippet: string, index: number) => (
+                                                <li key={index} className="text-sm text-muted-foreground">{snippet}</li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                        )}
+
+                                        {req.gaps && req.gaps.length > 0 && (
+                                          <div>
+                                            <h5 className="font-semibold text-sm mb-1 text-red-600">Gaps Identified</h5>
+                                            <ul className="list-disc list-inside space-y-1">
+                                              {req.gaps.map((gap: string, index: number) => (
+                                                <li key={index} className="text-sm text-muted-foreground">{gap}</li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                        )}
+
+                                        {req.recommendations && req.recommendations.length > 0 && (
+                                          <div>
+                                            <h5 className="font-semibold text-sm mb-1 text-blue-600">Recommendations</h5>
+                                            <ul className="list-disc list-inside space-y-1">
+                                              {req.recommendations.map((rec: string, index: number) => (
+                                                <li key={index} className="text-sm text-muted-foreground">{rec}</li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
                                 )}
-                              </td>
-                              <td className="p-3">
-                                <Button variant="ghost" size="sm">
-                                  <ExternalLink className="h-4 w-4" />
-                                </Button>
-                              </td>
-                            </tr>
-                            {expandedRows.has(req.id) && (
-                              <tr className="border-b bg-muted/5">
-                                <td colSpan={7} className="p-4">
-                                  <div className="space-y-4">
-                                    <div>
-                                      <h5 className="font-semibold text-sm mb-1">Requirement</h5>
-                                      <p className="text-sm text-muted-foreground">{req.requirement_text}</p>
-                                    </div>
-                                    
-                                    <div>
-                                      <h5 className="font-semibold text-sm mb-1">Acceptance Criteria</h5>
-                                      <p className="text-sm text-muted-foreground">{req.acceptance_criteria}</p>
-                                    </div>
-
-                                    {req.evidence_snippets && req.evidence_snippets.length > 0 && (
-                                      <div>
-                                        <h5 className="font-semibold text-sm mb-1">Evidence Found</h5>
-                                        <ul className="list-disc list-inside space-y-1">
-                                      {req.evidence_snippets.map((snippet: string, index: number) => (
-                                        <li key={index} className="text-sm text-muted-foreground">{snippet}</li>
-                                      ))}
-                                        </ul>
-                                      </div>
-                                    )}
-
-                                    {req.gaps && req.gaps.length > 0 && (
-                                      <div>
-                                        <h5 className="font-semibold text-sm mb-1 text-red-600">Gaps Identified</h5>
-                                        <ul className="list-disc list-inside space-y-1">
-                                          {req.gaps.map((gap: string, index: number) => (
-                                            <li key={index} className="text-sm text-muted-foreground">{gap}</li>
-                                          ))}
-                                        </ul>
-                                      </div>
-                                    )}
-
-                                    {req.recommendations && req.recommendations.length > 0 && (
-                                      <div>
-                                        <h5 className="font-semibold text-sm mb-1 text-blue-600">Recommendations</h5>
-                                        <ul className="list-disc list-inside space-y-1">
-                                          {req.recommendations.map((rec: string, index: number) => (
-                                            <li key={index} className="text-sm text-muted-foreground">{rec}</li>
-                                          ))}
-                                        </ul>
-                                      </div>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </React.Fragment>
-                    ))}
+                              </React.Fragment>
+                            )
+                          })}
+                        </React.Fragment>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>

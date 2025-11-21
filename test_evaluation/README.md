@@ -10,13 +10,13 @@ A standalone test version of the ISO 14971 compliance evaluator designed for deb
 - **Debug Output**: Saves prompts, responses, and detailed logs
 - **Cost Control**: ~3 API calls instead of 38
 - **Visual Reports**: Color-coded console output and formatted tables
-- **Vision Mode**: Optional pipeline that uploads the PDF directly to OpenAI for multimodal reasoning
+- **Vision Mode**: Optional pipeline that uploads the PDF directly to OpenAI or Gemini for multimodal reasoning
 
 ## Quick Start
 
 ### 1. Install Dependencies
 ```bash
-pip install --upgrade openai python-docx colorama tabulate openpyxl
+pip install --upgrade openai google-genai python-docx colorama tabulate openpyxl
 ```
 
 > **Note:** The vision evaluator requires `openai` 1.0.0 or later. Run `python - <<'PY'`
@@ -27,6 +27,10 @@ pip install --upgrade openai python-docx colorama tabulate openpyxl
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
 export OPENAI_MODEL="gpt-5"  # Optional, defaults to gpt-5
+# Optional Gemini setup
+# export VISION_PROVIDER="gemini"
+# export GEMINI_API_KEY="your-gemini-api-key"
+# export GEMINI_MODEL="gemini-2.0-flash"
 ```
 
 Optional overrides:
@@ -71,7 +75,7 @@ test_evaluation/
 
 ## Vision-Based Evaluator
 
-Run the new OpenAI vision pipeline (PDF only) to compare against the markdown flow:
+Run the vision pipeline (OpenAI by default; set `VISION_PROVIDER=gemini` to use Gemini) to compare against the markdown flow:
 
 ```bash
 python test_evaluation/vision_responses_evaluator.py path/to/document.pdf

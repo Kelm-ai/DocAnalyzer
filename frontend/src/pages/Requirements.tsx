@@ -43,20 +43,14 @@ const buildCopyClause = (value: string, existingValues: string[]): string => {
 interface RequirementFormState {
   clause: string
   title: string
-  requirement_text: string
-  acceptance_criteria: string
-  expected_artifacts: string
-  guidance_notes: string
+  display_order: string
   evaluation_type: string
 }
 
 const initialFormState: RequirementFormState = {
   clause: "",
   title: "",
-  requirement_text: "",
-  acceptance_criteria: "",
-  expected_artifacts: "",
-  guidance_notes: "",
+  display_order: "0",
   evaluation_type: "",
 }
 
@@ -68,13 +62,6 @@ interface RequirementTableActions {
 
 const columnsFactory = ({ onEdit, onDuplicate, onDelete }: RequirementTableActions): ColumnDef<ISORequirement>[] => [
   {
-    accessorKey: "clause",
-    header: "Clause",
-    cell: ({ row }) => (
-      <span className="font-medium text-gray-900">{row.original.clause}</span>
-    ),
-  },
-  {
     accessorKey: "title",
     header: "Title",
     cell: ({ row }) => (
@@ -82,39 +69,21 @@ const columnsFactory = ({ onEdit, onDuplicate, onDelete }: RequirementTableActio
     ),
   },
   {
-    accessorKey: "requirement_text",
-    header: "Requirement Text",
+    accessorKey: "clause",
+    header: "Clause Number",
     cell: ({ row }) => (
-      <p className="whitespace-pre-wrap text-sm text-gray-700">
-        {row.original.requirement_text || "—"}
-      </p>
+      <span className="font-medium text-gray-900">{row.original.clause}</span>
     ),
   },
   {
-    accessorKey: "acceptance_criteria",
-    header: "Acceptance Criteria",
+    accessorKey: "display_order",
+    header: "Order",
     cell: ({ row }) => (
-      <p className="whitespace-pre-wrap text-sm text-gray-700">
-        {row.original.acceptance_criteria || "—"}
-      </p>
-    ),
-  },
-  {
-    accessorKey: "expected_artifacts",
-    header: "Expected Artifacts",
-    cell: ({ row }) => (
-      <p className="whitespace-pre-wrap text-sm text-gray-700">
-        {row.original.expected_artifacts || "—"}
-      </p>
-    ),
-  },
-  {
-    accessorKey: "guidance_notes",
-    header: "Guidance Note",
-    cell: ({ row }) => (
-      <p className="whitespace-pre-wrap text-sm text-gray-700">
-        {row.original.guidance_notes || "—"}
-      </p>
+      <span className="text-sm text-gray-700">
+        {Number.isFinite(row.original.display_order)
+          ? row.original.display_order
+          : "—"}
+      </span>
     ),
   },
   {
@@ -375,18 +344,16 @@ export function Requirements() {
       return
     }
 
-    if (!formState.requirement_text.trim()) {
-      setFormError("Requirement text is required")
+    const parsedOrder = Number.parseInt(formState.display_order.trim() || "0", 10)
+    if (Number.isNaN(parsedOrder) || parsedOrder < 0) {
+      setFormError("Order must be a non-negative number")
       return
     }
 
     const payload: RequirementCreatePayload = {
       clause: formState.clause.trim(),
       title: formState.title.trim(),
-      requirement_text: formState.requirement_text.trim(),
-      acceptance_criteria: formState.acceptance_criteria.trim() || undefined,
-      expected_artifacts: formState.expected_artifacts.trim() || undefined,
-      guidance_notes: formState.guidance_notes.trim() || undefined,
+      display_order: parsedOrder,
       evaluation_type: formState.evaluation_type.trim() || undefined,
     }
 
@@ -444,10 +411,7 @@ export function Requirements() {
     setFormState({
       clause: requirement.clause,
       title: requirement.title,
-      requirement_text: requirement.requirement_text,
-      acceptance_criteria: requirement.acceptance_criteria ?? "",
-      expected_artifacts: requirement.expected_artifacts ?? "",
-      guidance_notes: requirement.guidance_notes ?? "",
+      display_order: String(requirement.display_order ?? 0),
       evaluation_type: requirement.evaluation_type ?? "",
     })
     setIsModalOpen(true)
@@ -488,10 +452,7 @@ export function Requirements() {
         setFormState({
           clause: copyClause,
           title: copyTitle,
-          requirement_text: requirement.requirement_text,
-          acceptance_criteria: requirement.acceptance_criteria ?? "",
-          expected_artifacts: requirement.expected_artifacts ?? "",
-          guidance_notes: requirement.guidance_notes ?? "",
+          display_order: String(requirement.display_order ?? 0),
           evaluation_type: requirement.evaluation_type ?? "",
         })
         setIsModalOpen(true)
@@ -592,7 +553,7 @@ export function Requirements() {
         }
       >
         <form id="requirement-form" onSubmit={handleModalSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-gray-900" htmlFor="clause">
                 Clause
@@ -602,6 +563,20 @@ export function Requirements() {
                 value={formState.clause}
                 onChange={(event) => handleFieldChange("clause", event.target.value)}
                 placeholder="e.g. 4.1"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-gray-900" htmlFor="display_order">
+                Order
+              </label>
+              <Input
+                id="display_order"
+                type="number"
+                min={0}
+                step={1}
+                value={formState.display_order}
+                onChange={(event) => handleFieldChange("display_order", event.target.value)}
+                placeholder="e.g. 1"
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -626,59 +601,6 @@ export function Requirements() {
               value={formState.title}
               onChange={(event) => handleFieldChange("title", event.target.value)}
               placeholder="Short title for the requirement"
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-900" htmlFor="requirement_text">
-              Requirement Text
-            </label>
-            <textarea
-              id="requirement_text"
-              value={formState.requirement_text}
-              onChange={(event) => handleFieldChange("requirement_text", event.target.value)}
-              placeholder="Full requirement description"
-              className="min-h-[120px] rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-900" htmlFor="acceptance_criteria">
-                Acceptance Criteria
-              </label>
-              <textarea
-                id="acceptance_criteria"
-                value={formState.acceptance_criteria}
-                onChange={(event) => handleFieldChange("acceptance_criteria", event.target.value)}
-                placeholder="How compliance is assessed"
-                className="min-h-[100px] rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-900" htmlFor="expected_artifacts">
-                Expected Artifacts
-              </label>
-              <textarea
-                id="expected_artifacts"
-                value={formState.expected_artifacts}
-                onChange={(event) => handleFieldChange("expected_artifacts", event.target.value)}
-                placeholder="Documentation or evidence required"
-                className="min-h-[100px] rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-900" htmlFor="guidance_notes">
-              Guidance Note
-            </label>
-            <textarea
-              id="guidance_notes"
-              value={formState.guidance_notes}
-              onChange={(event) => handleFieldChange("guidance_notes", event.target.value)}
-              placeholder="Additional context or references"
-              className="min-h-[100px] rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
