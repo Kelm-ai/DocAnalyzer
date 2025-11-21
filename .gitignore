@@ -87,7 +87,6 @@ config.local.json
 settings.local.json
 
 # Generated reports
-*.html
 report_*.html
 
 # Cache
