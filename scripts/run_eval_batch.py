@@ -34,7 +34,7 @@ for extra_path in (ROOT_DIR, ROOT_DIR / "api", ROOT_DIR / "test_evaluation"):
     if str_path not in sys.path:
         sys.path.append(str_path)
 
-from eval_config import CONFIG_LABEL, EVAL_DOCS, EVAL_REQUIREMENTS, NUM_RUNS  # noqa: E402
+from eval_config import CONFIG_LABEL, EVAL_DOCS, EVAL_REQUIREMENTS, NUM_RUNS, RUN_MODE  # noqa: E402
 
 try:
     from api.vision_responses_evaluator import VisionResponsesEvaluator  # type: ignore  # noqa: E402
@@ -110,7 +110,7 @@ async def _insert_eval_result(supabase: Client, row: Dict[str, Any]) -> None:
 
 async def _evaluate_single_run(
     evaluator: VisionResponsesEvaluator,
-    file_id: str,
+    file_ref: Dict[str, Any],
     requirement: Dict[str, Any],
     run_index: int,
     output_dir: Path,
@@ -119,7 +119,7 @@ async def _evaluate_single_run(
     semaphore = asyncio.Semaphore(1)
     try:
         result = await evaluator._evaluate_single_requirement(  # pylint: disable=protected-access
-            file_id=file_id,
+            file_ref=file_ref,
             requirement=requirement,
             semaphore=semaphore,
             run_responses_dir=output_dir,
@@ -137,6 +137,7 @@ async def _evaluate_single_run(
         "run_index": run_index,
         "requirement": requirement,
         "result": result,
+        "run_mode": RUN_MODE,
     }
     return model_label, raw_output
 
@@ -167,7 +168,12 @@ async def run_batch(batch_id: str, config_label: str) -> None:
     logger.info("Starting batch %s (config_label=%s)", batch_id, config_label)
 
     # Load requirements (Supabase preferred; fallback to local fixtures)
-    requirements_map = _load_requirements_from_supabase(supabase, EVAL_REQUIREMENTS)
+    requirements_map = {}
+    try:
+        requirements_map = _load_requirements_from_supabase(supabase, EVAL_REQUIREMENTS)
+    except Exception as exc:
+        logger.warning("Failed to load requirements from Supabase (%s), falling back to local fixtures", exc)
+
     if len(requirements_map) < len(EVAL_REQUIREMENTS):
         logger.warning(
             "Falling back to local requirements for missing IDs (Supabase returned %s of %s)",
@@ -187,12 +193,12 @@ async def run_batch(batch_id: str, config_label: str) -> None:
         doc_id = doc["id"]
         path_obj, should_cleanup = _materialize_document_path(doc)
 
-        file_id, file_hash, cache_hit = await evaluator.ensure_file_id(path_obj)
+        file_ref, file_hash, cache_hit = await evaluator.ensure_file_ref(path_obj)
         logger.info(
-            "Prepared doc_id=%s path=%s file_id=%s cache_hit=%s sha256=%s",
+            "Prepared doc_id=%s path=%s file_ref=%s cache_hit=%s sha256=%s",
             doc_id,
             path_obj,
-            file_id,
+            file_ref,
             cache_hit,
             file_hash[:12],
         )
@@ -215,7 +221,7 @@ async def run_batch(batch_id: str, config_label: str) -> None:
                 )
                 model_label, raw_output = await _evaluate_single_run(
                     evaluator=evaluator,
-                    file_id=file_id,
+                    file_ref=file_ref,
                     requirement=requirement,
                     run_index=run_index,
                     output_dir=run_responses_dir,

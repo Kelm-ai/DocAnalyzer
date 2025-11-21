@@ -4,7 +4,6 @@ import { ChevronDown, ChevronRight, Search, Download, ExternalLink } from "lucid
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import type { RequirementEvaluation } from "@/lib/types"
 import { mockRequirements } from "@/lib/mockData"
 
@@ -22,12 +21,6 @@ const CONFIDENCE_BADGE_CLASSES: Record<ConfidenceLevel, string> = {
   high: "bg-emerald-50 text-emerald-700 border border-emerald-200",
 }
 
-const CONFIDENCE_PERCENT_FALLBACK: Record<ConfidenceLevel, number> = {
-  low: 35,
-  medium: 65,
-  high: 90,
-}
-
 const getConfidenceLabel = (level?: RequirementEvaluation["confidence_level"]) => {
   if (!level) {
     return "Unknown"
@@ -40,21 +33,6 @@ const getConfidenceBadgeClass = (level?: RequirementEvaluation["confidence_level
     return "bg-slate-100 text-slate-600 border border-slate-200"
   }
   return CONFIDENCE_BADGE_CLASSES[level]
-}
-
-const getConfidencePercent = (
-  level?: RequirementEvaluation["confidence_level"],
-  score?: number
-): number | null => {
-  if (typeof score === "number" && Number.isFinite(score)) {
-    const normalized = score <= 1 ? score * 100 : score
-    const clamped = Math.max(0, Math.min(100, normalized))
-    return Math.round(clamped)
-  }
-  if (level) {
-    return CONFIDENCE_PERCENT_FALLBACK[level]
-  }
-  return null
 }
 
 export function RequirementsTable() {
@@ -128,7 +106,6 @@ export function RequirementsTable() {
     }
 
     const exportRows = filteredRequirements.map((req) => {
-      const confidencePercent = getConfidencePercent(req.confidence_level, req.confidence_score)
       return {
         ID: req.id,
         Clause: req.clause,
@@ -137,7 +114,6 @@ export function RequirementsTable() {
         "Evaluation Type": req.evaluation_type ?? "",
         Status: req.status ?? "PENDING",
         "Confidence Level": getConfidenceLabel(req.confidence_level),
-        "Confidence Score": confidencePercent !== null ? `${confidencePercent}%` : "N/A",
         Rationale: req.evaluation_rationale ?? "",
         "Evidence Snippets": req.evidence_snippets?.join("\n") ?? "",
         Gaps: req.gaps?.join("\n") ?? "",
@@ -239,13 +215,7 @@ export function RequirementsTable() {
                             </td>
                           </tr>
                           {reqs.map((req) => {
-                            const confidencePercent = getConfidencePercent(
-                              req.confidence_level,
-                              req.confidence_score
-                            )
-                            const hasConfidenceData =
-                              Boolean(req.confidence_level) ||
-                              typeof req.confidence_score === "number"
+                            const hasConfidenceData = Boolean(req.confidence_level)
 
                             return (
                               <React.Fragment key={req.id}>
@@ -263,36 +233,23 @@ export function RequirementsTable() {
                                     </button>
                                   </td>
                                   <td className="p-3 text-sm font-mono">{req.id}</td>
-                                  <td className="p-3 text-sm">{req.clause}</td>
-                                  <td className="p-3 text-sm">{req.display_order ?? "—"}</td>
-                                  <td className="p-3 text-sm font-medium">{req.title}</td>
-                                  <td className="p-3">{getStatusBadge(req.status)}</td>
-                                  <td className="p-3">
-                                    {hasConfidenceData ? (
-                                      <div className="space-y-1">
-                                        <Badge
-                                          variant="outline"
-                                          className={`px-2 py-0.5 text-xs font-medium ${getConfidenceBadgeClass(req.confidence_level)}`}
-                                        >
-                                          {getConfidenceLabel(req.confidence_level)} confidence
-                                        </Badge>
-                                        {confidencePercent !== null ? (
-                                          <div className="flex items-center space-x-2">
-                                            <Progress
-                                              value={confidencePercent}
-                                              className="w-20 h-2"
-                                            />
-                                            <span className="text-xs text-muted-foreground">
-                                              {confidencePercent}%
-                                            </span>
-                                          </div>
-                                        ) : null}
-                                      </div>
-                                    ) : (
-                                      <span className="text-xs text-muted-foreground">—</span>
-                                    )}
-                                  </td>
-                                  <td className="p-3">
+                            <td className="p-3 text-sm">{req.clause}</td>
+                            <td className="p-3 text-sm">{req.display_order ?? "—"}</td>
+                            <td className="p-3 text-sm font-medium">{req.title}</td>
+                            <td className="p-3">{getStatusBadge(req.status)}</td>
+                            <td className="p-3">
+                              {hasConfidenceData ? (
+                                <Badge
+                                  variant="outline"
+                                  className={`px-2 py-0.5 text-xs font-medium ${getConfidenceBadgeClass(req.confidence_level)}`}
+                                >
+                                  {getConfidenceLabel(req.confidence_level)} confidence
+                                </Badge>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </td>
+                            <td className="p-3">
                                     <Button variant="ghost" size="sm">
                                       <ExternalLink className="h-4 w-4" />
                                     </Button>

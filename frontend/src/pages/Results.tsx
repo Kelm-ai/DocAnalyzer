@@ -33,6 +33,7 @@ const STATUS_STYLES: Record<string, string> = {
 const DEFAULT_STATUS_STYLE = "bg-slate-100 text-slate-700 border border-slate-200"
 
 type ConfidenceLevel = RequirementResult["confidence_level"]
+type AgreementStatus = RequirementResult["agreement_status"]
 
 const CONFIDENCE_LEVEL_META: Record<ConfidenceLevel, { label: string; className: string; sort: number }> = {
   low: {
@@ -58,11 +59,33 @@ const DEFAULT_CONFIDENCE_META = {
   sort: -1,
 }
 
+const AGREEMENT_META: Record<AgreementStatus | "unknown", { label: string; className: string }> = {
+  agreement: {
+    label: "Agreement",
+    className: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  },
+  conflict: {
+    label: "Conflict",
+    className: "bg-amber-50 text-amber-700 border border-amber-200",
+  },
+  unknown: {
+    label: "Unknown",
+    className: "bg-slate-100 text-slate-600 border border-slate-200",
+  },
+}
+
 function getConfidenceMeta(level?: RequirementResult["confidence_level"]) {
   if (!level) {
     return DEFAULT_CONFIDENCE_META
   }
   return CONFIDENCE_LEVEL_META[level] ?? DEFAULT_CONFIDENCE_META
+}
+
+function getAgreementMeta(status?: RequirementResult["agreement_status"]) {
+  if (!status) {
+    return AGREEMENT_META.unknown
+  }
+  return AGREEMENT_META[status] ?? AGREEMENT_META.unknown
 }
 
 function getConfidenceSortValue(row: RequirementResult) {
@@ -74,6 +97,17 @@ function getConfidenceSortValue(row: RequirementResult) {
     return row.confidence_score
   }
   return -1
+}
+
+const AGREEMENT_SORT: Record<AgreementStatus | "unknown", number> = {
+  conflict: 2,
+  agreement: 1,
+  unknown: 0,
+}
+
+function getAgreementSortValue(row: RequirementResult) {
+  const status = row.agreement_status ?? "unknown"
+  return AGREEMENT_SORT[status] ?? AGREEMENT_SORT.unknown
 }
 
 type FeedbackEntry = {
@@ -92,26 +126,18 @@ function createDefaultFeedbackEntry(): FeedbackEntry {
   }
 }
 
-function formatPercent(score: number | null | undefined): string {
-  if (score === null || score === undefined) {
-    return "—"
-  }
-  const normalized = score > 1 ? score : score * 100
-  return `${Math.round(normalized)}%`
-}
-
 function formatConfidenceLabel(level?: RequirementResult["confidence_level"]): string {
   return getConfidenceMeta(level).label
 }
 
 function truncateText(value: string | null | undefined, length = 140): string {
   if (!value) {
-    return "—"
+    return "-"
   }
   if (value.length <= length) {
     return value
   }
-  return `${value.slice(0, length).trimEnd()}…`
+  return `${value.slice(0, length).trimEnd()}...`
 }
 
 export function Results() {
@@ -353,13 +379,11 @@ export function Results() {
 
     const exportRows = report.requirements.map((req) => ({
       "Requirement ID": req.requirement_id || "",
+      "Clause": req.requirement_clause || "",
       "Title": req.title || "",
       "Status": (req.status || "PENDING").toUpperCase(),
       "Confidence Level": formatConfidenceLabel(req.confidence_level),
-      "Confidence Score": (() => {
-        const formatted = formatPercent(req.confidence_score)
-        return formatted === "—" ? "N/A" : formatted
-      })(),
+      "Agreement": req.agreement_status ? req.agreement_status.toUpperCase() : "UNKNOWN",
       "Evaluation Rationale": req.evaluation_rationale || "",
       "Evidence Snippets": req.evidence_snippets?.filter(Boolean).join(" | ") || "",
       "Gaps Identified": req.gaps_identified?.filter(Boolean).join(" | ") || "",
@@ -382,11 +406,15 @@ export function Results() {
         header: "Requirement",
         cell: ({ row }) => (
           <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              {row.original.requirement_clause ? (
+                <Badge variant="outline" className="px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                  Clause {row.original.requirement_clause}
+                </Badge>
+              ) : null}
+            </div>
             <div className="text-sm font-medium text-slate-900">
               {row.original.title || "Untitled requirement"}
-            </div>
-            <div className="text-xs font-mono text-slate-500">
-              {row.original.requirement_id || "—"}
             </div>
           </div>
         ),
@@ -402,11 +430,13 @@ export function Results() {
             evaluation_rationale: evaluationRationale,
             evidence_snippets: evidenceSnippets,
             gaps_identified: gapsIdentified,
+            requirement_clause: requirementClause,
           } = row.original
 
           const searchableFields = [
             title,
             requirementId,
+            requirementClause,
             evaluationRationale,
             ...(Array.isArray(evidenceSnippets) ? evidenceSnippets : []),
             ...(Array.isArray(gapsIdentified) ? gapsIdentified : []),
@@ -437,19 +467,31 @@ export function Results() {
         sortingFn: (a, b) => getConfidenceSortValue(a.original) - getConfidenceSortValue(b.original),
         cell: ({ row }) => {
           const meta = getConfidenceMeta(row.original.confidence_level)
-          const percentText = formatPercent(row.original.confidence_score)
           return (
-            <div className="flex flex-col gap-1">
-              <Badge
-                variant="outline"
-                className={`px-2 py-1 text-xs font-medium ${meta.className}`}
-              >
-                {meta.label} confidence
-              </Badge>
-              {percentText !== "—" ? (
-                <span className="text-xs text-slate-500">{percentText}</span>
-              ) : null}
-            </div>
+            <Badge
+              variant="outline"
+              className={`px-2 py-1 text-xs font-medium ${meta.className}`}
+            >
+              {meta.label} confidence
+            </Badge>
+          )
+        },
+      },
+      {
+        id: "agreement",
+        header: "Agreement",
+        enableSorting: true,
+        accessorFn: (row) => getAgreementSortValue(row),
+        sortingFn: (a, b) => getAgreementSortValue(a.original) - getAgreementSortValue(b.original),
+        cell: ({ row }) => {
+          const agreementMeta = getAgreementMeta(row.original.agreement_status)
+          return (
+            <Badge
+              variant="outline"
+              className={`px-2 py-1 text-xs font-medium ${agreementMeta.className}`}
+            >
+              {agreementMeta.label}
+            </Badge>
           )
         },
       },
@@ -468,7 +510,7 @@ export function Results() {
         cell: ({ row }) => {
           const evidence = row.original.evidence_snippets?.filter(Boolean) ?? []
           if (!evidence.length) {
-            return <span className="text-sm text-slate-500">—</span>
+            return <span className="text-sm text-slate-500">-</span>
           }
           return (
             <p className="text-sm text-slate-600">
@@ -486,7 +528,7 @@ export function Results() {
         cell: ({ row }) => {
           const gaps = row.original.gaps_identified?.filter(Boolean) ?? []
           if (!gaps.length) {
-            return <span className="text-sm text-slate-500">—</span>
+            return <span className="text-sm text-slate-500">-</span>
           }
           return (
             <p className="text-sm text-slate-600">
@@ -596,7 +638,7 @@ export function Results() {
                 {entry.error ? (
                   <span className="text-xs text-red-600">{entry.error}</span>
                 ) : entry.isSaving ? (
-                  <span className="text-xs text-slate-500">Saving…</span>
+                  <span className="text-xs text-slate-500">Saving...</span>
                 ) : null}
               </div>
             )
@@ -633,7 +675,7 @@ export function Results() {
     return (
       <div className="flex h-48 items-center justify-center space-x-3">
         <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
-        <span className="text-sm text-slate-600">Loading evaluation results…</span>
+        <span className="text-sm text-slate-600">Loading evaluation results...</span>
       </div>
     )
   }
@@ -670,9 +712,9 @@ export function Results() {
   const activeConfidenceMeta = activeRequirement
     ? getConfidenceMeta(activeRequirement.confidence_level)
     : DEFAULT_CONFIDENCE_META
-  const activeConfidencePercent = activeRequirement
-    ? formatPercent(activeRequirement.confidence_score)
-    : "—"
+  const activeAgreementMeta = activeRequirement
+    ? getAgreementMeta(activeRequirement.agreement_status)
+    : AGREEMENT_META.unknown
 
   return (
     <div className="space-y-6">
@@ -730,7 +772,7 @@ export function Results() {
             {feedbackLoading ? (
               <div className="flex items-center gap-2 text-xs text-slate-500">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                <span>Loading human feedback…</span>
+                <span>Loading human feedback...</span>
               </div>
             ) : null}
             {feedbackError ? (
@@ -743,6 +785,7 @@ export function Results() {
             columns={columns}
             data={report.requirements}
             filterPlaceholder="Filter requirements..."
+            initialPageSize={25}
             toolbarSlot={
               <Button
                 onClick={handleExport}
@@ -765,7 +808,6 @@ export function Results() {
             }}
             isRowClickable={() => true}
             rowClassName={() => "hover:bg-slate-50"}
-            tableContainerClassName="max-h-[480px] overflow-y-auto"
           />
         </CardContent>
       </Card>
@@ -786,7 +828,12 @@ export function Results() {
                 <h2 className="text-lg font-semibold text-slate-900">
                   {activeRequirement.title || "Untitled requirement"}
                 </h2>
-                <div className="flex items-center gap-2">
+                {activeRequirement.requirement_clause ? (
+                  <span className="text-xs font-semibold text-slate-600">
+                    Clause {activeRequirement.requirement_clause}
+                  </span>
+                ) : null}
+                <div className="flex flex-wrap items-center gap-2">
                   <Badge
                     className={`${
                       STATUS_STYLES[(activeRequirement.status || "").toUpperCase()] ??
@@ -795,17 +842,18 @@ export function Results() {
                   >
                     {(activeRequirement.status || "").replace(/_/g, " ").toUpperCase()}
                   </Badge>
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className={`px-2 py-1 text-xs font-medium ${activeConfidenceMeta.className}`}
-                    >
-                      {activeConfidenceMeta.label} confidence
-                    </Badge>
-                    {activeConfidencePercent !== "—" ? (
-                      <span className="text-xs text-slate-500">{activeConfidencePercent}</span>
-                    ) : null}
-                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`px-2 py-1 text-xs font-medium ${activeConfidenceMeta.className}`}
+                  >
+                    {activeConfidenceMeta.label} confidence
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={`px-2 py-1 text-xs font-medium ${activeAgreementMeta.className}`}
+                  >
+                    {activeAgreementMeta.label}
+                  </Badge>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -853,7 +901,7 @@ export function Results() {
                   {activeFeedbackEntry.isSaving ? (
                     <span className="flex items-center gap-1 text-xs text-slate-500">
                       <Loader2 className="h-3 w-3 animate-spin" />
-                      Saving…
+                      Saving...
                     </span>
                   ) : null}
                 </div>

@@ -29,6 +29,8 @@ Railway detects the Python Railpack from `requirements.txt`. The `Procfile` defi
    - `EVALUATION_PIPELINE` (set to `vision` unless you restore the Azure pipeline)
    - `OPENAI_API_KEY` if you rely on the vision evaluator
    - `VISION_PROVIDER` (optional: set to `gemini` to run the vision flow on Gemini instead of OpenAI) + `GEMINI_API_KEY`
+   - `VISION_MODEL` (optional: shared override for either provider), `GEMINI_MODEL`/`GEMINI_VISION_MODEL` (optional, defaults to `gemini-3-pro-preview`), `OPENAI_MODEL`/`OPENAI_VISION_MODEL` (optional, defaults to `gpt-5`)
+   - Gemini tuning (optional): `GEMINI_THINKING_LEVEL=low|high` (defaults to high unless `VISION_REASONING_EFFORT=low`), `GEMINI_MEDIA_RESOLUTION=media_resolution_low|media_resolution_medium|media_resolution_high` (defaults to medium for PDFs)
    - `CORS_ALLOW_ORIGINS` with the public frontend URL(s), e.g. `https://frontend-docanalyzer-production.up.railway.app`
 4. Set the health check path to `/api/health`.
 5. Deploy. The Railpack will install dependencies, run migrations (if defined), and start `uvicorn`. Confirm with `railway logs` and `curl https://<backend-domain>/api/health`.

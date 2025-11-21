@@ -103,7 +103,7 @@ export function EvaluationStatus() {
 
   const formatDateTime = (timestamp?: string | null) => {
     if (!timestamp) {
-      return "—"
+      return "-"
     }
 
     const date = new Date(timestamp)
@@ -158,7 +158,13 @@ export function EvaluationStatus() {
           if (evaluation.status === "in_progress") {
             const percent = evaluation.metadata?.progress_percent ?? 0
             const completed = evaluation.metadata?.completed_requirements ?? 0
-            const total = evaluation.metadata?.total_requirements ?? 38
+            const total =
+              evaluation.metadata?.total_requirements ??
+              evaluation.total_requirements ??
+              (evaluation.requirements_passed ?? 0) +
+                (evaluation.requirements_failed ?? 0) +
+                (evaluation.requirements_flagged ?? evaluation.requirements_partial ?? 0) +
+                (evaluation.requirements_na ?? 0)
             return (
               <div className="space-y-1 min-w-[110px]">
                 <Progress value={percent} className="h-2" />
@@ -185,7 +191,7 @@ export function EvaluationStatus() {
             )
           }
 
-          return <span className="text-sm text-muted-foreground">—</span>
+          return <span className="text-sm text-muted-foreground">-</span>
         },
       },
       {
@@ -209,7 +215,7 @@ export function EvaluationStatus() {
               </span>
             )
           }
-          return <span className="text-sm text-muted-foreground">—</span>
+          return <span className="text-sm text-muted-foreground">-</span>
         },
       },
       {
@@ -320,6 +326,7 @@ export function EvaluationStatus() {
             columns={columns}
             data={evaluations}
             filterPlaceholder="Search evaluations..."
+            initialPageSize={25}
             toolbarSlot={
               <Button
                 variant="outline"

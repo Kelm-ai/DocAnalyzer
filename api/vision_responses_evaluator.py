@@ -95,6 +95,15 @@ Vision handling:
         self.openai_client: Optional[OpenAI] = None
         self.gemini_client: Optional["genai.Client"] = None
         self.gemini_response_schema = None
+        self.gemini_thinking_config = None
+        self.gemini_media_resolution = None
+        self.gemini_part_media_resolution = None
+        vision_model_override = os.getenv("VISION_MODEL")
+
+        # Evaluation controls (set early so helper methods can rely on them)
+        self.concurrent_requests = int(os.getenv("VISION_EVALUATOR_CONCURRENCY", "8"))
+        self.reasoning_effort = os.getenv('VISION_REASONING_EFFORT', 'medium')
+        self.requirements_limit = int(os.getenv("VISION_EVALUATOR_REQUIREMENT_LIMIT", "0"))
 
         if self.provider == "gemini":
             if not GENAI_AVAILABLE:
@@ -102,19 +111,29 @@ Vision handling:
             api_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
             if not api_key:
                 raise RuntimeError("GEMINI_API_KEY is required when VISION_PROVIDER=gemini")
-            self.model = self.model or os.getenv("GEMINI_VISION_MODEL", os.getenv("GEMINI_MODEL", "gemini-2.0-flash"))
+            self.model = (
+                self.model
+                or os.getenv("GEMINI_VISION_MODEL")
+                or os.getenv("GEMINI_MODEL")
+                or vision_model_override
+                or "gemini-3-pro-preview"
+            )
             self.gemini_client = genai.Client(api_key=api_key)
             self.gemini_response_schema = self._build_gemini_schema()
+            self.gemini_thinking_config = self._resolve_gemini_thinking_config()
+            self.gemini_media_resolution, self.gemini_part_media_resolution = self._resolve_gemini_media_resolution()
         else:
             api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
             if not api_key:
                 raise RuntimeError("OPENAI_API_KEY is required for the vision evaluator")
-            self.model = self.model or os.getenv("OPENAI_VISION_MODEL", os.getenv("OPENAI_MODEL", "gpt-5"))
+            self.model = (
+                self.model
+                or os.getenv("OPENAI_VISION_MODEL")
+                or os.getenv("OPENAI_MODEL")
+                or vision_model_override
+                or "gpt-5"
+            )
             self.openai_client = OpenAI(api_key=api_key)
-
-        self.concurrent_requests = int(os.getenv("VISION_EVALUATOR_CONCURRENCY", "8"))
-        self.reasoning_effort = os.getenv('VISION_REASONING_EFFORT', 'medium')
-        self.requirements_limit = int(os.getenv("VISION_EVALUATOR_REQUIREMENT_LIMIT", "0"))
 
         self.supabase: Optional[Client] = None
         if SUPABASE_AVAILABLE:
@@ -391,14 +410,21 @@ Vision handling:
 
             try:
                 file_part = genai_types.Part(file_data=genai_types.FileData(file_uri=file_uri, mime_type=mime_type))  # type: ignore[arg-type]
+                gen_config_kwargs = {
+                    "response_mime_type": "application/json",
+                    "response_schema": self.gemini_response_schema,
+                }
+                # media_resolution at the part-level is not supported on v1beta; keep config-level only when available
+                if self.gemini_media_resolution is not None:
+                    gen_config_kwargs["media_resolution"] = self.gemini_media_resolution
+                if self.gemini_thinking_config is not None:
+                    gen_config_kwargs["thinking_config"] = self.gemini_thinking_config
+
                 response = await asyncio.to_thread(
                     self.gemini_client.models.generate_content,  # type: ignore[union-attr]
                     model=self.model,
                     contents=[file_part, prompt],
-                    config=genai_types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=self.gemini_response_schema,
-                    ),
+                    config=genai_types.GenerateContentConfig(**gen_config_kwargs),
                 )
             except Exception as exc:
                 logger.exception("Gemini API error for requirement %s", requirement['id'])
@@ -669,6 +695,210 @@ Vision handling:
 
     def _save_cache(self) -> None:
         self.cache_path.write_text(json.dumps(self.file_cache, indent=2), encoding="utf-8")
+
+    def _resolve_gemini_thinking_config(self) -> Optional["genai_types.ThinkingConfig"]:
+        if not GENAI_AVAILABLE or genai_types is None:
+            return None
+        raw = os.getenv("GEMINI_THINKING_LEVEL") or os.getenv("VISION_THINKING_LEVEL")
+        normalized = (raw or "").strip().lower()
+        if not normalized:
+            effort = (self.reasoning_effort or "").strip().lower()
+            normalized = "low" if effort == "low" else "high"
+        if normalized in {"medium", "med"}:
+            normalized = "high"  # Gemini 3 treats medium as high/dynamic
+        if normalized not in {"low", "high"}:
+            return None
+        return genai_types.ThinkingConfig(thinking_level=normalized)
+
+    def _resolve_gemini_media_resolution(self) -> Tuple[Optional[Any], Optional[Any]]:
+        """Return (global_media_resolution_enum, part_media_resolution_config)."""
+        if not GENAI_AVAILABLE or genai_types is None:
+            return None, None
+        raw = os.getenv("GEMINI_MEDIA_RESOLUTION") or os.getenv("VISION_MEDIA_RESOLUTION") or "media_resolution_medium"
+        normalized = raw.strip().lower()
+        mapping = {
+            "low": "MEDIA_RESOLUTION_LOW",
+            "media_resolution_low": "MEDIA_RESOLUTION_LOW",
+            "medium": "MEDIA_RESOLUTION_MEDIUM",
+            "media_resolution_medium": "MEDIA_RESOLUTION_MEDIUM",
+            "high": "MEDIA_RESOLUTION_HIGH",
+            "media_resolution_high": "MEDIA_RESOLUTION_HIGH",
+        }
+        enum_key = mapping.get(normalized)
+        if not enum_key:
+            return None, None
+        try:
+            config_value = genai_types.MediaResolution[enum_key]
+        except Exception:
+            config_value = None
+        try:
+            part_value = genai_types.PartMediaResolution(
+                level=normalized if normalized.startswith("media_resolution_") else f"media_resolution_{normalized}"
+            )
+        except Exception:
+            part_value = None
+        return config_value, part_value
+
+
+class DualVisionComparator:
+    """
+    Run both OpenAI and Gemini providers per requirement, combine conservatively:
+    - Status priority: FAIL > FLAGGED/PARTIAL/ERROR > PASS > NOT_APPLICABLE
+    - Confidence: take the lower (less confident) level
+    - Content: on agreement use OpenAI content; on conflict use the content from the less-permissive status
+    - Agreement flag per requirement for UI (“agreement” | “conflict”)
+    """
+
+    STATUS_PRIORITY = {
+        "FAIL": 4,
+        "PARTIAL": 3,
+        "FLAGGED": 3,
+        "ERROR": 3,
+        "PASS": 2,
+        "NOT_APPLICABLE": 1,
+    }
+    CONFIDENCE_PRIORITY = {"low": 0, "medium": 1, "high": 2}
+
+    def __init__(self) -> None:
+        self.provider = "dual"
+        self.primary = VisionResponsesEvaluator(provider="openai")  # type: ignore[arg-type]
+        self.secondary = VisionResponsesEvaluator(provider="gemini")  # type: ignore[arg-type]
+        self.model = f"{self.primary.model}+{self.secondary.model}"
+        self.supabase = self.primary.supabase or self.secondary.supabase
+
+    async def evaluate_document(self, file_path: str) -> Dict[str, Any]:
+        openai_summary = await self.primary.evaluate_document(file_path)
+        gemini_summary = await self.secondary.evaluate_document(file_path)
+
+        combined_results, agreement_map, total_tokens = self._combine_results(
+            openai_summary.get("requirements_results", []),
+            gemini_summary.get("requirements_results", []),
+        )
+
+        status_counts: Dict[str, int] = {"PASS": 0, "FAIL": 0, "FLAGGED": 0, "NOT_APPLICABLE": 0, "ERROR": 0}
+        for record in combined_results:
+            status = record.get("status", "ERROR")
+            status_counts[status] = status_counts.get(status, 0) + 1
+
+        scored = len(combined_results) - status_counts.get("ERROR", 0)
+        compliance_score = (status_counts.get("PASS", 0) / scored * 100) if scored else 0
+
+        run_id = datetime.utcnow().strftime("%Y%m%d_%H%M%S_dual")
+        document_info = dict(openai_summary.get("document_info", {}))
+        document_info.update({
+            "provider": "dual",
+            "model": self.model,
+            "evaluated_at": datetime.utcnow().isoformat(),
+            "run_id": run_id,
+            "providers_used": {
+                "openai": getattr(self.primary, "model", None),
+                "gemini": getattr(self.secondary, "model", None),
+            },
+        })
+
+        summary = {
+            "document_info": document_info,
+            "evaluation_summary": {
+                "total_requirements": len(combined_results),
+                "compliance_score": round(compliance_score, 1),
+                "status_counts": status_counts,
+                "total_tokens_used": total_tokens,
+                "estimated_cost_usd": round((total_tokens / 1_000_000) * 5, 4),
+            },
+            "requirements_results": combined_results,
+            "agreement_by_requirement": agreement_map,
+            "raw_provider_results": {
+                "openai": openai_summary,
+                "gemini": gemini_summary,
+            },
+            "generated_at": datetime.utcnow().isoformat(),
+            "providers_used": {
+                "openai": getattr(self.primary, "model", None),
+                "gemini": getattr(self.secondary, "model", None),
+            },
+        }
+
+        # Persist combined summary alongside individual runs
+        try:
+            self.primary._persist_summary(summary, run_id)  # type: ignore[attr-defined]
+        except Exception as exc:
+            logger.warning("Failed to persist dual summary: %s", exc)
+
+        return summary
+
+    def _combine_results(
+        self,
+        openai_results: List[Dict[str, Any]],
+        gemini_results: List[Dict[str, Any]],
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, str], int]:
+        gemini_by_id = {str(r.get("requirement_id")): r for r in gemini_results}
+        combined: List[Dict[str, Any]] = []
+        agreement_map: Dict[str, str] = {}
+        total_tokens = 0
+
+        for openai_record in openai_results:
+            req_id = str(openai_record.get("requirement_id"))
+            gem_record = gemini_by_id.get(req_id)
+            if gem_record is None:
+                combined.append(openai_record)
+                agreement_map[req_id] = "unknown"
+                total_tokens += int(openai_record.get("tokens_used", 0) or 0)
+                continue
+
+            status_a = str(openai_record.get("status", "ERROR")).upper()
+            status_b = str(gem_record.get("status", "ERROR")).upper()
+            agreement = status_a == status_b
+
+            chosen_status = self._more_conservative_status(status_a, status_b)
+            chosen_provider = "openai" if chosen_status == status_a else "gemini"
+
+            confidence_a = str(openai_record.get("confidence", openai_record.get("confidence_level", "low"))).lower()
+            confidence_b = str(gem_record.get("confidence", gem_record.get("confidence_level", "low"))).lower()
+            chosen_confidence = self._lower_confidence(confidence_a, confidence_b)
+
+            agreement_map[req_id] = "agreement" if agreement else "conflict"
+
+            if agreement:
+                chosen_record = openai_record or gem_record
+            else:
+                chosen_record = openai_record if chosen_provider == "openai" else gem_record
+
+            tokens_used = int(openai_record.get("tokens_used", 0) or 0) + int(gem_record.get("tokens_used", 0) or 0)
+            total_tokens += tokens_used
+
+            combined.append({
+                "requirement_id": req_id,
+                "requirement_title": chosen_record.get("requirement_title") or chosen_record.get("title"),
+                "requirement_clause": chosen_record.get("requirement_clause") or chosen_record.get("clause"),
+                "status": chosen_status,
+                "confidence": chosen_confidence,
+                "confidence_level": chosen_confidence,  # for downstream normalization
+                "rationale": chosen_record.get("rationale") or chosen_record.get("evaluation_rationale") or "",
+                "evidence": chosen_record.get("evidence", []),
+                "gaps": chosen_record.get("gaps", []),
+                "recommendations": chosen_record.get("recommendations", []),
+                "tokens_used": tokens_used,
+                "agreement_status": agreement_map[req_id],
+                "source_provider": "openai" if agreement else chosen_provider,
+                "secondary_provider_status": {
+                    "openai": status_a,
+                    "gemini": status_b,
+                },
+            })
+
+        return combined, agreement_map, total_tokens
+
+    def _more_conservative_status(self, status_a: str, status_b: str) -> str:
+        priority_a = self.STATUS_PRIORITY.get(status_a, 3)
+        priority_b = self.STATUS_PRIORITY.get(status_b, 3)
+        if priority_a == priority_b:
+            return status_a
+        return status_a if priority_a > priority_b else status_b
+
+    def _lower_confidence(self, conf_a: str, conf_b: str) -> str:
+        rank_a = self.CONFIDENCE_PRIORITY.get(conf_a, 0)
+        rank_b = self.CONFIDENCE_PRIORITY.get(conf_b, 0)
+        return conf_a if rank_a <= rank_b else conf_b
 
 
 async def _async_main(file_path: str) -> None:

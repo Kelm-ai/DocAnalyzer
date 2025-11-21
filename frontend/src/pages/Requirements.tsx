@@ -43,6 +43,7 @@ const buildCopyClause = (value: string, existingValues: string[]): string => {
 interface RequirementFormState {
   clause: string
   title: string
+  requirement_text: string
   display_order: string
   evaluation_type: string
 }
@@ -50,6 +51,7 @@ interface RequirementFormState {
 const initialFormState: RequirementFormState = {
   clause: "",
   title: "",
+  requirement_text: "",
   display_order: "0",
   evaluation_type: "",
 }
@@ -353,6 +355,7 @@ export function Requirements() {
     const payload: RequirementCreatePayload = {
       clause: formState.clause.trim(),
       title: formState.title.trim(),
+      requirement_text: formState.requirement_text.trim() || undefined,
       display_order: parsedOrder,
       evaluation_type: formState.evaluation_type.trim() || undefined,
     }
@@ -411,6 +414,7 @@ export function Requirements() {
     setFormState({
       clause: requirement.clause,
       title: requirement.title,
+      requirement_text: requirement.requirement_text ?? "",
       display_order: String(requirement.display_order ?? 0),
       evaluation_type: requirement.evaluation_type ?? "",
     })
@@ -452,6 +456,7 @@ export function Requirements() {
         setFormState({
           clause: copyClause,
           title: copyTitle,
+          requirement_text: requirement.requirement_text ?? "",
           display_order: String(requirement.display_order ?? 0),
           evaluation_type: requirement.evaluation_type ?? "",
         })
@@ -601,6 +606,19 @@ export function Requirements() {
               value={formState.title}
               onChange={(event) => handleFieldChange("title", event.target.value)}
               placeholder="Short title for the requirement"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-900" htmlFor="requirement_text">
+              Requirement Text
+            </label>
+            <textarea
+              id="requirement_text"
+              value={formState.requirement_text}
+              onChange={(event) => handleFieldChange("requirement_text", event.target.value)}
+              placeholder="Detailed description of the requirement"
+              className="min-h-[120px] rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
             />
           </div>
 

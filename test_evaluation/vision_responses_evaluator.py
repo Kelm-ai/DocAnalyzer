@@ -95,6 +95,15 @@ Vision handling:
         self.openai_client: Optional[OpenAI] = None
         self.gemini_client: Optional["genai.Client"] = None
         self.gemini_response_schema = None
+        self.gemini_thinking_config = None
+        self.gemini_media_resolution = None
+        self.gemini_part_media_resolution = None
+        vision_model_override = os.getenv("VISION_MODEL")
+
+        # Evaluation controls (set early so helper methods can rely on them)
+        self.concurrent_requests = int(os.getenv("VISION_EVALUATOR_CONCURRENCY", "8"))
+        self.reasoning_effort = os.getenv('VISION_REASONING_EFFORT', 'medium')
+        self.requirements_limit = int(os.getenv("VISION_EVALUATOR_REQUIREMENT_LIMIT", "0"))
 
         if self.provider == "gemini":
             if not GENAI_AVAILABLE:
@@ -102,19 +111,29 @@ Vision handling:
             api_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
             if not api_key:
                 raise RuntimeError("GEMINI_API_KEY is required when VISION_PROVIDER=gemini")
-            self.model = self.model or os.getenv("GEMINI_VISION_MODEL", os.getenv("GEMINI_MODEL", "gemini-2.0-flash"))
+            self.model = (
+                self.model
+                or os.getenv("GEMINI_VISION_MODEL")
+                or os.getenv("GEMINI_MODEL")
+                or vision_model_override
+                or "gemini-3-pro-preview"
+            )
             self.gemini_client = genai.Client(api_key=api_key)
             self.gemini_response_schema = self._build_gemini_schema()
+            self.gemini_thinking_config = self._resolve_gemini_thinking_config()
+            self.gemini_media_resolution, self.gemini_part_media_resolution = self._resolve_gemini_media_resolution()
         else:
             api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
             if not api_key:
                 raise RuntimeError("OPENAI_API_KEY is required for the vision evaluator")
-            self.model = self.model or os.getenv("OPENAI_VISION_MODEL", os.getenv("OPENAI_MODEL", "gpt-5"))
+            self.model = (
+                self.model
+                or os.getenv("OPENAI_VISION_MODEL")
+                or os.getenv("OPENAI_MODEL")
+                or vision_model_override
+                or "gpt-5"
+            )
             self.openai_client = OpenAI(api_key=api_key)
-
-        self.concurrent_requests = int(os.getenv("VISION_EVALUATOR_CONCURRENCY", "8"))
-        self.reasoning_effort = os.getenv('VISION_REASONING_EFFORT', 'medium')
-        self.requirements_limit = int(os.getenv("VISION_EVALUATOR_REQUIREMENT_LIMIT", "0"))
 
         self.supabase: Optional[Client] = None
         if SUPABASE_AVAILABLE:
@@ -359,14 +378,23 @@ Vision handling:
 
             try:
                 file_part = genai_types.Part(file_data=genai_types.FileData(file_uri=file_uri, mime_type=mime_type))  # type: ignore[arg-type]
+                if self.gemini_part_media_resolution is not None:
+                    file_part.media_resolution = self.gemini_part_media_resolution
+
+                gen_config_kwargs = {
+                    "response_mime_type": "application/json",
+                    "response_schema": self.gemini_response_schema,
+                }
+                if self.gemini_media_resolution is not None:
+                    gen_config_kwargs["media_resolution"] = self.gemini_media_resolution
+                if self.gemini_thinking_config is not None:
+                    gen_config_kwargs["thinking_config"] = self.gemini_thinking_config
+
                 response = await asyncio.to_thread(
                     self.gemini_client.models.generate_content,  # type: ignore[union-attr]
                     model=self.model,
                     contents=[file_part, prompt],
-                    config=genai_types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=self.gemini_response_schema,
-                    ),
+                    config=genai_types.GenerateContentConfig(**gen_config_kwargs),
                 )
             except Exception as exc:
                 logger.exception("Gemini API error for requirement %s", requirement['id'])
@@ -626,6 +654,49 @@ Vision handling:
 
     def _save_cache(self) -> None:
         self.cache_path.write_text(json.dumps(self.file_cache, indent=2), encoding="utf-8")
+
+    def _resolve_gemini_thinking_config(self) -> Optional["genai_types.ThinkingConfig"]:
+        if not GENAI_AVAILABLE or genai_types is None:
+            return None
+        raw = os.getenv("GEMINI_THINKING_LEVEL") or os.getenv("VISION_THINKING_LEVEL")
+        normalized = (raw or "").strip().lower()
+        if not normalized:
+            effort = (self.reasoning_effort or "").strip().lower()
+            normalized = "low" if effort == "low" else "high"
+        if normalized in {"medium", "med"}:
+            normalized = "high"  # Gemini 3 treats medium as high/dynamic
+        if normalized not in {"low", "high"}:
+            return None
+        return genai_types.ThinkingConfig(thinking_level=normalized)
+
+    def _resolve_gemini_media_resolution(self) -> Tuple[Optional[Any], Optional[Any]]:
+        """Return (global_media_resolution_enum, part_media_resolution_config)."""
+        if not GENAI_AVAILABLE or genai_types is None:
+            return None, None
+        raw = os.getenv("GEMINI_MEDIA_RESOLUTION") or os.getenv("VISION_MEDIA_RESOLUTION") or "media_resolution_medium"
+        normalized = raw.strip().lower()
+        mapping = {
+            "low": "MEDIA_RESOLUTION_LOW",
+            "media_resolution_low": "MEDIA_RESOLUTION_LOW",
+            "medium": "MEDIA_RESOLUTION_MEDIUM",
+            "media_resolution_medium": "MEDIA_RESOLUTION_MEDIUM",
+            "high": "MEDIA_RESOLUTION_HIGH",
+            "media_resolution_high": "MEDIA_RESOLUTION_HIGH",
+        }
+        enum_key = mapping.get(normalized)
+        if not enum_key:
+            return None, None
+        try:
+            config_value = genai_types.MediaResolution[enum_key]
+        except Exception:
+            config_value = None
+        try:
+            part_value = genai_types.PartMediaResolution(
+                level=normalized if normalized.startswith("media_resolution_") else f"media_resolution_{normalized}"
+            )
+        except Exception:
+            part_value = None
+        return config_value, part_value
 
 
 async def _async_main(file_path: str) -> None:

@@ -16,9 +16,7 @@ A standalone test version of the ISO 14971 compliance evaluator designed for deb
 
 ### 1. Install Dependencies
 ```bash
-pip install --upgrade openai python-docx colorama tabulate openpyxl
-# Optional: add google-genai if you want to run the Gemini vision pipeline
-# pip install --upgrade google-genai
+pip install --upgrade openai google-genai python-docx colorama tabulate openpyxl
 ```
 
 > **Note:** The vision evaluator requires `openai` 1.0.0 or later. Run `python - <<'PY'`
@@ -29,10 +27,13 @@ pip install --upgrade openai python-docx colorama tabulate openpyxl
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
 export OPENAI_MODEL="gpt-5"  # Optional, defaults to gpt-5
-# Optional Gemini setup
-# export VISION_PROVIDER="gemini"
+# Vision provider/model toggle
+# export VISION_PROVIDER="gemini"                  # or "openai" (default)
+# export VISION_MODEL="gemini-3-pro-preview"       # shared override for either provider
 # export GEMINI_API_KEY="your-gemini-api-key"
-# export GEMINI_MODEL="gemini-2.0-flash"
+# export GEMINI_MODEL="gemini-3-pro-preview"       # provider-specific override (defaults to 3 Pro)
+# export GEMINI_THINKING_LEVEL="low|high"          # defaults: low when reasoning effort=low, else high
+# export GEMINI_MEDIA_RESOLUTION="media_resolution_medium"  # default; use low/high as needed
 ```
 
 Optional overrides:
@@ -83,11 +84,12 @@ Run the vision pipeline (OpenAI by default; set `VISION_PROVIDER=gemini` to use 
 python test_evaluation/vision_responses_evaluator.py path/to/document.pdf
 ```
 
-Each run uploads the PDF to the Files API (cached by SHA-256 hash), reuses the returned `file_id` across the three parallel requirement calls with `gpt-5`, and stores JSON/Excel summaries under `output/vision_results/`.
+Each run uploads the PDF to the Files API (cached by SHA-256 hash), reuses the returned `file_id` across the three parallel requirement calls with your configured model (`gpt-5` by default for OpenAI, `gemini-3-pro-preview` by default for Gemini), and stores JSON/Excel summaries under `output/vision_results/`.
+Gemini runs default to `gemini-3-pro-preview`, set `media_resolution_medium` for PDFs, and map `VISION_REASONING_EFFORT` to `thinking_level` (high unless `VISION_REASONING_EFFORT=low`).
 
 Optional environment variables for tuning:
 
-- `VISION_EVALUATOR_CONCURRENCY` – parallel OpenAI calls (default 3)
+- `VISION_EVALUATOR_CONCURRENCY` – parallel vision calls (default 3)
 - `VISION_REASONING_EFFORT` – override reasoning effort (default `medium`)
 
 ## Hybrid Evaluator

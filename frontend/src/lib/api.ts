@@ -17,6 +17,7 @@ export interface EvaluationStatus {
   requirements_partial?: number;
   requirements_na?: number;
   error_message?: string;
+  total_requirements?: number;
   metadata?: {
     progress_percent?: number;
     completed_requirements?: number;
@@ -32,6 +33,7 @@ export interface EvaluationStatus {
 
 export interface RequirementResult {
   requirement_id: string;
+  requirement_clause?: string | null;
   title: string;
   status: 'PASS' | 'FAIL' | 'FLAGGED' | 'PARTIAL' | 'NOT_APPLICABLE' | 'ERROR';
   confidence_level: 'low' | 'medium' | 'high';
@@ -40,6 +42,7 @@ export interface RequirementResult {
   evaluation_rationale: string;
   gaps_identified: string[];
   recommendations: string[];
+   agreement_status?: 'agreement' | 'conflict' | 'unknown';
   tokens_used?: number;
   evaluation_duration_ms?: number;
   search_results?: Record<string, unknown>[];
@@ -66,6 +69,7 @@ export interface ComplianceReport {
     flagged: number;
     partial?: number;
     not_applicable: number;
+    agreement_by_requirement?: Record<string, 'agreement' | 'conflict' | 'unknown'>;
   };
   requirements: RequirementResult[];
   high_risk_findings: string[];
@@ -89,6 +93,10 @@ const API_BASE_URL = (() => {
   }
 
   if (typeof window !== 'undefined') {
+    // If we're running the Vite dev server on 5173, default the API to the typical backend port.
+    if (window.location.port === '5173') {
+      return 'http://localhost:5001/api';
+    }
     const origin = window.location.origin.replace(/\/$/, '');
     return `${origin}/api`;
   }
@@ -109,21 +117,41 @@ class APIError extends Error {
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const errorBody = await response.text();
-    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-    
+  const contentType = response.headers.get('content-type') || '';
+  const rawBody = await response.text();
+  const isJsonLike = contentType.includes('application/json') || contentType.includes('+json');
+
+  let parsed: any = null;
+  if (rawBody && isJsonLike) {
     try {
-      const errorData = JSON.parse(errorBody);
-      errorMessage = errorData.detail || errorMessage;
+      parsed = JSON.parse(rawBody);
     } catch {
-      // Use default error message if parsing fails
+      // leave parsed as null and fall back to error handling below
     }
-    
-    throw new APIError(errorMessage, response.status, errorBody);
   }
-  
-  return response.json();
+
+  if (!response.ok) {
+    // Treat cache-related empties as success with no body
+    if (response.status === 304 || response.status === 204) {
+      return undefined as T;
+    }
+
+    const detail = parsed && (parsed.detail || parsed.message);
+    const fallback = rawBody ? rawBody.slice(0, 200) : '';
+    const errorMessage = detail || fallback || `HTTP ${response.status}: ${response.statusText}`;
+    throw new APIError(errorMessage, response.status, parsed ?? rawBody);
+  }
+
+  if (parsed !== null) {
+    return parsed as T;
+  }
+
+  // Allow empty bodies (e.g., 204 No Content)
+  if (!rawBody) {
+    return undefined as T;
+  }
+
+  throw new APIError('Unexpected non-JSON response from server', response.status, rawBody);
 }
 
 export const api = {
@@ -151,7 +179,7 @@ export const api = {
    * Get all document evaluations
    */
   async getEvaluations(): Promise<EvaluationStatus[]> {
-    const response = await fetch(`${API_BASE_URL}/evaluations`);
+    const response = await fetch(`${API_BASE_URL}/evaluations`, { cache: "no-store" });
     return handleResponse(response);
   },
 
@@ -159,7 +187,7 @@ export const api = {
    * Get status of specific evaluation
    */
   async getEvaluationStatus(evaluationId: string): Promise<EvaluationStatus> {
-    const response = await fetch(`${API_BASE_URL}/evaluations/${evaluationId}`);
+    const response = await fetch(`${API_BASE_URL}/evaluations/${evaluationId}`, { cache: "no-store" });
     return handleResponse(response);
   },
 
@@ -169,7 +197,7 @@ export const api = {
   async getEvaluationResults(evaluationId: string): Promise<{
     requirements: RequirementResult[];
   }> {
-    const response = await fetch(`${API_BASE_URL}/evaluations/${evaluationId}/results`);
+    const response = await fetch(`${API_BASE_URL}/evaluations/${evaluationId}/results`, { cache: "no-store" });
     return handleResponse(response);
   },
 
@@ -177,7 +205,7 @@ export const api = {
    * Get comprehensive compliance report
    */
   async getComplianceReport(evaluationId: string): Promise<ComplianceReport> {
-    const response = await fetch(`${API_BASE_URL}/evaluations/${evaluationId}/report`);
+    const response = await fetch(`${API_BASE_URL}/evaluations/${evaluationId}/report`, { cache: "no-store" });
     return handleResponse(response);
   },
 
@@ -185,7 +213,7 @@ export const api = {
    * Fetch stored human feedback for an evaluation
    */
   async getRequirementFeedback(evaluationId: string): Promise<RequirementFeedbackRecord[]> {
-    const response = await fetch(`${API_BASE_URL}/evaluations/${evaluationId}/feedback`);
+    const response = await fetch(`${API_BASE_URL}/evaluations/${evaluationId}/feedback`, { cache: "no-store" });
     return handleResponse(response);
   },
 
@@ -211,7 +239,7 @@ export const api = {
    * Fetch ISO requirements from backend
    */
   async getRequirements(): Promise<ISORequirement[]> {
-    const response = await fetch(`${API_BASE_URL}/requirements`)
+    const response = await fetch(`${API_BASE_URL}/requirements`, { cache: "no-store" })
     return handleResponse(response)
   },
 

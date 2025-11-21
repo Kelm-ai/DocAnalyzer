@@ -38,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   toolbarSlot?: React.ReactNode
   filterColumn?: string
   filterPlaceholder?: string
+  initialPageSize?: number
   onRowClick?: (row: Row<TData>) => void
   rowClassName?: (row: Row<TData>) => string | undefined
   isRowClickable?: (row: Row<TData>) => boolean
@@ -50,6 +51,7 @@ export function DataTable<TData, TValue>({
   toolbarSlot,
   filterColumn = "title",
   filterPlaceholder = "Filter...",
+  initialPageSize = 10,
   onRowClick,
   rowClassName,
   isRowClickable,
@@ -67,6 +69,11 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    initialState: {
+      pagination: {
+        pageSize: initialPageSize,
+      },
+    },
     state: {
       sorting,
       columnFilters,

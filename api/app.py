@@ -90,11 +90,12 @@ EVALUATION_PIPELINE = "vision" if raw_pipeline == "azure" else raw_pipeline
 
 # Vision evaluator (optional)
 try:
-    from vision_responses_evaluator import VisionResponsesEvaluator  # type: ignore
+    from vision_responses_evaluator import VisionResponsesEvaluator, DualVisionComparator  # type: ignore
     VISION_PIPELINE_AVAILABLE = True
 except ImportError as vision_import_error:
     logger.warning(f"Vision evaluator not available: {vision_import_error}")
     VisionResponsesEvaluator = None  # type: ignore
+    DualVisionComparator = None  # type: ignore
     VISION_PIPELINE_AVAILABLE = False
 
 # Azure pipeline has been archived; keep placeholders for backwards compatibility
@@ -293,6 +294,9 @@ def create_vision_compliance_report(evaluation_id: str, results: List[Dict[str, 
         'errors': status_counts.get('ERROR', 0),
         'score': summary.get('compliance_score', 0),
     }
+    agreement_map = summary.get('agreement_by_requirement')
+    if agreement_map:
+        summary_stats['agreement_by_requirement'] = agreement_map
 
     report_payload = {
         'document_evaluation_id': evaluation_id,
@@ -313,6 +317,7 @@ def persist_vision_results(evaluation_id: str, summary: Dict[str, Any]) -> None:
     status_counts = evaluation_summary.get('status_counts', {})
     total_requirements = evaluation_summary.get('total_requirements', 0)
     compliance_score = evaluation_summary.get('compliance_score', 0)
+    agreement_map = summary.get('agreement_by_requirement', {})
 
     document_update = {
         'status': 'completed',
@@ -383,6 +388,7 @@ def persist_vision_results(evaluation_id: str, summary: Dict[str, Any]) -> None:
         'status_counts': status_counts,
         'total_requirements': total_requirements,
         'compliance_score': compliance_score,
+        'agreement_by_requirement': agreement_map,
     })
 
 # Pydantic models
@@ -400,9 +406,12 @@ class EvaluationStatus(BaseModel):
     requirements_partial: Optional[int] = None
     requirements_na: Optional[int] = None
     error_message: Optional[str] = None
+    total_requirements: Optional[int] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 class RequirementResult(BaseModel):
     requirement_id: str
+    requirement_clause: Optional[str] = None
     title: str
     status: str
     confidence_level: Literal["low", "medium", "high"]
@@ -411,6 +420,7 @@ class RequirementResult(BaseModel):
     evaluation_rationale: str
     gaps_identified: List[str]
     recommendations: List[str]
+    agreement_status: Optional[str] = None
 
 class ComplianceReport(BaseModel):
     evaluation_id: str
@@ -487,7 +497,17 @@ async def startup_event():
         if EVALUATION_PIPELINE == "vision":
             if not VISION_PIPELINE_AVAILABLE or VisionResponsesEvaluator is None:
                 raise RuntimeError("Vision evaluator is not available but EVALUATION_PIPELINE=vision was requested")
-            vision_evaluator = VisionResponsesEvaluator()
+            use_dual = os.getenv("VISION_COMPARE_BOTH", "").lower() in {"1", "true", "yes"} or os.getenv("VISION_PROVIDER", "").lower() in {"dual", "both"}
+            if use_dual:
+                if DualVisionComparator is None:
+                    raise RuntimeError("DualVisionComparator is unavailable")
+                vision_evaluator = DualVisionComparator()
+                logger.info(
+                    "Dual vision evaluator initialized (providers=openai+gemini, models=%s)",
+                    getattr(vision_evaluator, "model", None),
+                )
+            else:
+                vision_evaluator = VisionResponsesEvaluator()
             if getattr(vision_evaluator, "supabase", None) is None:
                 raise RuntimeError("Vision evaluator requires Supabase credentials; none were provided")
             logger.info(
@@ -962,7 +982,9 @@ async def list_evaluations():
                 requirements_flagged=flagged,
                 requirements_partial=partial,
                 requirements_na=row.get('requirements_na'),
-                error_message=row.get('error_message')
+                error_message=row.get('error_message'),
+                total_requirements=row.get('total_requirements'),
+                metadata=row.get('metadata'),
             ))
         
         return evaluations
@@ -1004,7 +1026,9 @@ async def get_evaluation_status(evaluation_id: str):
             requirements_flagged=flagged,
             requirements_partial=partial,
             requirements_na=row.get('requirements_na'),
-            error_message=row.get('error_message')
+            error_message=row.get('error_message'),
+            total_requirements=row.get('total_requirements'),
+            metadata=row.get('metadata'),
         )
         
     except Exception as e:
@@ -1034,6 +1058,7 @@ async def get_evaluation_results(evaluation_id: str):
                 score_value = _confidence_score_from_level(level)
             requirements.append(RequirementResult(
                 requirement_id=row['requirement_id'],
+                requirement_clause=iso_requirement.get('clause') or row.get('requirement_clause'),
                 title=row.get('title') or iso_requirement.get('title', ''),
                 status=row['status'],
                 confidence_level=level,
@@ -1081,6 +1106,11 @@ async def get_compliance_report(evaluation_id: str):
         eval_data = eval_result.data
         report_data = report_result.data if report_result.data else {}
         
+        summary_stats_map = {}
+        if isinstance(report_data.get('summary_stats'), dict):
+            summary_stats_map = report_data.get('summary_stats') or {}
+        agreement_map = summary_stats_map.get('agreement_by_requirement', {})
+
         requirements = []
         for row in req_result.data:
             iso_requirement = row.get('iso_requirements') or {}
@@ -1090,6 +1120,7 @@ async def get_compliance_report(evaluation_id: str):
                 score_value = _confidence_score_from_level(level)
             requirements.append(RequirementResult(
                 requirement_id=row['requirement_id'],
+                requirement_clause=iso_requirement.get('clause') or row.get('requirement_clause'),
                 title=row.get('title') or iso_requirement.get('title', ''),
                 status=row['status'],
                 confidence_level=level,
@@ -1097,7 +1128,8 @@ async def get_compliance_report(evaluation_id: str):
                 evidence_snippets=row.get('evidence_snippets', []),
                 evaluation_rationale=row.get('evaluation_rationale', ''),
                 gaps_identified=row.get('gaps_identified', []),
-                recommendations=row.get('recommendations', [])
+                recommendations=row.get('recommendations', []),
+                agreement_status=agreement_map.get(str(row['requirement_id'])) if isinstance(agreement_map, dict) else None,
             ))
         
         return ComplianceReport(

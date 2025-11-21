@@ -17,9 +17,10 @@ from typing import Dict, List
 # Default hardcoded eval set. Paths should be accessible to the evaluator
 # (local filesystem, blob URL, or presigned URL depending on pipeline setup).
 _DEFAULT_EVAL_DOCS: List[Dict[str, str]] = [
-    {"id": "doc_1", "path": "s3://path/to/doc1.pdf"},
-    {"id": "doc_2", "path": "s3://path/to/doc2.pdf"},
-    {"id": "doc_3", "path": "s3://path/to/doc3.pdf"},
+    {
+        "id": "bad_rm_sop_example",
+        "path": "docs/docs_for_eval/Bad RM SOP Example.pdf",  # local test doc
+    },
 ]
 
 # Subset of requirement IDs to exercise in repeatability runs.
@@ -52,3 +53,4 @@ EVAL_DOCS: List[Dict[str, str]] = _load_json_override("EVAL_DOCS_JSON") or _DEFA
 EVAL_REQUIREMENTS: List[str] = _load_json_override("EVAL_REQUIREMENTS_JSON") or _DEFAULT_EVAL_REQUIREMENTS
 NUM_RUNS: int = int(os.getenv("EVAL_NUM_RUNS", "5"))
 CONFIG_LABEL: str = os.getenv("EVAL_CONFIG_LABEL", "baseline_v1")
+RUN_MODE: str = os.getenv("EVAL_RUN_MODE", "precision").strip().lower()
