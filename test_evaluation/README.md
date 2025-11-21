@@ -16,7 +16,9 @@ A standalone test version of the ISO 14971 compliance evaluator designed for deb
 
 ### 1. Install Dependencies
 ```bash
-pip install --upgrade openai google-genai python-docx colorama tabulate openpyxl
+pip install --upgrade openai python-docx colorama tabulate openpyxl
+# Optional: add google-genai if you want to run the Gemini vision pipeline
+# pip install --upgrade google-genai
 ```
 
 > **Note:** The vision evaluator requires `openai` 1.0.0 or later. Run `python - <<'PY'`
