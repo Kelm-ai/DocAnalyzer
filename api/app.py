@@ -78,7 +78,8 @@ def _get_allowed_origins() -> List[str]:
     logger.info("Allowed CORS origins: %s", merged)
     return merged or default_origins
 
-for path in (ROOT_DIR, SCRIPTS_DIR, TEST_EVALUATION_DIR, BASE_DIR):
+# Ensure API dir is first to resolve vision_responses_evaluator before test fixtures
+for path in (BASE_DIR, ROOT_DIR, SCRIPTS_DIR, TEST_EVALUATION_DIR):
     str_path = str(path)
     if str_path not in sys.path:
         sys.path.append(str_path)

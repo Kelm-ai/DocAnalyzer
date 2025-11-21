@@ -699,6 +699,167 @@ Vision handling:
         return config_value, part_value
 
 
+class DualVisionComparator:
+    """
+    Run both OpenAI and Gemini providers per requirement, combine conservatively:
+    - Status priority: FAIL > FLAGGED/PARTIAL/ERROR > PASS > NOT_APPLICABLE
+    - Confidence: take the lower confidence level
+    - Content: on agreement use OpenAI content; on conflict use the content from the less-permissive status
+    - Agreement flag per requirement for UI (“agreement” | “conflict”)
+    """
+
+    STATUS_PRIORITY = {
+        "FAIL": 4,
+        "PARTIAL": 3,
+        "FLAGGED": 3,
+        "ERROR": 3,
+        "PASS": 2,
+        "NOT_APPLICABLE": 1,
+    }
+    CONFIDENCE_PRIORITY = {"low": 0, "medium": 1, "high": 2}
+
+    def __init__(self) -> None:
+        self.provider = "dual"
+        self.primary = VisionResponsesEvaluator(provider="openai")  # type: ignore[arg-type]
+        self.secondary = VisionResponsesEvaluator(provider="gemini")  # type: ignore[arg-type]
+        self.model = f"{self.primary.model}+{self.secondary.model}"
+        self.supabase = self.primary.supabase or self.secondary.supabase
+
+    async def evaluate_document(self, file_path: str) -> Dict[str, Any]:
+        openai_summary = await self.primary.evaluate_document(file_path)
+        gemini_summary = await self.secondary.evaluate_document(file_path)
+
+        combined_results, agreement_map, total_tokens = self._combine_results(
+            openai_summary.get("requirements_results", []),
+            gemini_summary.get("requirements_results", []),
+        )
+
+        status_counts: Dict[str, int] = {"PASS": 0, "FAIL": 0, "FLAGGED": 0, "NOT_APPLICABLE": 0, "ERROR": 0}
+        for record in combined_results:
+            status = record.get("status", "ERROR")
+            status_counts[status] = status_counts.get(status, 0) + 1
+
+        scored = len(combined_results) - status_counts.get("ERROR", 0)
+        compliance_score = (status_counts.get("PASS", 0) / scored * 100) if scored else 0
+
+        run_id = datetime.utcnow().strftime("%Y%m%d_%H%M%S_dual")
+        document_info = dict(openai_summary.get("document_info", {}))
+        document_info.update({
+            "provider": "dual",
+            "model": self.model,
+            "evaluated_at": datetime.utcnow().isoformat(),
+            "run_id": run_id,
+            "providers_used": {
+                "openai": getattr(self.primary, "model", None),
+                "gemini": getattr(self.secondary, "model", None),
+            },
+        })
+
+        summary = {
+            "document_info": document_info,
+            "evaluation_summary": {
+                "total_requirements": len(combined_results),
+                "compliance_score": round(compliance_score, 1),
+                "status_counts": status_counts,
+                "total_tokens_used": total_tokens,
+                "estimated_cost_usd": round((total_tokens / 1_000_000) * 5, 4),
+            },
+            "requirements_results": combined_results,
+            "agreement_by_requirement": agreement_map,
+            "raw_provider_results": {
+                "openai": openai_summary,
+                "gemini": gemini_summary,
+            },
+            "generated_at": datetime.utcnow().isoformat(),
+            "providers_used": {
+                "openai": getattr(self.primary, "model", None),
+                "gemini": getattr(self.secondary, "model", None),
+            },
+        }
+
+        try:
+            self.primary._persist_summary(summary, run_id)  # type: ignore[attr-defined]
+        except Exception as exc:
+            print(f"Warning: Failed to persist dual summary: {exc}")
+
+        return summary
+
+    def _combine_results(
+        self,
+        openai_results: List[Dict[str, Any]],
+        gemini_results: List[Dict[str, Any]],
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, str], int]:
+        gemini_by_id = {str(r.get("requirement_id")): r for r in gemini_results}
+        combined: List[Dict[str, Any]] = []
+        agreement_map: Dict[str, str] = {}
+        total_tokens = 0
+
+        for openai_record in openai_results:
+            req_id = str(openai_record.get("requirement_id"))
+            gem_record = gemini_by_id.get(req_id)
+            if gem_record is None:
+                combined.append(openai_record)
+                agreement_map[req_id] = "unknown"
+                total_tokens += int(openai_record.get("tokens_used", 0) or 0)
+                continue
+
+            status_a = str(openai_record.get("status", "ERROR")).upper()
+            status_b = str(gem_record.get("status", "ERROR")).upper()
+            agreement = status_a == status_b
+
+            chosen_status = self._more_conservative_status(status_a, status_b)
+            chosen_provider = "openai" if chosen_status == status_a else "gemini"
+
+            confidence_a = str(openai_record.get("confidence", openai_record.get("confidence_level", "low"))).lower()
+            confidence_b = str(gem_record.get("confidence", gem_record.get("confidence_level", "low"))).lower()
+            chosen_confidence = self._lower_confidence(confidence_a, confidence_b)
+
+            agreement_map[req_id] = "agreement" if agreement else "conflict"
+
+            if agreement:
+                chosen_record = openai_record or gem_record
+            else:
+                chosen_record = openai_record if chosen_provider == "openai" else gem_record
+
+            tokens_used = int(openai_record.get("tokens_used", 0) or 0) + int(gem_record.get("tokens_used", 0) or 0)
+            total_tokens += tokens_used
+
+            combined.append({
+                "requirement_id": req_id,
+                "requirement_title": chosen_record.get("requirement_title") or chosen_record.get("title"),
+                "requirement_clause": chosen_record.get("requirement_clause") or chosen_record.get("clause"),
+                "status": chosen_status,
+                "confidence": chosen_confidence,
+                "confidence_level": chosen_confidence,
+                "rationale": chosen_record.get("rationale") or chosen_record.get("evaluation_rationale") or "",
+                "evidence": chosen_record.get("evidence", []),
+                "gaps": chosen_record.get("gaps", []),
+                "recommendations": chosen_record.get("recommendations", []),
+                "tokens_used": tokens_used,
+                "agreement_status": agreement_map[req_id],
+                "source_provider": "openai" if agreement else chosen_provider,
+                "secondary_provider_status": {
+                    "openai": status_a,
+                    "gemini": status_b,
+                },
+            })
+
+        return combined, agreement_map, total_tokens
+
+    def _more_conservative_status(self, status_a: str, status_b: str) -> str:
+        priority_a = self.STATUS_PRIORITY.get(status_a, 3)
+        priority_b = self.STATUS_PRIORITY.get(status_b, 3)
+        if priority_a == priority_b:
+            return status_a
+        return status_a if priority_a > priority_b else status_b
+
+    def _lower_confidence(self, conf_a: str, conf_b: str) -> str:
+        rank_a = self.CONFIDENCE_PRIORITY.get(conf_a, 0)
+        rank_b = self.CONFIDENCE_PRIORITY.get(conf_b, 0)
+        return conf_a if rank_a <= rank_b else conf_b
+
+
+
 async def _async_main(file_path: str) -> None:
     evaluator = VisionResponsesEvaluator()
     summary = await evaluator.evaluate_document(file_path)
