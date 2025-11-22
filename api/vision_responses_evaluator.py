@@ -353,8 +353,7 @@ Vision handling:
                 response = await asyncio.to_thread(
                     self.openai_client.responses.parse,  # type: ignore[union-attr]
                     model=self.model,
-                    seed=self.seed,
-                    temperature=self.temperature,
+
                     reasoning={"effort": self.reasoning_effort},
                     input=[
                         {
@@ -501,6 +500,17 @@ Vision handling:
             ]
         ).strip()
 
+        # Extract first sentence from requirement_text for focused evaluation
+        first_sentence = ""
+        requirement_text = requirement.get("requirement_text")
+        if requirement_text:
+            # Split by sentence-ending punctuation and take the first sentence
+            sentences = requirement_text.split(".")
+            if sentences:
+                first_sentence = sentences[0].strip()
+                if first_sentence and not first_sentence.endswith("."):
+                    first_sentence = first_sentence + "."
+
         instruction_block = (
             "MANDATORY METHOD:\n"
             "1. Review the attached PDF for visuals (tables, charts, signatures) whenever the text layer is insufficient.\n"
@@ -528,6 +538,10 @@ Vision handling:
             "".join(instruction_block),
             "Requirement:\n" + requirement_details,
         ]
+
+        # Add first sentence as special instruction if available
+        if first_sentence:
+            prompt_sections.append(f"REQUIREMENT FOCUS:\n{first_sentence}")
 
         return "\n\n".join(prompt_sections)
 
