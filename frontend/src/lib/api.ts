@@ -121,7 +121,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
   const rawBody = await response.text();
   const isJsonLike = contentType.includes('application/json') || contentType.includes('+json');
 
-  let parsed: any = null;
+  let parsed: unknown = null;
   if (rawBody && isJsonLike) {
     try {
       parsed = JSON.parse(rawBody);
