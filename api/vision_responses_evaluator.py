@@ -16,7 +16,8 @@ import hashlib
 import json
 import logging
 import os
-from datetime import datetime
+import tempfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -152,8 +153,12 @@ Vision handling:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.responses_dir.mkdir(parents=True, exist_ok=True)
 
+        # Legacy local cache (will be phased out in favor of DB-based caching)
         self.cache_path = self.output_dir / f"uploaded_files_cache_{self.provider}.json"
         self.file_cache = self._load_cache()
+
+        # Gemini file TTL (48 hours, with 1 hour buffer for safety)
+        self.gemini_ttl_hours = 47
 
         if self.provider == "openai":
             logger.info(
@@ -239,8 +244,13 @@ Vision handling:
         }
 
         semaphore = asyncio.Semaphore(self.concurrent_requests)
+        # Include file_hash in file_ref for retry logic
+        file_ref["file_hash"] = file_hash
         tasks = [
-            self._evaluate_single_requirement(file_ref, requirement, semaphore, run_responses_dir)
+            self._evaluate_single_requirement(
+                file_ref, requirement, semaphore, run_responses_dir,
+                document_path=document_path
+            )
             for requirement in requirements
         ]
 
@@ -267,13 +277,193 @@ Vision handling:
         return summary
 
     async def ensure_file_ref(self, document_path: Path) -> Tuple[Dict[str, str], str, bool]:
-        """Upload the PDF once and cache the returned identifier per provider."""
+        """
+        Upload the PDF once and cache the returned identifier per provider.
+
+        Uses Supabase Storage as the permanent source of truth, with provider-specific
+        file references (Gemini/OpenAI) that may expire. When a provider reference
+        expires, the file is re-uploaded from Supabase Storage.
+        """
         data = document_path.read_bytes()
         file_hash = hashlib.sha256(data).hexdigest()
+        file_size = len(data)
+
+        # Try DB-based caching first (if Supabase is available)
+        if self.supabase is not None:
+            try:
+                db_result = await self._get_or_create_file_ref_from_db(
+                    document_path, data, file_hash, file_size
+                )
+                if db_result is not None:
+                    return db_result
+            except Exception as exc:
+                logger.warning("DB-based file caching failed, falling back to local cache: %s", exc)
+
+        # Fallback to legacy local JSON cache
         cached_entry = self.file_cache.get(file_hash)
         if cached_entry and cached_entry.get("provider") == self.provider:
             return cached_entry, file_hash, True
 
+        # Upload to provider
+        file_meta = await self._upload_to_provider(document_path, file_hash)
+
+        self.file_cache[file_hash] = file_meta
+        self._save_cache()
+        return file_meta, file_hash, False
+
+    async def _get_or_create_file_ref_from_db(
+        self,
+        document_path: Path,
+        data: bytes,
+        file_hash: str,
+        file_size: int,
+    ) -> Optional[Tuple[Dict[str, str], str, bool]]:
+        """
+        Check DB for existing file reference. If provider ref is valid, return it.
+        If expired or missing, re-upload from Supabase Storage or upload new file.
+        """
+        if self.supabase is None:
+            return None
+
+        # Check for existing record by file hash
+        response = self.supabase.table("document_files").select("*").eq("file_hash", file_hash).execute()
+
+        if response.data:
+            record = response.data[0]
+
+            # Check if provider reference is still valid
+            if self.provider == "gemini":
+                expires_at_str = record.get("gemini_expires_at")
+                if expires_at_str and record.get("gemini_file_uri"):
+                    expires_at = datetime.fromisoformat(expires_at_str.replace("Z", "+00:00"))
+                    if expires_at > datetime.now(timezone.utc):
+                        # Valid cached Gemini reference
+                        logger.info("Using cached Gemini file ref for hash %s (expires %s)", file_hash[:12], expires_at_str)
+                        return {
+                            "provider": "gemini",
+                            "file_id": record["gemini_file_id"],
+                            "file_uri": record["gemini_file_uri"],
+                            "file_name": record["file_name"],
+                            "mime_type": record.get("mime_type") or "application/pdf",
+                            "file_hash": file_hash,
+                        }, file_hash, True
+
+                # Gemini reference expired or missing - re-upload from Supabase Storage
+                logger.info("Gemini file ref expired/missing for hash %s, re-uploading from storage", file_hash[:12])
+                file_bytes = await self._download_from_supabase_storage(record["storage_path"])
+                file_meta = await self._upload_bytes_to_gemini(file_bytes, record["file_name"], file_hash)
+
+                # Update DB with new Gemini reference
+                now = datetime.now(timezone.utc)
+                self.supabase.table("document_files").update({
+                    "gemini_file_id": file_meta["file_id"],
+                    "gemini_file_uri": file_meta["file_uri"],
+                    "gemini_uploaded_at": now.isoformat(),
+                    "gemini_expires_at": (now + timedelta(hours=self.gemini_ttl_hours)).isoformat(),
+                    "updated_at": now.isoformat(),
+                }).eq("id", record["id"]).execute()
+
+                file_meta["file_hash"] = file_hash
+                return file_meta, file_hash, False
+
+            elif self.provider == "openai":
+                if record.get("openai_file_id"):
+                    # OpenAI files don't expire the same way, but we still track them
+                    logger.info("Using cached OpenAI file ref for hash %s", file_hash[:12])
+                    return {
+                        "provider": "openai",
+                        "file_id": record["openai_file_id"],
+                        "file_uri": record["openai_file_id"],
+                        "file_name": record["file_name"],
+                        "file_hash": file_hash,
+                    }, file_hash, True
+
+                # OpenAI reference missing - re-upload from Supabase Storage
+                logger.info("OpenAI file ref missing for hash %s, re-uploading from storage", file_hash[:12])
+                file_bytes = await self._download_from_supabase_storage(record["storage_path"])
+                file_meta = await self._upload_bytes_to_openai(file_bytes, record["file_name"])
+
+                # Update DB with new OpenAI reference
+                now = datetime.now(timezone.utc)
+                self.supabase.table("document_files").update({
+                    "openai_file_id": file_meta["file_id"],
+                    "openai_uploaded_at": now.isoformat(),
+                    "updated_at": now.isoformat(),
+                }).eq("id", record["id"]).execute()
+
+                file_meta["file_hash"] = file_hash
+                return file_meta, file_hash, False
+
+        else:
+            # New file - upload to Supabase Storage first, then to provider
+            storage_path = await self._upload_to_supabase_storage(document_path, file_hash)
+            file_meta = await self._upload_to_provider(document_path, file_hash)
+
+            # Insert new DB record
+            now = datetime.now(timezone.utc)
+            db_record = {
+                "storage_path": storage_path,
+                "file_hash": file_hash,
+                "file_name": document_path.name,
+                "mime_type": "application/pdf",
+                "file_size_bytes": file_size,
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat(),
+            }
+
+            if self.provider == "gemini":
+                db_record.update({
+                    "gemini_file_id": file_meta["file_id"],
+                    "gemini_file_uri": file_meta["file_uri"],
+                    "gemini_uploaded_at": now.isoformat(),
+                    "gemini_expires_at": (now + timedelta(hours=self.gemini_ttl_hours)).isoformat(),
+                })
+            elif self.provider == "openai":
+                db_record.update({
+                    "openai_file_id": file_meta["file_id"],
+                    "openai_uploaded_at": now.isoformat(),
+                })
+
+            self.supabase.table("document_files").insert(db_record).execute()
+            file_meta["file_hash"] = file_hash
+            return file_meta, file_hash, False
+
+        return None
+
+    async def _upload_to_supabase_storage(self, file_path: Path, file_hash: str) -> str:
+        """Upload file to Supabase Storage bucket, return storage path."""
+        if self.supabase is None:
+            raise RuntimeError("Supabase client is not configured")
+
+        storage_path = f"evaluations/{file_hash}/{file_path.name}"
+        data = file_path.read_bytes()
+
+        try:
+            self.supabase.storage.from_("documents").upload(
+                storage_path,
+                data,
+                {"content-type": "application/pdf", "upsert": "true"}
+            )
+            logger.info("Uploaded file to Supabase Storage: %s", storage_path)
+        except Exception as exc:
+            # If file already exists, that's fine
+            if "already exists" not in str(exc).lower() and "duplicate" not in str(exc).lower():
+                raise
+            logger.info("File already exists in Supabase Storage: %s", storage_path)
+
+        return storage_path
+
+    async def _download_from_supabase_storage(self, storage_path: str) -> bytes:
+        """Download file from Supabase Storage bucket."""
+        if self.supabase is None:
+            raise RuntimeError("Supabase client is not configured")
+
+        response = self.supabase.storage.from_("documents").download(storage_path)
+        logger.info("Downloaded file from Supabase Storage: %s (%d bytes)", storage_path, len(response))
+        return response
+
+    async def _upload_to_provider(self, document_path: Path, file_hash: str) -> Dict[str, str]:
+        """Upload file to the configured vision provider (Gemini or OpenAI)."""
         if self.provider == "gemini":
             if self.gemini_client is None:
                 raise RuntimeError("Gemini client is not configured")
@@ -289,10 +479,11 @@ Vision handling:
                 "file_uri": file_uri,
                 "file_name": getattr(upload, "display_name", None) or document_path.name,
                 "mime_type": getattr(upload, "mime_type", None) or "application/pdf",
-                "uploaded_at": datetime.utcnow().isoformat(),
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
             }
             if not file_meta["file_uri"]:
                 raise RuntimeError("Gemini upload failed: missing file URI")
+            return file_meta
         else:
             if self.openai_client is None:
                 raise RuntimeError("OpenAI client is not configured")
@@ -302,18 +493,97 @@ Vision handling:
                     file=file_obj,
                     purpose="user_data",
                 )
-
-            file_meta = {
+            return {
                 "provider": "openai",
                 "file_id": upload.id,
                 "file_uri": getattr(upload, "id", None),
                 "file_name": document_path.name,
-                "uploaded_at": datetime.utcnow().isoformat(),
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
             }
 
-        self.file_cache[file_hash] = file_meta
-        self._save_cache()
-        return file_meta, file_hash, False
+    async def _upload_bytes_to_gemini(self, file_bytes: bytes, file_name: str, file_hash: str) -> Dict[str, str]:
+        """Upload bytes to Gemini (requires writing to temp file first)."""
+        if self.gemini_client is None:
+            raise RuntimeError("Gemini client is not configured")
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            tmp.write(file_bytes)
+            tmp_path = Path(tmp.name)
+
+        try:
+            upload = await asyncio.to_thread(
+                self.gemini_client.files.upload,
+                file=tmp_path,
+            )
+            file_id = getattr(upload, "name", None) or getattr(upload, "uri", None)
+            file_uri = getattr(upload, "uri", None) or file_id
+            file_meta = {
+                "provider": "gemini",
+                "file_id": file_id,
+                "file_uri": file_uri,
+                "file_name": file_name,
+                "mime_type": getattr(upload, "mime_type", None) or "application/pdf",
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
+            }
+            if not file_meta["file_uri"]:
+                raise RuntimeError("Gemini upload failed: missing file URI")
+            return file_meta
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+    async def _upload_bytes_to_openai(self, file_bytes: bytes, file_name: str) -> Dict[str, str]:
+        """Upload bytes to OpenAI (requires writing to temp file first)."""
+        if self.openai_client is None:
+            raise RuntimeError("OpenAI client is not configured")
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            tmp.write(file_bytes)
+            tmp_path = Path(tmp.name)
+
+        try:
+            with open(tmp_path, "rb") as file_obj:
+                upload = await asyncio.to_thread(
+                    self.openai_client.files.create,
+                    file=file_obj,
+                    purpose="user_data",
+                )
+            return {
+                "provider": "openai",
+                "file_id": upload.id,
+                "file_uri": getattr(upload, "id", None),
+                "file_name": file_name,
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
+            }
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+    async def invalidate_provider_ref(self, file_hash: str) -> None:
+        """
+        Invalidate the provider file reference for a given file hash.
+        Called when a 403 PERMISSION_DENIED error is encountered.
+        """
+        if self.supabase is None:
+            # Clear from local cache
+            if file_hash in self.file_cache:
+                del self.file_cache[file_hash]
+                self._save_cache()
+            return
+
+        now = datetime.now(timezone.utc)
+        if self.provider == "gemini":
+            self.supabase.table("document_files").update({
+                "gemini_file_id": None,
+                "gemini_file_uri": None,
+                "gemini_expires_at": None,
+                "updated_at": now.isoformat(),
+            }).eq("file_hash", file_hash).execute()
+        elif self.provider == "openai":
+            self.supabase.table("document_files").update({
+                "openai_file_id": None,
+                "updated_at": now.isoformat(),
+            }).eq("file_hash", file_hash).execute()
+
+        logger.info("Invalidated %s file ref for hash %s", self.provider, file_hash[:12])
 
     async def _evaluate_single_requirement(
         self,
@@ -321,9 +591,38 @@ Vision handling:
         requirement: Dict,
         semaphore: asyncio.Semaphore,
         run_responses_dir: Path,
+        document_path: Optional[Path] = None,
+        retry_count: int = 0,
     ) -> Dict:
         if self.provider == "gemini":
-            return await self._evaluate_single_requirement_gemini(file_ref, requirement, semaphore, run_responses_dir)
+            result = await self._evaluate_single_requirement_gemini(file_ref, requirement, semaphore, run_responses_dir)
+
+            # Check for 403 PERMISSION_DENIED and retry once with fresh upload
+            if (
+                result.get("status") == "ERROR"
+                and "PERMISSION_DENIED" in result.get("rationale", "")
+                and retry_count < 1
+                and document_path is not None
+            ):
+                logger.warning(
+                    "Got PERMISSION_DENIED for requirement %s, invalidating cache and retrying...",
+                    requirement["id"]
+                )
+                file_hash = file_ref.get("file_hash", "")
+                if file_hash:
+                    await self.invalidate_provider_ref(file_hash)
+
+                    # Re-upload and get fresh file reference
+                    new_file_ref, _, _ = await self.ensure_file_ref(document_path)
+                    new_file_ref["file_hash"] = file_hash
+
+                    return await self._evaluate_single_requirement(
+                        new_file_ref, requirement, semaphore, run_responses_dir,
+                        document_path=document_path, retry_count=retry_count + 1
+                    )
+
+            return result
+
         return await self._evaluate_single_requirement_openai(
             file_ref.get("file_id", ""),
             requirement,
