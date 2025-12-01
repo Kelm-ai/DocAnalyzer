@@ -44,6 +44,36 @@ except ImportError:
     print("Warning: google-genai not available. Gemini provider will be disabled.")
 
 try:
+    import anthropic
+    from anthropic import Anthropic
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
+    anthropic = None  # type: ignore
+    Anthropic = None  # type: ignore
+    print("Warning: anthropic SDK not available. Claude provider will be disabled.")
+
+# Retry and fallback configuration
+RETRYABLE_STATUS_CODES = {429, 500, 503, 529}
+MAX_RETRIES = 2
+BASE_DELAY_SECONDS = 2.0
+REDUCED_CONCURRENCY_FACTOR = 0.5  # Halve concurrency on first retry
+
+# Provider-specific concurrency defaults
+PROVIDER_CONCURRENCY = {
+    "openai": 8,
+    "claude": 4,   # Conservative due to 50 RPM limit for Opus 4.5
+    "gemini": 8,
+}
+
+# Fallback mapping: if primary fails, try fallback
+FALLBACK_PROVIDER = {
+    "openai": "gemini",
+    "claude": "gemini",
+    "gemini": None,  # No fallback for Gemini
+}
+
+try:
     from supabase import create_client, Client
     SUPABASE_AVAILABLE = True
 except ImportError:
@@ -89,12 +119,15 @@ Vision handling:
         provider: Optional[str] = None,
     ) -> None:
         self.provider = (provider or os.getenv("VISION_PROVIDER") or "openai").strip().lower()
-        if self.provider not in {"openai", "gemini"}:
-            raise RuntimeError(f"Unsupported VISION_PROVIDER '{self.provider}'. Use 'openai' or 'gemini'.")
+        if self.provider not in {"openai", "gemini", "claude"}:
+            raise RuntimeError(f"Unsupported VISION_PROVIDER '{self.provider}'. Use 'openai', 'gemini', or 'claude'.")
 
         self.model = model
         self.openai_client: Optional[OpenAI] = None
         self.gemini_client: Optional["genai.Client"] = None
+        self.claude_client: Optional["Anthropic"] = None
+        self.claude_betas: List[str] = []
+        self._fallback_evaluator: Optional["VisionResponsesEvaluator"] = None
         self.gemini_response_schema = None
         self.gemini_thinking_config = None
         self.gemini_media_resolution = None
@@ -123,6 +156,23 @@ Vision handling:
             self.gemini_response_schema = self._build_gemini_schema()
             self.gemini_thinking_config = self._resolve_gemini_thinking_config()
             self.gemini_media_resolution, self.gemini_part_media_resolution = self._resolve_gemini_media_resolution()
+        elif self.provider == "claude":
+            if not ANTHROPIC_AVAILABLE:
+                raise RuntimeError("anthropic SDK is required for Claude (pip install anthropic)")
+            api_key = os.getenv("ANTHROPIC_API_KEY")
+            if not api_key:
+                raise RuntimeError("ANTHROPIC_API_KEY is required when VISION_PROVIDER=claude")
+            self.model = (
+                self.model
+                or os.getenv("CLAUDE_VISION_MODEL")
+                or os.getenv("CLAUDE_MODEL")
+                or vision_model_override
+                or "claude-opus-4-5-20251101"
+            )
+            self.claude_client = Anthropic(api_key=api_key)
+            self.claude_betas = ["files-api-2025-04-14"]
+            # Use conservative concurrency for Claude due to 50 RPM limit
+            self.concurrent_requests = min(self.concurrent_requests, PROVIDER_CONCURRENCY["claude"])
         else:
             api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
             if not api_key:
@@ -167,6 +217,15 @@ Vision handling:
                 getattr(openai, "__version__", "unknown"),
                 getattr(openai, "__file__", "unknown"),
                 type(self.openai_client).__name__ if self.openai_client else "missing",
+                self.model,
+                self.requirements_limit,
+                self.concurrent_requests,
+            )
+        elif self.provider == "claude":
+            logger.info(
+                "VisionResponsesEvaluator initialised (provider=%s); client=%s; model=%s; limit=%s; concurrency=%s",
+                self.provider,
+                type(self.claude_client).__name__ if self.claude_client else "missing",
                 self.model,
                 self.requirements_limit,
                 self.concurrent_requests,
@@ -394,6 +453,34 @@ Vision handling:
                 file_meta["file_hash"] = file_hash
                 return file_meta, file_hash, False
 
+            elif self.provider == "claude":
+                if record.get("claude_file_id"):
+                    # Claude files don't expire like Gemini - they persist indefinitely
+                    logger.info("Using cached Claude file ref for hash %s", file_hash[:12])
+                    return {
+                        "provider": "claude",
+                        "file_id": record["claude_file_id"],
+                        "file_uri": record["claude_file_id"],
+                        "file_name": record["file_name"],
+                        "file_hash": file_hash,
+                    }, file_hash, True
+
+                # Claude reference missing - re-upload from Supabase Storage
+                logger.info("Claude file ref missing for hash %s, re-uploading from storage", file_hash[:12])
+                file_bytes = await self._download_from_supabase_storage(record["storage_path"])
+                file_meta = await self._upload_bytes_to_claude(file_bytes, record["file_name"])
+
+                # Update DB with new Claude reference
+                now = datetime.now(timezone.utc)
+                self.supabase.table("document_files").update({
+                    "claude_file_id": file_meta["file_id"],
+                    "claude_uploaded_at": now.isoformat(),
+                    "updated_at": now.isoformat(),
+                }).eq("id", record["id"]).execute()
+
+                file_meta["file_hash"] = file_hash
+                return file_meta, file_hash, False
+
         else:
             # New file - upload to Supabase Storage first, then to provider
             storage_path = await self._upload_to_supabase_storage(document_path, file_hash)
@@ -422,6 +509,11 @@ Vision handling:
                 db_record.update({
                     "openai_file_id": file_meta["file_id"],
                     "openai_uploaded_at": now.isoformat(),
+                })
+            elif self.provider == "claude":
+                db_record.update({
+                    "claude_file_id": file_meta["file_id"],
+                    "claude_uploaded_at": now.isoformat(),
                 })
 
             self.supabase.table("document_files").insert(db_record).execute()
@@ -463,7 +555,7 @@ Vision handling:
         return response
 
     async def _upload_to_provider(self, document_path: Path, file_hash: str) -> Dict[str, str]:
-        """Upload file to the configured vision provider (Gemini or OpenAI)."""
+        """Upload file to the configured vision provider (Gemini, OpenAI, or Claude)."""
         if self.provider == "gemini":
             if self.gemini_client is None:
                 raise RuntimeError("Gemini client is not configured")
@@ -484,6 +576,21 @@ Vision handling:
             if not file_meta["file_uri"]:
                 raise RuntimeError("Gemini upload failed: missing file URI")
             return file_meta
+        elif self.provider == "claude":
+            if self.claude_client is None:
+                raise RuntimeError("Claude client is not configured")
+            upload = await asyncio.to_thread(
+                self.claude_client.files.upload,
+                file=document_path,
+            )
+            return {
+                "provider": "claude",
+                "file_id": upload.id,
+                "file_uri": upload.id,
+                "file_name": getattr(upload, "filename", None) or document_path.name,
+                "mime_type": getattr(upload, "mime_type", None) or "application/pdf",
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
+            }
         else:
             if self.openai_client is None:
                 raise RuntimeError("OpenAI client is not configured")
@@ -557,6 +664,31 @@ Vision handling:
         finally:
             tmp_path.unlink(missing_ok=True)
 
+    async def _upload_bytes_to_claude(self, file_bytes: bytes, file_name: str) -> Dict[str, str]:
+        """Upload bytes to Claude Files API (requires writing to temp file first)."""
+        if self.claude_client is None:
+            raise RuntimeError("Claude client is not configured")
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            tmp.write(file_bytes)
+            tmp_path = Path(tmp.name)
+
+        try:
+            upload = await asyncio.to_thread(
+                self.claude_client.files.upload,
+                file=tmp_path,
+            )
+            return {
+                "provider": "claude",
+                "file_id": upload.id,
+                "file_uri": upload.id,
+                "file_name": file_name,
+                "mime_type": getattr(upload, "mime_type", None) or "application/pdf",
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
+            }
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
     async def invalidate_provider_ref(self, file_hash: str) -> None:
         """
         Invalidate the provider file reference for a given file hash.
@@ -582,8 +714,77 @@ Vision handling:
                 "openai_file_id": None,
                 "updated_at": now.isoformat(),
             }).eq("file_hash", file_hash).execute()
+        elif self.provider == "claude":
+            self.supabase.table("document_files").update({
+                "claude_file_id": None,
+                "claude_uploaded_at": None,
+                "updated_at": now.isoformat(),
+            }).eq("file_hash", file_hash).execute()
 
         logger.info("Invalidated %s file ref for hash %s", self.provider, file_hash[:12])
+
+    def _error_result(self, requirement: Dict, rationale: str, gap: str, tokens_used: int = 0) -> Dict:
+        """Create standardized error result."""
+        return {
+            "requirement_id": requirement["id"],
+            "status": "ERROR",
+            "confidence": "low",
+            "rationale": rationale,
+            "evidence": [],
+            "gaps": [gap],
+            "recommendations": ["Retry requirement"],
+            "tokens_used": tokens_used,
+        }
+
+    def _parse_json_response(self, text: str) -> Optional[Dict]:
+        """Parse JSON from response text, handling markdown code blocks."""
+        if not text:
+            return None
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            import re
+            match = re.search(r'\{[\s\S]*\}', text)
+            if match:
+                try:
+                    return json.loads(match.group())
+                except json.JSONDecodeError:
+                    pass
+        return None
+
+    def _is_retryable_error(self, error_str: str) -> bool:
+        """Check if an error is retryable (transient)."""
+        retryable_patterns = ["429", "500", "503", "529", "overload", "rate_limit", "RateLimitError", "ServerError"]
+        return any(pattern.lower() in error_str.lower() for pattern in retryable_patterns)
+
+    async def _evaluate_with_fallback(
+        self,
+        document_path: Path,
+        requirement: Dict,
+        run_responses_dir: Path,
+        fallback_provider: str,
+    ) -> Dict:
+        """Evaluate using fallback provider (Gemini)."""
+        if self._fallback_evaluator is None or self._fallback_evaluator.provider != fallback_provider:
+            self._fallback_evaluator = VisionResponsesEvaluator(provider=fallback_provider)
+
+        # Get file ref for fallback provider
+        file_ref, file_hash, _ = await self._fallback_evaluator.ensure_file_ref(document_path)
+        file_ref["file_hash"] = file_hash
+
+        fallback_semaphore = asyncio.Semaphore(PROVIDER_CONCURRENCY.get(fallback_provider, 4))
+
+        if fallback_provider == "gemini":
+            result = await self._fallback_evaluator._evaluate_single_requirement_gemini(
+                file_ref, requirement, fallback_semaphore, run_responses_dir
+            )
+        else:
+            result = await self._fallback_evaluator._evaluate_single_requirement_openai(
+                file_ref.get("file_id", ""), requirement, fallback_semaphore, run_responses_dir
+            )
+
+        result["fallback_provider"] = fallback_provider
+        return result
 
     async def _evaluate_single_requirement(
         self,
@@ -594,41 +795,96 @@ Vision handling:
         document_path: Optional[Path] = None,
         retry_count: int = 0,
     ) -> Dict:
-        if self.provider == "gemini":
-            result = await self._evaluate_single_requirement_gemini(file_ref, requirement, semaphore, run_responses_dir)
-
-            # Check for 403 PERMISSION_DENIED and retry once with fresh upload
-            if (
-                result.get("status") == "ERROR"
-                and "PERMISSION_DENIED" in result.get("rationale", "")
-                and retry_count < 1
-                and document_path is not None
-            ):
-                logger.warning(
-                    "Got PERMISSION_DENIED for requirement %s, invalidating cache and retrying...",
-                    requirement["id"]
+        """Evaluate with retry and fallback logic."""
+        try:
+            if self.provider == "claude":
+                result = await self._evaluate_single_requirement_claude(
+                    file_ref, requirement, semaphore, run_responses_dir
                 )
-                file_hash = file_ref.get("file_hash", "")
-                if file_hash:
-                    await self.invalidate_provider_ref(file_hash)
+            elif self.provider == "gemini":
+                result = await self._evaluate_single_requirement_gemini(
+                    file_ref, requirement, semaphore, run_responses_dir
+                )
+            else:
+                result = await self._evaluate_single_requirement_openai(
+                    file_ref.get("file_id", ""), requirement, semaphore, run_responses_dir
+                )
 
-                    # Re-upload and get fresh file reference
-                    new_file_ref, _, _ = await self.ensure_file_ref(document_path)
-                    new_file_ref["file_hash"] = file_hash
+            # Check for retryable errors in result
+            if result.get("status") == "ERROR":
+                rationale = result.get("rationale", "")
 
-                    return await self._evaluate_single_requirement(
-                        new_file_ref, requirement, semaphore, run_responses_dir,
-                        document_path=document_path, retry_count=retry_count + 1
-                    )
+                # Handle PERMISSION_DENIED (file expired/invalid)
+                if "PERMISSION_DENIED" in rationale or "not_found" in rationale.lower():
+                    if retry_count < 1 and document_path is not None:
+                        logger.warning(
+                            "Got file access error for requirement %s, invalidating cache and retrying...",
+                            requirement["id"]
+                        )
+                        file_hash = file_ref.get("file_hash", "")
+                        if file_hash:
+                            await self.invalidate_provider_ref(file_hash)
+                            new_file_ref, _, _ = await self.ensure_file_ref(document_path)
+                            new_file_ref["file_hash"] = file_hash
+                            return await self._evaluate_single_requirement(
+                                new_file_ref, requirement, semaphore, run_responses_dir,
+                                document_path=document_path, retry_count=retry_count + 1
+                            )
+
+                # Handle retryable errors (rate limits, overload, server errors)
+                if self._is_retryable_error(rationale):
+                    if retry_count < 1:
+                        logger.warning(
+                            "Retryable error for requirement %s (attempt %d), retrying after delay...",
+                            requirement["id"], retry_count + 1
+                        )
+                        await asyncio.sleep(BASE_DELAY_SECONDS * (retry_count + 1))
+                        return await self._evaluate_single_requirement(
+                            file_ref, requirement, semaphore, run_responses_dir,
+                            document_path=document_path, retry_count=retry_count + 1
+                        )
+
+                    # After retries exhausted, try fallback provider
+                    fallback_provider = FALLBACK_PROVIDER.get(self.provider)
+                    if fallback_provider and document_path is not None:
+                        logger.warning(
+                            "Falling back to %s for requirement %s after %s failures",
+                            fallback_provider, requirement["id"], self.provider
+                        )
+                        return await self._evaluate_with_fallback(
+                            document_path, requirement, run_responses_dir, fallback_provider
+                        )
 
             return result
 
-        return await self._evaluate_single_requirement_openai(
-            file_ref.get("file_id", ""),
-            requirement,
-            semaphore,
-            run_responses_dir,
-        )
+        except Exception as exc:
+            error_str = str(exc)
+            logger.exception("Exception during evaluation of requirement %s", requirement["id"])
+
+            if self._is_retryable_error(error_str):
+                if retry_count < 1:
+                    logger.warning(
+                        "Retrying requirement %s after exception (attempt %d)",
+                        requirement["id"], retry_count + 1
+                    )
+                    await asyncio.sleep(BASE_DELAY_SECONDS * (retry_count + 1))
+                    return await self._evaluate_single_requirement(
+                        file_ref, requirement, semaphore, run_responses_dir,
+                        document_path=document_path, retry_count=retry_count + 1
+                    )
+
+                # Try fallback provider
+                fallback_provider = FALLBACK_PROVIDER.get(self.provider)
+                if fallback_provider and document_path is not None:
+                    logger.warning(
+                        "Falling back to %s for requirement %s after exception",
+                        fallback_provider, requirement["id"]
+                    )
+                    return await self._evaluate_with_fallback(
+                        document_path, requirement, run_responses_dir, fallback_provider
+                    )
+
+            return self._error_result(requirement, error_str, f"{self.provider} evaluation failed")
 
     async def _evaluate_single_requirement_openai(
         self,
@@ -693,6 +949,71 @@ Vision handling:
             raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}.txt"
             raw_text = getattr(response, "output_text", None) or json.dumps(parsed, indent=2)
             raw_file.write_text(raw_text, encoding="utf-8")
+            return parsed
+
+    async def _evaluate_single_requirement_claude(
+        self,
+        file_ref: Dict,
+        requirement: Dict,
+        semaphore: asyncio.Semaphore,
+        run_responses_dir: Path,
+    ) -> Dict:
+        """Evaluate a single requirement using Claude's vision API."""
+        async with semaphore:
+            prompt = self._build_prompt(requirement)
+            file_id = file_ref.get("file_id")
+
+            if not file_id:
+                return self._error_result(requirement, "Missing file_id for Claude evaluation", "File reference missing")
+
+            try:
+                response = await asyncio.to_thread(
+                    self.claude_client.messages.create,  # type: ignore[union-attr]
+                    model=self.model,
+                    max_tokens=4096,
+                    messages=[{
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "document",
+                                "source": {"type": "file", "file_id": file_id}
+                            },
+                            {"type": "text", "text": prompt},
+                        ]
+                    }]
+                )
+            except Exception as exc:
+                error_str = str(exc)
+                logger.exception("Claude API error for requirement %s", requirement['id'])
+                # Re-raise retryable errors so the retry logic can handle them
+                if self._is_retryable_error(error_str):
+                    raise
+                return self._error_result(requirement, error_str, "Claude API error")
+
+            # Extract token usage
+            usage = getattr(response, "usage", None)
+            tokens_used = 0
+            if usage:
+                tokens_used = getattr(usage, "input_tokens", 0) + getattr(usage, "output_tokens", 0)
+
+            # Parse response
+            response_text = ""
+            if response.content and len(response.content) > 0:
+                response_text = getattr(response.content[0], "text", "")
+
+            parsed = self._parse_json_response(response_text)
+            if parsed is None:
+                raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}.txt"
+                raw_file.write_text(response_text or "", encoding="utf-8")
+                return self._error_result(requirement, "Structured output missing from Claude response", "Parse JSON response failed", tokens_used)
+
+            parsed.setdefault("requirement_id", requirement["id"])
+            parsed.setdefault("requirement_title", requirement.get("title"))
+            parsed.setdefault("requirement_clause", requirement.get("clause"))
+            parsed["tokens_used"] = tokens_used
+
+            raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}.txt"
+            raw_file.write_text(response_text or json.dumps(parsed, indent=2), encoding="utf-8")
             return parsed
 
     async def _evaluate_single_requirement_gemini(
@@ -1041,11 +1362,22 @@ Vision handling:
 
 class DualVisionComparator:
     """
-    Run both OpenAI and Gemini providers per requirement, combine conservatively:
+    Run both Claude and OpenAI providers per requirement in parallel, combine conservatively:
+    - Primary providers: Claude + OpenAI (run in parallel)
+    - Fallback: Each provider independently falls back to Gemini on transient errors
     - Status priority: FAIL > FLAGGED/PARTIAL/ERROR > PASS > NOT_APPLICABLE
     - Confidence: take the lower (less confident) level
-    - Content: on agreement use OpenAI content; on conflict use the content from the less-permissive status
-    - Agreement flag per requirement for UI (“agreement” | “conflict”)
+    - Content: on agreement use Claude content; on conflict use the content from the less-permissive status
+    - Agreement flag per requirement for UI ("agreement" | "conflict")
+
+    Flow:
+    Request → Claude AND OpenAI (parallel)
+    ↓ (Error 429/503/529)
+    Retry after 2s delay
+    ↓ (Error again)
+    Fallback to Gemini FOR THE MODEL THAT PRODUCED THE ERROR
+    ↓ (If both Claude and OpenAI error out even with fallback)
+    Return error
     """
 
     STATUS_PRIORITY = {
@@ -1060,18 +1392,57 @@ class DualVisionComparator:
 
     def __init__(self) -> None:
         self.provider = "dual"
-        self.primary = VisionResponsesEvaluator(provider="openai")  # type: ignore[arg-type]
-        self.secondary = VisionResponsesEvaluator(provider="gemini")  # type: ignore[arg-type]
+        self.primary = VisionResponsesEvaluator(provider="claude")  # type: ignore[arg-type]
+        self.secondary = VisionResponsesEvaluator(provider="openai")  # type: ignore[arg-type]
         self.model = f"{self.primary.model}+{self.secondary.model}"
         self.supabase = self.primary.supabase or self.secondary.supabase
+        # Shared Gemini fallback evaluator (lazily initialized)
+        self._gemini_fallback: Optional[VisionResponsesEvaluator] = None
+
+    def _get_gemini_fallback(self) -> "VisionResponsesEvaluator":
+        """Get or create a Gemini evaluator for fallback."""
+        if self._gemini_fallback is None:
+            self._gemini_fallback = VisionResponsesEvaluator(provider="gemini")  # type: ignore[arg-type]
+        return self._gemini_fallback
 
     async def evaluate_document(self, file_path: str) -> Dict[str, Any]:
-        openai_summary = await self.primary.evaluate_document(file_path)
-        gemini_summary = await self.secondary.evaluate_document(file_path)
+        """Evaluate document using Claude and OpenAI in parallel, with Gemini fallback."""
+        # Run both providers in parallel
+        claude_task = asyncio.create_task(
+            self._evaluate_with_fallback(self.primary, file_path, "claude")
+        )
+        openai_task = asyncio.create_task(
+            self._evaluate_with_fallback(self.secondary, file_path, "openai")
+        )
+
+        claude_summary, openai_summary = await asyncio.gather(
+            claude_task, openai_task, return_exceptions=True
+        )
+
+        # Handle exceptions from gather
+        claude_failed = isinstance(claude_summary, Exception)
+        openai_failed = isinstance(openai_summary, Exception)
+
+        if claude_failed:
+            logger.error("Claude evaluation failed completely: %s", claude_summary)
+            claude_summary = self._empty_summary("claude", str(claude_summary))
+        if openai_failed:
+            logger.error("OpenAI evaluation failed completely: %s", openai_summary)
+            openai_summary = self._empty_summary("openai", str(openai_summary))
+
+        # Check if both providers produced only errors
+        claude_results = claude_summary.get("requirements_results", [])
+        openai_results = openai_summary.get("requirements_results", [])
+
+        claude_all_errors = all(r.get("status") == "ERROR" for r in claude_results) if claude_results else True
+        openai_all_errors = all(r.get("status") == "ERROR" for r in openai_results) if openai_results else True
+
+        if claude_all_errors and openai_all_errors:
+            logger.error("Both Claude and OpenAI failed for all requirements")
 
         combined_results, agreement_map, total_tokens = self._combine_results(
+            claude_summary.get("requirements_results", []),
             openai_summary.get("requirements_results", []),
-            gemini_summary.get("requirements_results", []),
         )
 
         status_counts: Dict[str, int] = {"PASS": 0, "FAIL": 0, "FLAGGED": 0, "NOT_APPLICABLE": 0, "ERROR": 0}
@@ -1083,17 +1454,23 @@ class DualVisionComparator:
         compliance_score = (status_counts.get("PASS", 0) / scored * 100) if scored else 0
 
         run_id = datetime.utcnow().strftime("%Y%m%d_%H%M%S_dual")
-        document_info = dict(openai_summary.get("document_info", {}))
+        document_info = dict(claude_summary.get("document_info", {}))
         document_info.update({
             "provider": "dual",
             "model": self.model,
             "evaluated_at": datetime.utcnow().isoformat(),
             "run_id": run_id,
             "providers_used": {
-                "openai": getattr(self.primary, "model", None),
-                "gemini": getattr(self.secondary, "model", None),
+                "claude": getattr(self.primary, "model", None),
+                "openai": getattr(self.secondary, "model", None),
             },
         })
+
+        # Track which requirements used fallback
+        fallback_used = {
+            "claude": claude_summary.get("_fallback_used", False),
+            "openai": openai_summary.get("_fallback_used", False),
+        }
 
         summary = {
             "document_info": document_info,
@@ -1107,14 +1484,15 @@ class DualVisionComparator:
             "requirements_results": combined_results,
             "agreement_by_requirement": agreement_map,
             "raw_provider_results": {
+                "claude": claude_summary,
                 "openai": openai_summary,
-                "gemini": gemini_summary,
             },
             "generated_at": datetime.utcnow().isoformat(),
             "providers_used": {
-                "openai": getattr(self.primary, "model", None),
-                "gemini": getattr(self.secondary, "model", None),
+                "claude": getattr(self.primary, "model", None),
+                "openai": getattr(self.secondary, "model", None),
             },
+            "fallback_used": fallback_used,
         }
 
         # Persist combined summary alongside individual runs
@@ -1125,45 +1503,94 @@ class DualVisionComparator:
 
         return summary
 
+    async def _evaluate_with_fallback(
+        self,
+        evaluator: "VisionResponsesEvaluator",
+        file_path: str,
+        provider_name: str,
+    ) -> Dict[str, Any]:
+        """
+        Evaluate document with a provider, falling back to Gemini on transient errors.
+
+        The evaluator's own retry logic will handle:
+        1. First transient error → retry after delay
+        2. Second transient error → fallback to Gemini (per-requirement)
+
+        This wrapper catches complete evaluation failures and returns error summary.
+        """
+        try:
+            summary = await evaluator.evaluate_document(file_path)
+
+            # Check if fallback was used for any requirement
+            results = summary.get("requirements_results", [])
+            fallback_used = any(r.get("fallback_provider") == "gemini" for r in results)
+            summary["_fallback_used"] = fallback_used
+
+            return summary
+        except Exception as exc:
+            logger.exception("Complete failure for %s provider", provider_name)
+            error_summary = self._empty_summary(provider_name, str(exc))
+            error_summary["_fallback_used"] = False
+            return error_summary
+
+    def _empty_summary(self, provider: str, error_msg: str) -> Dict[str, Any]:
+        """Create an empty summary for when a provider completely fails."""
+        return {
+            "document_info": {"provider": provider, "error": error_msg},
+            "evaluation_summary": {
+                "total_requirements": 0,
+                "compliance_score": 0,
+                "status_counts": {"ERROR": 0},
+                "total_tokens_used": 0,
+            },
+            "requirements_results": [],
+            "_provider_error": error_msg,
+        }
+
     def _combine_results(
         self,
+        claude_results: List[Dict[str, Any]],
         openai_results: List[Dict[str, Any]],
-        gemini_results: List[Dict[str, Any]],
     ) -> Tuple[List[Dict[str, Any]], Dict[str, str], int]:
-        gemini_by_id = {str(r.get("requirement_id")): r for r in gemini_results}
+        """Combine results from Claude and OpenAI, taking the more conservative assessment."""
+        openai_by_id = {str(r.get("requirement_id")): r for r in openai_results}
         combined: List[Dict[str, Any]] = []
         agreement_map: Dict[str, str] = {}
         total_tokens = 0
 
-        for openai_record in openai_results:
-            req_id = str(openai_record.get("requirement_id"))
-            gem_record = gemini_by_id.get(req_id)
-            if gem_record is None:
-                combined.append(openai_record)
+        for claude_record in claude_results:
+            req_id = str(claude_record.get("requirement_id"))
+            oai_record = openai_by_id.get(req_id)
+            if oai_record is None:
+                combined.append(claude_record)
                 agreement_map[req_id] = "unknown"
-                total_tokens += int(openai_record.get("tokens_used", 0) or 0)
+                total_tokens += int(claude_record.get("tokens_used", 0) or 0)
                 continue
 
-            status_a = str(openai_record.get("status", "ERROR")).upper()
-            status_b = str(gem_record.get("status", "ERROR")).upper()
+            status_a = str(claude_record.get("status", "ERROR")).upper()
+            status_b = str(oai_record.get("status", "ERROR")).upper()
             agreement = status_a == status_b
 
             chosen_status = self._more_conservative_status(status_a, status_b)
-            chosen_provider = "openai" if chosen_status == status_a else "gemini"
+            chosen_provider = "claude" if chosen_status == status_a else "openai"
 
-            confidence_a = str(openai_record.get("confidence", openai_record.get("confidence_level", "low"))).lower()
-            confidence_b = str(gem_record.get("confidence", gem_record.get("confidence_level", "low"))).lower()
+            confidence_a = str(claude_record.get("confidence", claude_record.get("confidence_level", "low"))).lower()
+            confidence_b = str(oai_record.get("confidence", oai_record.get("confidence_level", "low"))).lower()
             chosen_confidence = self._lower_confidence(confidence_a, confidence_b)
 
             agreement_map[req_id] = "agreement" if agreement else "conflict"
 
             if agreement:
-                chosen_record = openai_record or gem_record
+                chosen_record = claude_record or oai_record
             else:
-                chosen_record = openai_record if chosen_provider == "openai" else gem_record
+                chosen_record = claude_record if chosen_provider == "claude" else oai_record
 
-            tokens_used = int(openai_record.get("tokens_used", 0) or 0) + int(gem_record.get("tokens_used", 0) or 0)
+            tokens_used = int(claude_record.get("tokens_used", 0) or 0) + int(oai_record.get("tokens_used", 0) or 0)
             total_tokens += tokens_used
+
+            # Track which provider was used and if fallback was involved
+            claude_fallback = claude_record.get("fallback_provider") == "gemini"
+            openai_fallback = oai_record.get("fallback_provider") == "gemini"
 
             combined.append({
                 "requirement_id": req_id,
@@ -1178,10 +1605,14 @@ class DualVisionComparator:
                 "recommendations": chosen_record.get("recommendations", []),
                 "tokens_used": tokens_used,
                 "agreement_status": agreement_map[req_id],
-                "source_provider": "openai" if agreement else chosen_provider,
+                "source_provider": "claude" if agreement else chosen_provider,
                 "secondary_provider_status": {
-                    "openai": status_a,
-                    "gemini": status_b,
+                    "claude": status_a,
+                    "openai": status_b,
+                },
+                "fallback_used": {
+                    "claude": claude_fallback,
+                    "openai": openai_fallback,
                 },
             })
 
