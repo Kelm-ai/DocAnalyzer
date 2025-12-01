@@ -580,7 +580,7 @@ Vision handling:
             if self.claude_client is None:
                 raise RuntimeError("Claude client is not configured")
             upload = await asyncio.to_thread(
-                self.claude_client.files.upload,
+                self.claude_client.beta.files.upload,
                 file=document_path,
             )
             return {
@@ -675,7 +675,7 @@ Vision handling:
 
         try:
             upload = await asyncio.to_thread(
-                self.claude_client.files.upload,
+                self.claude_client.beta.files.upload,
                 file=tmp_path,
             )
             return {
@@ -968,9 +968,10 @@ Vision handling:
 
             try:
                 response = await asyncio.to_thread(
-                    self.claude_client.messages.create,  # type: ignore[union-attr]
+                    self.claude_client.beta.messages.create,  # type: ignore[union-attr]
                     model=self.model,
                     max_tokens=4096,
+                    betas=self.claude_betas,
                     messages=[{
                         "role": "user",
                         "content": [
