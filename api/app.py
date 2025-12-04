@@ -25,7 +25,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Import summary generator
-from summary_generator import generate_executive_summary_sync
+try:
+    from api.summary_generator import generate_executive_summary_sync
+except ImportError:
+    from summary_generator import generate_executive_summary_sync
 
 # Local imports
 import sys
