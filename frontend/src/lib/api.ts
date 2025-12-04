@@ -58,6 +58,20 @@ export interface RequirementFeedbackRecord {
   updated_at?: string;
 }
 
+export interface ExecutiveSummaryItem {
+  clause: string;
+  title: string;
+  finding: string;
+  recommendation: string;
+}
+
+export interface ExecutiveSummary {
+  overview: string;
+  critical_gaps: ExecutiveSummaryItem[];
+  opportunities_for_improvement: ExecutiveSummaryItem[];
+  generated_at: string;
+}
+
 export interface ComplianceReport {
   evaluation_id: string;
   document_name: string;
@@ -74,6 +88,7 @@ export interface ComplianceReport {
   requirements: RequirementResult[];
   high_risk_findings: string[];
   key_gaps: string[];
+  executive_summary?: ExecutiveSummary;
 }
 
 export interface RequirementCreatePayload {

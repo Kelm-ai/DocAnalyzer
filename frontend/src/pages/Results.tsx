@@ -7,8 +7,9 @@ import { DataTable } from "@/components/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { api } from "@/lib/api"
-import type { ComplianceReport, RequirementResult } from "@/lib/api"
+import type { ComplianceReport, RequirementResult, ExecutiveSummary } from "@/lib/api"
 import {
   AlertCircle,
   ChevronDown,
@@ -140,6 +141,129 @@ function truncateText(value: string | null | undefined, length = 140): string {
   return `${value.slice(0, length).trimEnd()}...`
 }
 
+function SummaryView({ executiveSummary }: { executiveSummary?: ExecutiveSummary }) {
+  if (!executiveSummary) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <AlertCircle className="mb-4 h-12 w-12 text-slate-300" />
+            <h3 className="text-lg font-medium text-slate-900">No Summary Available</h3>
+            <p className="mt-2 max-w-md text-sm text-slate-500">
+              Executive summary is not available for this evaluation. This may be because the evaluation was run before this feature was added.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const { overview, critical_gaps, opportunities_for_improvement } = executiveSummary
+
+  return (
+    <div className="space-y-6">
+      {/* Executive Overview */}
+      <Card>
+        <CardContent className="p-6">
+          <h2 className="mb-4 text-lg font-semibold text-slate-900">Executive Overview</h2>
+          <p className="text-slate-700 leading-relaxed">{overview}</p>
+        </CardContent>
+      </Card>
+
+      {/* Critical Gaps */}
+      {critical_gaps && critical_gaps.length > 0 && (
+        <Card className="border-red-200">
+          <CardContent className="p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-red-500" />
+              <h2 className="text-lg font-semibold text-slate-900">
+                Critical Gaps ({critical_gaps.length})
+              </h2>
+            </div>
+            <div className="space-y-4">
+              {critical_gaps.map((item, index) => (
+                <div
+                  key={`gap-${index}`}
+                  className="rounded-lg border border-red-100 bg-red-50/50 p-4"
+                >
+                  <div className="mb-2 flex items-center gap-2">
+                    <Badge className="bg-red-100 text-red-700 border border-red-200">
+                      Clause {item.clause}
+                    </Badge>
+                    <span className="font-medium text-slate-900">{item.title}</span>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="font-medium text-slate-700">Finding: </span>
+                      <span className="text-slate-600">{item.finding}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-slate-700">Recommendation: </span>
+                      <span className="text-slate-600">{item.recommendation}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No Critical Gaps Message */}
+      {(!critical_gaps || critical_gaps.length === 0) && (
+        <Card className="border-emerald-200">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-emerald-500" />
+              <h2 className="text-lg font-semibold text-slate-900">Critical Gaps</h2>
+            </div>
+            <p className="mt-2 text-sm text-slate-600">No critical gaps identified.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Opportunities for Improvement */}
+      {opportunities_for_improvement && opportunities_for_improvement.length > 0 && (
+        <Card className="border-amber-200">
+          <CardContent className="p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-amber-500" />
+              <h2 className="text-lg font-semibold text-slate-900">
+                Opportunities for Improvement ({opportunities_for_improvement.length})
+              </h2>
+            </div>
+            <div className="space-y-4">
+              {opportunities_for_improvement.map((item, index) => (
+                <div
+                  key={`ofi-${index}`}
+                  className="rounded-lg border border-amber-100 bg-amber-50/50 p-4"
+                >
+                  <div className="mb-2 flex items-center gap-2">
+                    <Badge className="bg-amber-100 text-amber-700 border border-amber-200">
+                      Clause {item.clause}
+                    </Badge>
+                    <span className="font-medium text-slate-900">{item.title}</span>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="font-medium text-slate-700">Finding: </span>
+                      <span className="text-slate-600">{item.finding}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-slate-700">Recommendation: </span>
+                      <span className="text-slate-600">{item.recommendation}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
 export function Results() {
   const { evaluationId } = useParams<{ evaluationId: string }>()
   const [report, setReport] = useState<ComplianceReport | null>(null)
@@ -150,6 +274,7 @@ export function Results() {
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"table" | "summary">("table")
 
   const closeDrawer = useCallback(() => setSelectedRequirementIndex(null), [])
 
@@ -477,69 +602,96 @@ export function Results() {
           )
         },
       },
+      // Agreement column hidden - uncomment to restore
+      // {
+      //   id: "agreement",
+      //   header: "Agreement",
+      //   enableSorting: true,
+      //   accessorFn: (row) => getAgreementSortValue(row),
+      //   sortingFn: (a, b) => getAgreementSortValue(a.original) - getAgreementSortValue(b.original),
+      //   cell: ({ row }) => {
+      //     const agreementMeta = getAgreementMeta(row.original.agreement_status)
+      //     return (
+      //       <Badge
+      //         variant="outline"
+      //         className={`px-2 py-1 text-xs font-medium ${agreementMeta.className}`}
+      //       >
+      //         {agreementMeta.label}
+      //       </Badge>
+      //     )
+      //   },
+      // },
+      // Rationale column hidden - view in sidebar
+      // {
+      //   id: "rationale",
+      //   header: "Rationale",
+      //   cell: ({ row }) => (
+      //     <p className="text-sm text-slate-600">
+      //       {truncateText(row.original.evaluation_rationale, 160)}
+      //     </p>
+      //   ),
+      // },
+      // Evidence column hidden - view in sidebar
+      // {
+      //   id: "evidence",
+      //   header: "Evidence",
+      //   cell: ({ row }) => {
+      //     const evidence = row.original.evidence_snippets?.filter(Boolean) ?? []
+      //     if (!evidence.length) {
+      //       return <span className="text-sm text-slate-500">-</span>
+      //     }
+      //     return (
+      //       <p className="text-sm text-slate-600">
+      //         {truncateText(evidence[0], 120)}
+      //         {evidence.length > 1 ? (
+      //           <span className="text-xs text-slate-500"> (+{evidence.length - 1} more)</span>
+      //         ) : null}
+      //       </p>
+      //     )
+      //   },
+      // },
       {
-        id: "agreement",
-        header: "Agreement",
-        enableSorting: true,
-        accessorFn: (row) => getAgreementSortValue(row),
-        sortingFn: (a, b) => getAgreementSortValue(a.original) - getAgreementSortValue(b.original),
+        id: "findings",
+        header: "Findings",
         cell: ({ row }) => {
-          const agreementMeta = getAgreementMeta(row.original.agreement_status)
-          return (
-            <Badge
-              variant="outline"
-              className={`px-2 py-1 text-xs font-medium ${agreementMeta.className}`}
-            >
-              {agreementMeta.label}
-            </Badge>
-          )
-        },
-      },
-      {
-        id: "rationale",
-        header: "Rationale",
-        cell: ({ row }) => (
-          <p className="text-sm text-slate-600">
-            {truncateText(row.original.evaluation_rationale, 160)}
-          </p>
-        ),
-      },
-      {
-        id: "evidence",
-        header: "Evidence",
-        cell: ({ row }) => {
-          const evidence = row.original.evidence_snippets?.filter(Boolean) ?? []
-          if (!evidence.length) {
+          // For FAIL/FLAGGED show gaps, for PASS show recommendations as OFI
+          const status = row.original.status?.toUpperCase()
+          const isFailOrFlagged = status === "FAIL" || status === "FLAGGED"
+          const items = isFailOrFlagged
+            ? (row.original.gaps_identified?.filter(Boolean) ?? [])
+            : (row.original.gaps_identified?.filter(Boolean) ?? []) // OFI comes from gaps for PASS
+          if (!items.length) {
             return <span className="text-sm text-slate-500">-</span>
           }
           return (
             <p className="text-sm text-slate-600">
-              {truncateText(evidence[0], 120)}
-              {evidence.length > 1 ? (
-                <span className="text-xs text-slate-500"> (+{evidence.length - 1} more)</span>
+              {truncateText(items[0], 120)}
+              {items.length > 1 ? (
+                <span className="text-xs text-slate-500"> (+{items.length - 1} more)</span>
               ) : null}
             </p>
           )
         },
       },
-      {
-        id: "gaps",
-        header: "Gaps",
-        cell: ({ row }) => {
-          const gaps = row.original.gaps_identified?.filter(Boolean) ?? []
-          if (!gaps.length) {
-            return <span className="text-sm text-slate-500">-</span>
-          }
-          return (
-            <p className="text-sm text-slate-600">
-              {truncateText(gaps[0], 120)}
-              {gaps.length > 1 ? (
-                <span className="text-xs text-slate-500"> (+{gaps.length - 1} more)</span>
-              ) : null}
-            </p>
-          )
-        },
-      },
+      // Recommendations column hidden - view in sidebar
+      // {
+      //   id: "recommendations",
+      //   header: "Recommendations",
+      //   cell: ({ row }) => {
+      //     const recs = row.original.recommendations?.filter(Boolean) ?? []
+      //     if (!recs.length) {
+      //       return <span className="text-sm text-slate-500">-</span>
+      //     }
+      //     return (
+      //       <p className="text-sm text-slate-600">
+      //         {truncateText(recs[0], 120)}
+      //         {recs.length > 1 ? (
+      //           <span className="text-xs text-slate-500"> (+{recs.length - 1} more)</span>
+      //         ) : null}
+      //       </p>
+      //     )
+      //   },
+      // },
       {
         id: "humanFeedback",
         header: "Human Feedback",
@@ -760,57 +912,70 @@ export function Results() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="p-6">
-          <div className="mb-4 space-y-2">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900">Requirement breakdown</h2>
-              <p className="text-sm text-slate-600">
-                Each row represents the evaluation outcome for a single ISO 14971 requirement.
-              </p>
-            </div>
-            {feedbackLoading ? (
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span>Loading human feedback...</span>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "table" | "summary")}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="table">Table</TabsTrigger>
+          <TabsTrigger value="summary">Summary</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="table">
+          <Card>
+            <CardContent className="p-6">
+              <div className="mb-4 space-y-2">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Requirement breakdown</h2>
+                  <p className="text-sm text-slate-600">
+                    Each row represents the evaluation outcome for a single ISO 14971 requirement.
+                  </p>
+                </div>
+                {feedbackLoading ? (
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Loading human feedback...</span>
+                  </div>
+                ) : null}
+                {feedbackError ? (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">
+                    {feedbackError}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-            {feedbackError ? (
-              <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">
-                {feedbackError}
-              </div>
-            ) : null}
-          </div>
-          <DataTable
-            columns={columns}
-            data={report.requirements}
-            filterPlaceholder="Filter requirements..."
-            initialPageSize={25}
-            toolbarSlot={
-              <Button
-                onClick={handleExport}
-                disabled={!report || report.requirements.length === 0}
-                size="sm"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export to Excel
-              </Button>
-            }
-            onRowClick={(row: Row<RequirementResult>) => {
-              const clickedIndex = report.requirements.findIndex(
-                (item: RequirementResult) => item.requirement_id === row.original.requirement_id
-              )
-              if (clickedIndex >= 0) {
-                setSelectedRequirementIndex(clickedIndex)
-              } else {
-                setSelectedRequirementIndex(row.index ?? 0)
-              }
-            }}
-            isRowClickable={() => true}
-            rowClassName={() => "hover:bg-slate-50"}
-          />
-        </CardContent>
-      </Card>
+              <DataTable
+                columns={columns}
+                data={report.requirements}
+                filterPlaceholder="Filter requirements..."
+                initialPageSize={25}
+                toolbarSlot={
+                  <Button
+                    onClick={handleExport}
+                    disabled={!report || report.requirements.length === 0}
+                    size="sm"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Export to Excel
+                  </Button>
+                }
+                onRowClick={(row: Row<RequirementResult>) => {
+                  const clickedIndex = report.requirements.findIndex(
+                    (item: RequirementResult) => item.requirement_id === row.original.requirement_id
+                  )
+                  if (clickedIndex >= 0) {
+                    setSelectedRequirementIndex(clickedIndex)
+                  } else {
+                    setSelectedRequirementIndex(row.index ?? 0)
+                  }
+                }}
+                isRowClickable={() => true}
+                rowClassName={() => "hover:bg-slate-50"}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="summary">
+          <SummaryView executiveSummary={report.executive_summary} />
+        </TabsContent>
+      </Tabs>
 
       {activeRequirement ? (
         <div className="fixed inset-0 z-50 flex">
@@ -989,9 +1154,77 @@ export function Results() {
                 </p>
               </section>
 
+              {/* Show Gaps section only for FAIL/FLAGGED status */}
+              {(activeRequirement.status === "FAIL" || activeRequirement.status === "FLAGGED") && (
+                <section className="space-y-2">
+                  <h3 className="text-sm font-semibold text-red-700">Gaps</h3>
+                  {activeRequirement.gaps_identified?.filter(Boolean).length ? (
+                    <ul className="space-y-2 text-sm text-slate-700">
+                      {activeRequirement.gaps_identified
+                        .filter(Boolean)
+                        .map((item: string, index: number) => (
+                          <li
+                            key={index}
+                            className="rounded-md border border-red-200 bg-red-50 p-3"
+                          >
+                            {item}
+                          </li>
+                        ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-slate-500">No gaps documented.</p>
+                  )}
+                </section>
+              )}
+
+              {/* Show OFI section only for PASS status - uses gaps_identified field */}
+              {activeRequirement.status === "PASS" && (
+                <section className="space-y-2">
+                  <h3 className="text-sm font-semibold text-amber-700">Opportunities for Improvement</h3>
+                  {activeRequirement.gaps_identified?.filter(Boolean).length ? (
+                    <ul className="space-y-2 text-sm text-slate-700">
+                      {activeRequirement.gaps_identified
+                        .filter(Boolean)
+                        .map((item: string, index: number) => (
+                          <li
+                            key={index}
+                            className="rounded-md border border-amber-200 bg-amber-50 p-3"
+                          >
+                            {item}
+                          </li>
+                        ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-slate-500">No improvements suggested - requirement is fully satisfied.</p>
+                  )}
+                </section>
+              )}
+
+              {/* Recommendations section - always shown */}
+              <section className="space-y-2">
+                <h3 className="text-sm font-semibold text-blue-700">Recommendations</h3>
+                {activeRequirement.recommendations?.filter(Boolean).length ? (
+                  <ul className="space-y-2 text-sm text-slate-700">
+                    {activeRequirement.recommendations
+                      .filter(Boolean)
+                      .map((item: string, index: number) => (
+                        <li
+                          key={index}
+                          className="rounded-md border border-blue-200 bg-blue-50 p-3"
+                        >
+                          {item}
+                        </li>
+                      ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-slate-500">No recommendations provided.</p>
+                )}
+              </section>
+
+              {/* Evidence section moved to the bottom */}
               <section className="space-y-2">
                 <h3 className="text-sm font-semibold text-slate-900">Evidence</h3>
-                {activeRequirement.evidence_snippets?.length ? (
+                {activeRequirement.evidence_snippets?.filter(Boolean).length ? (
                   <ul className="space-y-2 text-sm text-slate-700">
                     {activeRequirement.evidence_snippets
                       .filter(Boolean)
@@ -1006,46 +1239,6 @@ export function Results() {
                   </ul>
                 ) : (
                   <p className="text-sm text-slate-500">No evidence captured.</p>
-                )}
-              </section>
-
-              <section className="space-y-2">
-                <h3 className="text-sm font-semibold text-slate-900">Gaps</h3>
-                {activeRequirement.gaps_identified?.length ? (
-                  <ul className="space-y-2 text-sm text-slate-700">
-                    {activeRequirement.gaps_identified
-                      .filter(Boolean)
-                      .map((item: string, index: number) => (
-                        <li
-                          key={index}
-                          className="rounded-md border border-slate-200 bg-rose-50/80 p-3"
-                        >
-                          {item}
-                        </li>
-                      ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-slate-500">No gaps were identified.</p>
-                )}
-              </section>
-
-              <section className="space-y-2">
-                <h3 className="text-sm font-semibold text-slate-900">Recommendations</h3>
-                {activeRequirement.recommendations?.length ? (
-                  <ul className="space-y-2 text-sm text-slate-700">
-                    {activeRequirement.recommendations
-                      .filter(Boolean)
-                      .map((item: string, index: number) => (
-                        <li
-                          key={index}
-                          className="rounded-md border border-slate-200 bg-blue-50 p-3"
-                        >
-                          {item}
-                        </li>
-                      ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-slate-500">No recommendations provided.</p>
                 )}
               </section>
             </div>

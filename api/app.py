@@ -24,6 +24,9 @@ from dotenv import load_dotenv
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Import summary generator
+from summary_generator import generate_executive_summary_sync
+
 # Local imports
 import sys
 
@@ -247,7 +250,12 @@ def _is_valid_uuid(value: str) -> bool:
         return False
 
 
-def create_vision_compliance_report(evaluation_id: str, results: List[Dict[str, Any]], summary: Dict[str, Any]) -> None:
+def create_vision_compliance_report(
+    evaluation_id: str,
+    results: List[Dict[str, Any]],
+    summary: Dict[str, Any],
+    executive_summary: Optional[Dict[str, Any]] = None
+) -> None:
     supabase = get_supabase_client()
 
     # Fetch all requirements to get clause information
@@ -308,6 +316,10 @@ def create_vision_compliance_report(evaluation_id: str, results: List[Dict[str, 
         'report_format': 'json',
         'generated_at': datetime.utcnow().isoformat(),
     }
+
+    # Add executive summary if provided
+    if executive_summary:
+        report_payload['executive_summary'] = executive_summary
 
     supabase.table('compliance_reports').insert(report_payload).execute()
 
@@ -383,6 +395,34 @@ def persist_vision_results(evaluation_id: str, summary: Dict[str, Any]) -> None:
             else:
                 raise
 
+    # Generate executive summary
+    document_name = summary.get('document_info', {}).get('file_name', 'Unknown Document')
+    executive_summary = None
+    try:
+        # Build requirements data for summary generator
+        requirements_for_summary = []
+        for result in summary.get('requirements_results', []):
+            requirements_for_summary.append({
+                'requirement_clause': result.get('requirement_clause') or result.get('clause'),
+                'title': result.get('requirement_title') or result.get('title', ''),
+                'status': str(result.get('status', 'Unknown')).upper(),
+                'gaps_identified': _ensure_list(result.get('gaps')),
+                'recommendations': _ensure_list(result.get('recommendations')),
+            })
+
+        executive_summary = generate_executive_summary_sync(
+            document_name=document_name,
+            requirements_results=requirements_for_summary,
+            overall_score=float(compliance_score or 0)
+        )
+        if executive_summary:
+            logger.info(f"Executive summary generated for evaluation {evaluation_id}")
+        else:
+            logger.warning(f"Executive summary generation returned None for evaluation {evaluation_id}")
+    except Exception as summary_error:
+        logger.error(f"Failed to generate executive summary: {summary_error}")
+        # Continue without executive summary - it's not critical
+
     # Replace existing compliance report
     supabase.table('compliance_reports').delete().eq('document_evaluation_id', evaluation_id).execute()
     create_vision_compliance_report(evaluation_id, requirement_records, {
@@ -390,7 +430,7 @@ def persist_vision_results(evaluation_id: str, summary: Dict[str, Any]) -> None:
         'total_requirements': total_requirements,
         'compliance_score': compliance_score,
         'agreement_by_requirement': agreement_map,
-    })
+    }, executive_summary=executive_summary)
 
 # Pydantic models
 class EvaluationStatus(BaseModel):
@@ -431,6 +471,7 @@ class ComplianceReport(BaseModel):
     requirements: List[RequirementResult]
     high_risk_findings: List[str]
     key_gaps: List[str]
+    executive_summary: Optional[Dict[str, Any]] = None
 
 
 class DocumentMarkdownResponse(BaseModel):
@@ -1140,7 +1181,8 @@ async def get_compliance_report(evaluation_id: str):
             summary_stats=report_data.get('summary_stats', {}),
             requirements=requirements,
             high_risk_findings=report_data.get('high_risk_findings', []),
-            key_gaps=report_data.get('key_gaps', [])
+            key_gaps=report_data.get('key_gaps', []),
+            executive_summary=report_data.get('executive_summary')
         )
         
     except Exception as e:
