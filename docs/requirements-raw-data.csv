@@ -1,0 +1,650 @@
+title,clause_number,display_order,requirement_text
+Risk management process,4.1,1,"You are evaluating ISO 14971:2019 clause 4.1 – “Risk management process”.
+
+Objective:
+Determine whether the document establishes, describes, and maintains an ongoing risk management process that:
+- Covers the entire medical device life cycle (from concept through post-market).
+- Includes risk analysis, risk evaluation, risk control, and production & post-production (P&PP) activities.
+- Is integrated with or appropriately linked to the broader quality management system (QMS) / product realization processes.
+
+Core evidence to look for (minimal subset for PASS):
+- A defined risk management PROCESS (procedure, section, or flowchart) that references ISO 14971 or clearly equivalent concepts.
+- Explicit or implicit statement that the process applies across the device life cycle (not just design).
+- Description of the main steps: risk analysis, risk evaluation, risk control, and P&PP activities (these may be named differently but conceptually should match).
+- At least some indication of integration with other QMS processes (e.g., links to design controls, complaint handling, CAPA, PMS, etc.).
+
+Examples of strong PASS evidence:
+- A dedicated “Risk Management Procedure” section that defines scope, key activities, and references related procedures.
+- A flowchart showing risk management from pre-market through post-market with feedback loops.
+- Statements like “This process applies to all phases of the product life cycle…” and “Risk management activities are integrated into design control, change control, and complaint handling processes.”
+
+When to FLAG:
+- The document references risk management in general terms, but it is unclear whether all life-cycle phases are covered OR the P&PP loop is vaguely described.
+- It appears that risk analysis and control are defined, but their linkage to post-market monitoring is only implied, not clearly stated.
+
+When to FAIL:
+- No recognizable risk management process is described.
+- The document only addresses a narrow subset (e.g., just risk analysis) without any indication that evaluation, control, or P&PP are part of a defined process.
+- No link at all between risk management and other QMS/product realization processes.
+
+Typical OFIs (can still PASS):
+- The process is described but not clearly mapped to life-cycle stages.
+- Links to related SOPs (e.g., complaint handling, CAPA) exist but could be clearer.
+- Missing or superficial flowcharts where they would improve understanding."
+"Management responsibilities (commitment, policy, review)",4.2,2,"You are evaluating ISO 14971:2019 clause 4.2 – “Management responsibilities”.
+
+Objective:
+Determine whether top management’s responsibilities for risk management are described, including:
+- Demonstrated commitment (resources, authority, visibility).
+- A documented risk acceptability policy.
+- Periodic review of the suitability and effectiveness of the risk management process.
+
+Core evidence to look for (minimal subset for PASS):
+- Statements that top management is responsible for establishing and maintaining the risk management process.
+- A documented “risk acceptability policy” or equivalent (criteria for acceptable risk and overall residual risk), approved or owned by management.
+- Evidence that the risk management process is periodically reviewed for suitability and effectiveness (typically via management review or a specific risk management review).
+
+Examples of strong PASS evidence:
+- A section assigning top-level responsibility (e.g., “Top Management shall ensure adequate resources, appoint a risk management responsible person, and approve the risk management policy”).
+- A documented risk acceptability policy (in this document or by reference) that defines criteria and refers to applicable regulations/standards.
+- Description of how management reviews the risk management process at planned intervals (inputs/outputs, actions).
+
+When to FLAG:
+- There is a general statement about management “commitment” or “approval” but no clear policy for risk acceptability and/or no description of how suitability is reviewed.
+- Responsibility is mentioned in passing but it is not clear who owns the policy or review cycle.
+
+When to FAIL:
+- No mention of management’s role in providing resources, approving policy, or reviewing the process.
+- No risk acceptability policy (or anything equivalent) can be found or inferred.
+- The document suggests risk decisions are made without defined criteria or management involvement.
+
+Typical OFIs (can still PASS):
+- Roles and responsibilities could be clearer (e.g., no named role for risk-management oversight).
+- The risk acceptability policy exists but is not clearly linked to specific device families or regulatory expectations.
+- The management review of risk management is implied (e.g., part of general management review) but could be more explicitly described."
+Competence of personnel,4.3,3,"You are evaluating ISO 14971:2019 clause 4.3 – “Competence of personnel”.
+
+Objective:
+Determine whether the document requires that people performing risk management tasks are competent and that their competence is maintained and documented (education, training, skills, experience).
+
+Core evidence to look for (minimal subset for PASS):
+- A requirement that personnel involved in risk management activities must have appropriate competence.
+- Reference to training, qualifications, or experience criteria for those roles.
+- Indication that records of competence (e.g., training records, CVs, competency matrices) are maintained, even if stored outside this document.
+
+Examples of strong PASS evidence:
+- A section stating that risk management team members must have defined qualifications and that their training is documented.
+- References to HR/training procedures or competency matrices that cover risk-management roles.
+- Role descriptions (e.g., “Risk Management Lead,” “Clinical Safety Officer”) with competency expectations.
+
+When to FLAG:
+- The document mentions “trained personnel” but does not specify that this applies to risk management activities or lacks any pointer to how competence is defined or recorded.
+- It is unclear whether competence is actually a requirement or simply assumed.
+
+When to FAIL:
+- No mention of competency requirements for personnel performing risk management tasks.
+- No implication that training or qualification is needed for risk management activities.
+
+Typical OFIs (can still PASS):
+- Competency criteria exist but are generic (e.g., “adequately trained personnel”) without role-specific expectations.
+- The document relies heavily on other SOPs for training without clearly linking risk-management roles to those processes."
+Risk management plan (all sub-items a–h grouped),4.4,4,"You are evaluating ISO 14971:2019 clause 4.4 – “Risk management plan”.
+
+Objective:
+Determine whether the document describes how risk management plans (RMPs) are created, maintained, and updated, covering all required elements:
+- Device/product identification and life-cycle scope.
+- Assigned responsibilities and authorities.
+- Planned reviews of risk management activities.
+- Risk acceptability criteria and method for evaluating overall residual risk.
+- Planning of verification of risk control measures.
+- Planning for collection and review of production & post-production information.
+- Change control for the RMP itself.
+
+Core evidence to look for (minimal subset for PASS):
+- A description of the RMP as a formal, documented plan (possibly per device/family).
+- A defined STRUCTURE or TEMPLATE for the RMP that, taken together, addresses most of:
+  - Device identification and life-cycle phases covered.
+  - Named roles/responsibilities for risk-management activities.
+  - Criteria for risk acceptability and method for overall residual risk evaluation (or reference to the risk acceptability policy).
+  - Planning of reviews and verification of risk controls.
+  - Approach to P&PP information flow back into risk management.
+  - Version control / change history for the RMP.
+
+Examples of strong PASS evidence:
+- A section “Risk Management Plan” describing required contents including scope, roles, review points, risk criteria, verification and P&PP plans, and change control.
+- An RMP template attached or referenced that includes sections for responsibilities, risk acceptability criteria, verification plans, and P&PP information.
+
+When to FLAG:
+- An RMP is referenced, but only a few of the above elements are clearly defined and it is unclear whether the others are captured elsewhere.
+- The plan is described only in very high-level terms, making it unclear if it would satisfy ISO 14971 expectations in practice.
+
+When to FAIL:
+- No risk management plan is mentioned or described.
+- The document suggests risk activities are performed ad hoc without any planning document per device/family.
+- Key elements (e.g., risk acceptability criteria, verification planning, or P&PP information flow) are completely absent from the plan or from surrounding text.
+
+Typical OFIs (can still PASS):
+- RMP elements are scattered across multiple sections instead of clearly grouped.
+- Change control for the RMP is minimal or only implied via generic document control.
+- The method for overall residual risk is referenced but not clearly described."
+Risk management file (RMF) & traceability,4.5,5,"You are evaluating ISO 14971:2019 clause 4.5 – “Risk management file”.
+
+Objective:
+Determine whether the document defines a risk management file (RMF) that provides traceability from:
+- Each identified hazard/hazardous situation → risk analysis → risk evaluation → risk control measures → verification of implementation/effectiveness → residual risk evaluation.
+
+Core evidence to look for (minimal subset for PASS):
+- A definition of the RMF as the logical collection of risk management records.
+- An expectation of TRACEABILITY linking hazards through the entire risk-management process.
+- Description of how the RMF is organized (e.g., index, traceability matrix, references to other documents/systems).
+
+Examples of strong PASS evidence:
+- An explicit requirement to maintain an RMF that “shall provide traceability from hazards to risk analyses, controls, verification, and residual risk decisions.”
+- A description of a hazard log or traceability matrix structure.
+- Indication that the RMF may point to other systems (e.g., electronic records) and is kept up to date.
+
+When to FLAG:
+- The RMF is mentioned, but it is unclear what it contains or whether traceability across all stages is required.
+- Some elements (e.g., hazard list and evaluations) are clearly documented, but connections to verification or P&PP are not explicit.
+
+When to FAIL:
+- No risk management file concept is present.
+- There is no expectation of traceability from hazards to controls and residual risk decisions.
+
+Typical OFIs (can still PASS):
+- The RMF organization is described only at a high level; index or matrix is not clearly defined.
+- Traceability exists but is limited (e.g., only hazard → control, with weak links to verification or P&PP)."
+Risk analysis process,5.1,6,"You are evaluating ISO 14971:2019 clause 5.1 – “Risk analysis process”.
+
+Objective:
+Determine whether the document requires conducting and recording risk analysis according to clauses 5.2–5.5, including:
+- Clear scope and identification of the device/configurations.
+- Performance of the sequence: intended use/misuse, characteristics related to safety, hazards/hazardous situations, and risk estimation.
+- Recording of results with sufficient identifiers (device, date, analysts, etc.).
+
+Core evidence to look for (minimal subset for PASS):
+- A defined risk analysis activity or process that explicitly or implicitly includes 5.2–5.5 steps.
+- Requirement to record risk analysis results and metadata (e.g., device ID, date, responsible individuals).
+- Linkage of risk analysis records to the RMF.
+
+Examples of strong PASS evidence:
+- A section “Risk Analysis” describing inputs, outputs, and required records (e.g., risk analysis report, FMEA, hazard analysis).
+- Mention of using structured techniques (FMEA, FTA, PHA) with documented outputs.
+
+When to FLAG:
+- The document mentions risk analysis but does not clarify what is recorded or how the various steps fit together.
+- Risk analysis is only referenced as “performed” without describing its main components.
+
+When to FAIL:
+- No risk analysis process is described.
+- Risk analysis is mentioned only as a vague concept with no expectation of documentation or structure.
+
+Typical OFIs (can still PASS):
+- Risk analysis steps are present but not clearly aligned with 5.2–5.5.
+- Metadata (e.g., analyst names) are not explicitly required but are implied by general record requirements."
+Intended use and reasonably foreseeable misuse,5.2,7,"You are evaluating ISO 14971:2019 clause 5.2 – “Intended use and reasonably foreseeable misuse”.
+
+Objective:
+Determine whether the document requires:
+- Documenting the intended use of the device (including indication, patient population, user type, environment, and operating principle).
+- Identifying and documenting reasonably foreseeable misuse based on predictable human behavior, use errors, and field experience.
+
+Core evidence to look for (minimal subset for PASS):
+- A requirement to document intended use and key contextual factors (indications, users, environments).
+- A requirement to identify and document reasonably foreseeable misuse scenarios.
+- Linkage of these definitions to subsequent risk analysis (e.g., hazard identification and risk estimation).
+
+Examples of strong PASS evidence:
+- A section or template field for “Intended Use / Indications / Patient Population / User / Use Environment”.
+- A specific requirement or section for “Reasonably Foreseeable Misuse” (or similarly named misuse/use error analysis).
+- References to usability engineering or human-factors activities feeding misuse scenarios.
+
+When to FLAG:
+- Intended use is mentioned, but misuse is only vaguely acknowledged or not clearly required as an input to risk analysis.
+- Misuse is only discussed in general HFE language without clear linkage to the risk analysis process.
+
+When to FAIL:
+- No requirement to document intended use OR the document treats intended use as implicit in labeling only.
+- No mention of reasonably foreseeable misuse and no obvious way it would be captured.
+
+Typical OFIs (can still PASS):
+- Intended use is documented but lacks some dimensions (e.g., environment, user type).
+- Misuse is identified but not systematically linked to human factors or post-market experience."
+Characteristics related to safety,5.3,8,"You are evaluating ISO 14971:2019 clause 5.3 – “Characteristics related to safety”.
+
+Objective:
+Determine whether the document requires identifying and documenting device characteristics that relate to safety, including:
+- Qualitative and quantitative characteristics.
+- Limits/tolerances, essential performance, and other parameters that could influence safety.
+
+Core evidence to look for (minimal subset for PASS):
+- A step or section requiring identification of “characteristics related to safety” (even if phrased differently).
+- Expectation to document limits/tolerances or performance ranges that influence safety.
+- Linkage between these characteristics and the subsequent hazard identification and risk estimation.
+
+Examples of strong PASS evidence:
+- A risk analysis template containing a field for “Safety-related characteristics” or “Critical parameters”.
+- Requirements to identify essential performance, alarms, control limits, and related specifications as risk inputs.
+
+When to FLAG:
+- Safety-related characteristics are implied (e.g., via engineering specifications) but not clearly required as a distinct step in risk analysis.
+- It is unclear whether characterization is systematic or ad hoc.
+
+When to FAIL:
+- No mention of identifying characteristics related to safety.
+- Risk analysis jumps directly to hazards without any characterization step of the device.
+
+Typical OFIs (can still PASS):
+- Characteristics are identified only indirectly through engineering documents, not clearly described in risk analysis controls.
+- Quantitative limits are not consistently documented even though they are critical to safety."
+Hazards and hazardous situations,5.4,9,"You are evaluating ISO 14971:2019 clause 5.4 – “Hazards and hazardous situations”.
+
+Objective:
+Determine whether the document requires systematically identifying:
+- Known and foreseeable hazards.
+- Hazardous situations (combinations of circumstances that could lead to harm) across the device life cycle.
+
+Core evidence to look for (minimal subset for PASS):
+- An activity or step to identify hazards (e.g., hazard analysis, hazard identification).
+- An activity or step to define hazardous situations, not just a generic hazard list.
+- Expectation of life-cycle coverage (e.g., normal use, maintenance, transport, disposal; interactions with other devices/users).
+
+Examples of strong PASS evidence:
+- A hazard analysis table structure including hazard, sequence of events, hazardous situation, and potential harm.
+- References to systematic methods (e.g., checklists, standards, prior device experience) to populate hazards/hazardous situations.
+
+When to FLAG:
+- Hazards are mentioned, but hazardous situations are not explicitly required or are ambiguously described.
+- Life-cycle phases are mentioned but not clearly integrated into the hazard identification.
+
+When to FAIL:
+- No hazard identification step is described.
+- The process assumes hazards are already known and does not plan for systematic identification.
+
+Typical OFIs (can still PASS):
+- Hazard lists exist but the concept of “hazardous situation” is not well explained.
+- Life-cycle coverage is partial (e.g., strong on normal use but weak on manufacturing or decommissioning)."
+Risk estimation,5.5,10,"You are evaluating ISO 14971:2019 clause 5.5 – “Risk estimation”.
+
+Objective:
+Determine whether the document requires estimating risk(s) for each hazardous situation, including:
+- Defining severity and probability scales.
+- Describing how data, assumptions, and uncertainty are handled.
+- Addressing cases where probability cannot reasonably be estimated.
+
+Core evidence to look for (minimal subset for PASS):
+- A defined method for estimating risk (e.g., categorical scales, numerical estimation).
+- Clear severity and probability definitions (or references to a policy/matrix).
+- Instructions on what to do when probability cannot be estimated (e.g., treat as worst case, use qualitative approach, or specific policy).
+
+Examples of strong PASS evidence:
+- A risk matrix or table defining severity levels and probability levels.
+- Instructions for entering severity and probability per hazardous situation and deriving a risk score/category.
+- Treatment of “unknown probability” aligned with the risk acceptability policy (e.g., considered high risk until proven otherwise).
+
+When to FLAG:
+- Risk estimation is referenced but severity/probability scales are not clearly defined.
+- The approach to “unknown” or highly uncertain probability is not described.
+
+When to FAIL:
+- No method for risk estimation is defined.
+- The process only qualitatively describes risks without any structured estimation or scale.
+
+Typical OFIs (can still PASS):
+- Scales exist but are not well justified or harmonized across product lines.
+- Handling of uncertainty is implicit rather than explicit."
+Risk evaluation,6,11,"You are evaluating ISO 14971:2019 clause 6 – “Risk evaluation”.
+
+Objective:
+Determine whether the document requires comparing estimated risks from 5.5 to defined criteria for risk acceptability and deciding:
+- Whether risks are acceptable and can be treated as residual, or
+- Whether risk control is required.
+
+Core evidence to look for (minimal subset for PASS):
+- A clear link between risk estimates and risk acceptability criteria (policy or matrix).
+- A decision step that classifies risks (e.g., acceptable, ALARP, unacceptable) and routes them accordingly.
+- Documentation of evaluation outcomes for each hazardous situation.
+
+Examples of strong PASS evidence:
+- A risk evaluation table with columns for risk score, acceptability category, and required action.
+- Explicit rules like “Risks in the red zone require risk control measures” or “Risks below threshold X are acceptable.”
+
+When to FLAG:
+- Criteria are mentioned but not clearly applied (e.g., risk matrix exists but decision-making rules are vague).
+- It is unclear whether all hazardous situations are evaluated or only some.
+
+When to FAIL:
+- No evaluation step exists; risk estimation is done but there is no comparison to any criteria.
+- Risk decisions appear arbitrary or are left entirely to subjective judgment without reference to policy.
+
+Typical OFIs (can still PASS):
+- Criteria are defined but not well documented in this specific procedure.
+- Evaluation outcomes are recorded but not clearly linked to subsequent risk control steps."
+Risk control option analysis and documenting impracticability,7.1,12,"You are evaluating ISO 14971:2019 clause 7.1 – “Risk control option analysis”.
+
+Objective:
+Determine whether the document requires:
+- Identifying and evaluating risk control options.
+- Applying the priority order: (1) inherently safe design, (2) protective measures, (3) information for safety/training.
+- Recording selected measures and justifying when further risk reduction is not practicable (and thus may require benefit–risk analysis).
+
+Core evidence to look for (minimal subset for PASS):
+- A requirement to consider risk control options in a structured manner.
+- Explicit or clearly implied application of the priority order (even if not worded exactly like the standard).
+- Expectation to record selected controls and rationale, including reasons why additional risk reduction is not practicable when residual risk remains.
+
+Examples of strong PASS evidence:
+- A table where each hazard/hazardous situation has columns for inherent design changes, protective measures, and information for safety, with selection rationale.
+- Text that states the priority and requires justification if the order is not followed or further reduction is impracticable.
+
+When to FLAG:
+- Controls are listed but there is no notion of “option analysis” or priority order.
+- Impracticability is mentioned but not clearly tied to decision-making or benefit–risk analysis.
+
+When to FAIL:
+- No process for considering risk control options, only ad hoc controls.
+- The document never addresses prioritization or justification of risk control strategies.
+
+Typical OFIs (can still PASS):
+- Priority order is implied but not clearly articulated.
+- Documentation of impracticability is vaguely referenced (e.g., “per engineering judgment”) without clear expectations."
+Implementation and verification of risk control measures (incl. effectiveness),7.2,13,"You are evaluating ISO 14971:2019 clause 7.2 – “Implementation of risk control measures”.
+
+Objective:
+Determine whether the document requires:
+- Implementing selected risk control measures.
+- Verifying that they have been implemented as designed.
+- Verifying their effectiveness in reducing risk (e.g., severity/probability).
+
+Core evidence to look for (minimal subset for PASS):
+- A requirement to implement selected controls via design outputs, process controls, labeling changes, etc.
+- A requirement to verify implementation (e.g., design verification, process qualification, inspection).
+- A requirement to verify effectiveness, i.e., confirm that the control actually reduces risk (often via validation, testing, or usability studies).
+
+Examples of strong PASS evidence:
+- Separate steps/records for “Implementation”, “Verification of implementation”, and “Verification of effectiveness”.
+- References to specific test reports, validations, or clinical/usability evaluations as evidence of effectiveness.
+
+When to FLAG:
+- Implementation is required but verification/effectiveness is only implied.
+- Verification is described but “effectiveness” is not clearly distinguished from mere existence.
+
+When to FAIL:
+- No requirement to verify implementation of risk control measures.
+- No notion that effectiveness must be demonstrated; controls are assumed effective with no evidence.
+
+Typical OFIs (can still PASS):
+- Effectiveness verification is present only for certain types of controls (e.g., technical, but not information-for-safety).
+- Links to verification/validation documentation are weak or inconsistent."
+Residual risk evaluation (per hazardous situation),7.3,14,"You are evaluating ISO 14971:2019 clause 7.3 – “Residual risk evaluation”.
+
+Objective:
+Determine whether the document requires, after implementing controls:
+- Evaluating residual risk for each hazardous situation.
+- Deciding whether residual risk is acceptable per the criteria.
+
+Core evidence to look for (minimal subset for PASS):
+- A step to re-estimate or evaluate residual risk per hazardous situation.
+- Application of the same or clearly related acceptability criteria used in clause 6.
+- Documentation of the decision (acceptable/not acceptable, further action required).
+
+Examples of strong PASS evidence:
+- A “residual risk” column in the risk table with evaluation outcomes and comments.
+- Instructions that any residual risk that remains unacceptable must proceed to further risk control or benefit–risk analysis.
+
+When to FLAG:
+- Residual risk is mentioned but only at a high level (e.g., “Risks must be acceptable overall”) with no per-hazard evaluation.
+- It is unclear how residual risk is documented.
+
+When to FAIL:
+- No per-hazard residual risk evaluation step is described.
+- The process ends after risk control implementation with no follow-up evaluation.
+
+Typical OFIs (can still PASS):
+- Residual risk is evaluated qualitatively but not clearly tied to the numerical criteria used earlier.
+- Documentation of residual risk decisions is sparse but present."
+Benefit–risk analysis,7.4,15,"You are evaluating ISO 14971:2019 clause 7.4 – “Benefit–risk analysis”.
+
+Objective:
+Determine whether the document requires performing a benefit–risk analysis (BRA) when:
+- Residual risk remains unacceptable despite all practicable risk control measures.
+- The manufacturer wishes to justify acceptance of such risk based on benefit.
+
+Core evidence to look for (minimal subset for PASS):
+- A trigger that when residual risk is not acceptable and further reduction is not practicable, a BRA must be performed.
+- Expectation to use clinical/market data, literature, or expert judgment to compare benefits and residual risks.
+- Requirement to document conclusions and decisions.
+
+Examples of strong PASS evidence:
+- A defined BRA process with inputs (clinical evidence, literature, alternatives), method, and outputs.
+- A requirement to record BRA conclusions in the RMF or risk management report.
+
+When to FLAG:
+- BRA is mentioned only in passing without clear triggers, inputs, or expected documentation.
+- It is unclear who performs BRA or how it feeds into decision-making.
+
+When to FAIL:
+- No BRA concept or trigger exists; the process cannot handle unacceptable residual risks that cannot be further reduced.
+- The document implies that all residual risks must be acceptable without considering benefit–risk.
+
+Typical OFIs (can still PASS):
+- BRA exists but lacks detailed guidance on methods or data sources.
+- Documentation expectations are minimal or not clearly linked to the RMF/RMR."
+Risks arising from risk control measures,7.5,16,"You are evaluating ISO 14971:2019 clause 7.5 – “Risks arising from risk control measures”.
+
+Objective:
+Determine whether the document requires:
+- Assessing whether implemented risk control measures introduce new hazards, hazardous situations, or modify existing risks.
+- Feeding any new or changed risks back through the risk-management process.
+
+Core evidence to look for (minimal subset for PASS):
+- A requirement to evaluate new risks or adverse effects introduced by risk controls.
+- A mechanism to feed these new/changed risks back into hazard identification and risk evaluation.
+
+Examples of strong PASS evidence:
+- A change impact assessment step that explicitly includes “risks introduced by controls”.
+- A statement that any new hazards arising from controls must be added to the hazard analysis and evaluated.
+
+When to FLAG:
+- Change impact assessment exists but does not clearly mention new hazards or risks from controls.
+- It is ambiguous whether newly created risks are systematically captured.
+
+When to FAIL:
+- No consideration of new risks arising from controls.
+- The process implicitly assumes controls only reduce risk and can never create new risks.
+
+Typical OFIs (can still PASS):
+- The concept of new risks is handled only under generic change control, not explicitly labelled as a risk-management requirement."
+Completeness of risk control,7.6,17,"You are evaluating ISO 14971:2019 clause 7.6 – “Completeness of risk control”.
+
+Objective:
+Determine whether the document requires a review to confirm that:
+- All planned risk control measures have been implemented and verified.
+- Risk control activities are complete for all identified hazardous situations.
+
+Core evidence to look for (minimal subset for PASS):
+- A final completeness check or review step for risk controls.
+- Expectation to confirm that all planned controls are implemented, verified, and that resulting residual risks have been evaluated.
+
+Examples of strong PASS evidence:
+- A checklist or review record specifically for completeness of risk control.
+- A requirement to check that there are no “open” risk controls prior to final risk management review.
+
+When to FLAG:
+- Completeness is implied (e.g., “all actions must be closed”) but not clearly linked to risk control measures.
+- The review step is present but it is unclear whether it covers all hazardous situations.
+
+When to FAIL:
+- No concept of a completeness check; risk control activities just “stop” without a final review.
+
+Typical OFIs (can still PASS):
+- Completeness review is limited (e.g., only design-stage controls, not production/post-production).
+- The review is informal or lacks defined outputs."
+Evaluation of overall residual risk and disclosure,8,18,"You are evaluating ISO 14971:2019 clause 8 – “Evaluation of overall residual risk”.
+
+Objective:
+Determine whether the document requires:
+- Evaluating the overall residual risk of the device (considering all individual residual risks together) in relation to overall benefits.
+- Deciding whether overall residual risk is acceptable.
+- Ensuring that significant residual risks are disclosed to users in accompanying information (e.g., IFU, labeling).
+
+Core evidence to look for (minimal subset for PASS):
+- A defined step for overall residual risk evaluation (beyond per-hazard evaluation).
+- Use of method/criteria for this evaluation (may reference policy or RMP).
+- A requirement to identify and document significant residual risks for disclosure in labeling/IFU.
+
+Examples of strong PASS evidence:
+- A dedicated “overall residual risk evaluation” section or report.
+- Instructions to summarize major residual risks and confirm whether overall residual risk is acceptable.
+- A requirement to include significant residual risks in the IFU/labeling.
+
+When to FLAG:
+- Overall residual risk is mentioned but no method or decision criteria are described.
+- Disclosure of residual risks is present but not clearly linked to the risk management process.
+
+When to FAIL:
+- No concept of overall residual risk evaluation.
+- No expectation to communicate significant residual risks to users.
+
+Typical OFIs (can still PASS):
+- Overall evaluation is qualitative and high-level but clearly present.
+- Residual risk disclosures exist but are not systematically traced back to the RMF."
+Risk management review & risk management report,9,19,"You are evaluating ISO 14971:2019 clause 9 – “Risk management review”.
+
+Objective:
+Determine whether the document requires a final review (often resulting in a Risk Management Report, RMR) that:
+- Confirms the risk management plan has been implemented.
+- Concludes on the acceptability of overall residual risk.
+- Confirms that P&PP activities are in place.
+- Is approved by a person/role with appropriate authority.
+
+Core evidence to look for (minimal subset for PASS):
+- A formal risk management review step prior to commercial release (and/or updates).
+- Expectation to generate a documented RMR (or equivalent).
+- Requirements for content of this review (e.g., status of RMP, residual risk conclusions, conditions for release).
+
+Examples of strong PASS evidence:
+- A section “Risk Management Review” that describes inputs, review activities, and the RMR as output.
+- Requirement that the RMR be approved by top management or a designated authority.
+
+When to FLAG:
+- A general “review” is mentioned but it is unclear if it is specific to risk management or if it covers necessary conclusions.
+- The existence of a report is implied but not clearly required.
+
+When to FAIL:
+- No risk management review is described.
+- The process moves directly from risk control to market release with no final risk-management-specific review.
+
+Typical OFIs (can still PASS):
+- RMR content is only loosely defined.
+- The review process could better integrate post-market obligations or conditions of release."
+System for production & post‑production monitoring,10.1,20,"You are evaluating ISO 14971:2019 clause 10.1 – “Production and post-production activities – General”.
+
+Objective:
+Determine whether the document requires establishing and maintaining a system to:
+- Collect and monitor production and post-production information relevant to safety.
+- Feed that information back into the risk management process.
+
+Core evidence to look for (minimal subset for PASS):
+- A defined system or process for production and post-production monitoring (may align with PMS, complaint handling, vigilance, etc.).
+- Clear reference to sources like complaints, service reports, nonconformities, market surveillance, literature, regulatory reports.
+- Statement that this system is part of the risk-management feedback loop.
+
+Examples of strong PASS evidence:
+- A “Post-Market Surveillance” or “Production & Post-Production Information” section tied directly to risk management.
+- SOP references for complaint handling, vigilance, PMS plans, and trending.
+
+When to FLAG:
+- Post-market activities are described but their link to risk management is only implied.
+- The system is very generic, leaving unclear whether it effectively supports risk management.
+
+When to FAIL:
+- No mention of production/post-production information relevant to safety.
+- No mechanism for monitoring such information is described.
+
+Typical OFIs (can still PASS):
+- The system exists but could be more clearly documented or integrated.
+- Not all relevant information sources are enumerated, but core ones (e.g., complaints) are present."
+Information collection (sources & mechanisms),10.2,21,"You are evaluating ISO 14971:2019 clause 10.2 – “Information collection”.
+
+Objective:
+Determine whether the document requires collecting information from appropriate production and post-production sources, such as:
+- Production records, nonconformances, and process deviations.
+- Complaints, incident reports, service/repair records.
+- Regulatory reports, literature, state-of-the-art and similar devices.
+
+Core evidence to look for (minimal subset for PASS):
+- A list or description of information sources that are routinely collected and monitored for safety relevance.
+- Mechanisms for collecting this information (e.g., databases, forms, periodic reviews).
+- Linkage between collected data and risk management (e.g., feeding into hazard analysis, risk evaluation, or CAPA).
+
+Examples of strong PASS evidence:
+- A table or section listing information sources and specifying who collects them and how often.
+- References to central complaint databases, supplier quality data, service logs, and literature reviews.
+
+When to FLAG:
+- Some sources (e.g., complaints) are mentioned but it is unclear whether other important sources are considered.
+- Collection is mentioned but mechanisms (frequency, responsibility) are vague.
+
+When to FAIL:
+- No defined process for collecting production or post-production safety information.
+- Collection is purely reactive and not described as part of a systematic process.
+
+Typical OFIs (can still PASS):
+- Sources are generally defined but could be expanded (e.g., literature or “state of the art” not clearly included).
+- Data collection frequency or trending methods are not well specified."
+Information review & feedback into risk management,10.3,22,"You are evaluating ISO 14971:2019 clause 10.3 – “Information review”.
+
+Objective:
+Determine whether the document requires:
+- Reviewing collected production and post-production information to determine its relevance to safety.
+- Feeding relevant information back into earlier stages of the risk-management process (hazard identification, risk estimation, risk control, etc.).
+
+Core evidence to look for (minimal subset for PASS):
+- A defined review process for collected information (e.g., periodic safety meetings, safety review boards, signal review).
+- Criteria or triggers for determining when information is safety-relevant.
+- Expectation that new information leads to updates of the RMF (e.g., hazard list, risk estimates, controls).
+
+Examples of strong PASS evidence:
+- A “safety review board” or “PMS review” step with defined inputs and outputs.
+- Instructions to update hazard analyses, risk evaluations, and RMPs based on review findings.
+
+When to FLAG:
+- Review is mentioned but not clearly tied to risk management (e.g., only a generic KPI review).
+- It is unclear how often review occurs or how decisions are documented.
+
+When to FAIL:
+- No review mechanism is described for production/post-production information.
+- Collected data are stored but not analyzed for safety implications.
+
+Typical OFIs (can still PASS):
+- Review exists but not all outputs (e.g., changes to risk controls, changes to labeling) are clearly defined.
+- Criteria for escalation or re-analysis are vague."
+Actions based on production & post‑production information,10.4,23,"You are evaluating ISO 14971:2019 clause 10.4 – “Actions”.
+
+Objective:
+Determine whether the document requires, when collected information is relevant to safety:
+- Deciding whether action is needed (e.g., CAPA, field safety corrective actions, design changes, labeling updates).
+- Implementing those actions.
+- Updating the risk-management file and associated documents accordingly.
+
+Core evidence to look for (minimal subset for PASS):
+- A decision process for determining when safety‑relevant information triggers action.
+- Examples or types of possible actions (e.g., risk assessment updates, design changes, process changes, field actions, safety notices).
+- Expectation to update risk assessments, risk management plan/file, and other documentation when actions are taken.
+
+Examples of strong PASS evidence:
+- A flowchart from “safety-relevant signal detected” → “evaluation” → “decide on actions” → “implement and document” → “update RMF and related documents”.
+- Explicit mention of CAPA, recalls/field safety corrective actions, and communication with regulators as part of potential actions.
+
+When to FLAG:
+- Actions are mentioned but it is unclear how they are triggered or how they link back to risk management.
+- The document relies wholly on generic CAPA text without specifying the risk-management tie-in.
+
+When to FAIL:
+- No process for determining or implementing actions based on safety-related information.
+- The system collects and reviews data but does nothing with it in terms of risk management.
+
+Typical OFIs (can still PASS):
+- Actions are described but updating the RMF/RMP is not explicitly mentioned.
+- The set of example actions is incomplete (e.g., design changes mentioned but not field safety actions)."

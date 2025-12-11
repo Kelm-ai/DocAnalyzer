@@ -525,6 +525,7 @@ export function Requirements() {
         columns={columns}
         data={requirements}
         filterPlaceholder="Filter requirements..."
+        initialSorting={[{ id: "display_order", desc: false }]}
         toolbarSlot={
           <Button onClick={handleOpenCreate}>
             Add new requirement

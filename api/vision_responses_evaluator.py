@@ -53,6 +53,24 @@ except ImportError:
     Anthropic = None  # type: ignore
     print("Warning: anthropic SDK not available. Claude provider will be disabled.")
 
+# Import rate limiter for Claude API calls
+try:
+    from api.rate_limiter import get_rate_limiter
+except ImportError:
+    try:
+        from rate_limiter import get_rate_limiter
+    except ImportError:
+        # Fallback: create a no-op rate limiter if module not available
+        def get_rate_limiter():
+            class NoOpRateLimiter:
+                async def acquire(self, tokens=None):
+                    return (0.0, 0)
+                async def record_actual_usage(self, estimated, actual):
+                    pass
+                async def handle_429_error(self, retry_after=None):
+                    return 10.0
+            return NoOpRateLimiter()
+
 # Retry and fallback configuration
 RETRYABLE_STATUS_CODES = {429, 500, 503, 529}
 MAX_RETRIES = 2
@@ -189,7 +207,7 @@ Vision handling:
         self.supabase: Optional[Client] = None
         if SUPABASE_AVAILABLE:
             supabase_url = os.getenv("SUPABASE_URL")
-            supabase_key = os.getenv("SUPABASE_ANON_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+            supabase_key = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
             if supabase_url and supabase_key:
                 try:
                     self.supabase = create_client(supabase_url, supabase_key)
@@ -757,6 +775,22 @@ Vision handling:
         retryable_patterns = ["429", "500", "503", "529", "overload", "rate_limit", "RateLimitError", "ServerError"]
         return any(pattern.lower() in error_str.lower() for pattern in retryable_patterns)
 
+    def _estimate_tokens(self, text: str) -> int:
+        """
+        Estimate token count for text.
+        Uses approximation: ~4 characters per token.
+        """
+        return len(text) // 4 + 100  # Add small buffer
+
+    def _extract_retry_after(self, error_str: str) -> Optional[float]:
+        """Extract retry-after value from error message if present."""
+        import re
+        # Look for patterns like "retry after 60 seconds" or "Retry-After: 60"
+        match = re.search(r'retry.?after[:\s]+(\d+)', error_str, re.IGNORECASE)
+        if match:
+            return float(match.group(1))
+        return None
+
     async def _evaluate_with_fallback(
         self,
         document_path: Path,
@@ -834,11 +868,18 @@ Vision handling:
                 # Handle retryable errors (rate limits, overload, server errors)
                 if self._is_retryable_error(rationale):
                     if retry_count < 1:
+                        # For rate limit errors, use longer delays from rate limiter
+                        if "429" in rationale or "rate_limit" in rationale.lower():
+                            rate_limiter = get_rate_limiter(model=self.model)
+                            delay = await rate_limiter.handle_429_error(self._extract_retry_after(rationale))
+                        else:
+                            delay = BASE_DELAY_SECONDS * (2 ** retry_count)  # Exponential backoff
+
                         logger.warning(
-                            "Retryable error for requirement %s (attempt %d), retrying after delay...",
-                            requirement["id"], retry_count + 1
+                            "Retryable error for requirement %s (attempt %d), retrying after %.1fs...",
+                            requirement["id"], retry_count + 1, delay
                         )
-                        await asyncio.sleep(BASE_DELAY_SECONDS * (retry_count + 1))
+                        await asyncio.sleep(delay)
                         return await self._evaluate_single_requirement(
                             file_ref, requirement, semaphore, run_responses_dir,
                             document_path=document_path, retry_count=retry_count + 1
@@ -863,11 +904,18 @@ Vision handling:
 
             if self._is_retryable_error(error_str):
                 if retry_count < 1:
+                    # For rate limit errors, use longer delays from rate limiter
+                    if "429" in error_str or "rate_limit" in error_str.lower():
+                        rate_limiter = get_rate_limiter(model=self.model)
+                        delay = await rate_limiter.handle_429_error(self._extract_retry_after(error_str))
+                    else:
+                        delay = BASE_DELAY_SECONDS * (2 ** retry_count)  # Exponential backoff
+
                     logger.warning(
-                        "Retrying requirement %s after exception (attempt %d)",
-                        requirement["id"], retry_count + 1
+                        "Retrying requirement %s after exception (attempt %d), waiting %.1fs",
+                        requirement["id"], retry_count + 1, delay
                     )
-                    await asyncio.sleep(BASE_DELAY_SECONDS * (retry_count + 1))
+                    await asyncio.sleep(delay)
                     return await self._evaluate_single_requirement(
                         file_ref, requirement, semaphore, run_responses_dir,
                         document_path=document_path, retry_count=retry_count + 1
@@ -958,13 +1006,26 @@ Vision handling:
         semaphore: asyncio.Semaphore,
         run_responses_dir: Path,
     ) -> Dict:
-        """Evaluate a single requirement using Claude's vision API."""
+        """Evaluate a single requirement using Claude's vision API with rate limiting."""
         async with semaphore:
             prompt = self._build_prompt(requirement)
             file_id = file_ref.get("file_id")
 
             if not file_id:
                 return self._error_result(requirement, "Missing file_id for Claude evaluation", "File reference missing")
+
+            # Estimate tokens for this request (prompt + file reference overhead)
+            estimated_tokens = self._estimate_tokens(prompt) + 4000  # Base overhead for PDF
+
+            # Acquire rate limit permission (model-specific)
+            rate_limiter = get_rate_limiter(model=self.model)
+            wait_time, current_usage = await rate_limiter.acquire(estimated_tokens)
+
+            if wait_time > 0:
+                logger.info(
+                    "Rate limiter delayed request for requirement %s by %.1fs",
+                    requirement["id"], wait_time
+                )
 
             try:
                 response = await asyncio.to_thread(
@@ -986,6 +1047,16 @@ Vision handling:
             except Exception as exc:
                 error_str = str(exc)
                 logger.exception("Claude API error for requirement %s", requirement['id'])
+
+                # Handle 429 rate limit errors specially
+                if "429" in error_str or "rate_limit" in error_str.lower():
+                    retry_after = self._extract_retry_after(error_str)
+                    wait_time = await rate_limiter.handle_429_error(retry_after)
+                    logger.warning(
+                        "Rate limit hit for requirement %s, recommended wait: %.1fs",
+                        requirement["id"], wait_time
+                    )
+
                 # Re-raise retryable errors so the retry logic can handle them
                 if self._is_retryable_error(error_str):
                     raise
@@ -996,6 +1067,9 @@ Vision handling:
             tokens_used = 0
             if usage:
                 tokens_used = getattr(usage, "input_tokens", 0) + getattr(usage, "output_tokens", 0)
+
+            # Update rate limiter with actual usage
+            await rate_limiter.record_actual_usage(estimated_tokens, tokens_used)
 
             # Parse response
             response_text = ""
@@ -1116,18 +1190,23 @@ Vision handling:
             "MANDATORY METHOD:\n"
             "1. Review the attached PDF for visuals (tables, charts, signatures) whenever the text layer is insufficient.\n"
             "2. Evaluate ONLY the requested clause; cite page or section references for evidence. Treat clear cross-references to other SOPs/records as evidence that those processes/records exist.\n"
-            "3. Decision logic: PASS if the requirement is clearly addressed and practicable (minor OFIs allowed); FAIL if the process/records are missing/contradicted; FLAGGED when evidence is incomplete or genuinely uncertain; NOT_APPLICABLE only when the clause truly does not apply.\n"
-            "4. When in doubt between PASS and FLAGGED, choose PASS and note OFIs in the gaps/recommendations fields.\n"
-            "5. Before finalising, confirm the chosen status best matches the evidence; do not default to FLAGGED when PASS or FAIL is supported.\n"
+            "3. Decision logic: PASS if the requirement is clearly addressed and practicable; FAIL if the process/records are missing/contradicted; FLAGGED when evidence is incomplete or genuinely uncertain; NOT_APPLICABLE only when the clause truly does not apply.\n"
+            "4. Before finalising, confirm the chosen status best matches the evidence; do not default to FLAGGED when PASS or FAIL is supported.\n"
             "Respond strictly with JSON using this schema:\n"
             "{\n"
             "  \"status\": \"PASS|FAIL|FLAGGED|NOT_APPLICABLE\",\n"
             "  \"confidence\": \"low|medium|high\",\n"
-            "  \"rationale\": \"Explain satisfied/unsatisfied criteria with citations\",\n"
-            "  \"evidence\": [\"Page/Section citation with quote\", ...],\n"
+            "  \"rationale\": \"Brief 1-2 sentence explanation of the decision with key citations\",\n"
+            "  \"evidence\": [\"Page/Section citation with brief quote\", ...],\n"
             "  \"gaps\": [string],\n"
             "  \"recommendations\": [string]\n"
             "}\n"
+            "IMPORTANT - Field definitions:\n"
+            "- 'gaps': Findings/deficiencies identified in the document.\n"
+            "  - For FAIL/FLAGGED: Critical gaps that caused the failure (must be addressed).\n"
+            "  - For PASS: Minor opportunities for improvement (OFI) - optional enhancements. Leave empty [] if fully satisfied.\n"
+            "- 'recommendations': Actionable suggestions on HOW to address the gaps/OFIs. Always provide if gaps exist.\n"
+            "Keep responses concise. Avoid lengthy explanations.\n"
             "Confidence level guidelines:\n"
             "- Use \"high\" when evidence is explicit, comprehensive, and directly addresses all criteria\n"
             "- Use \"medium\" when evidence is present but incomplete, requires some inference, or has minor gaps\n"
@@ -1553,45 +1632,95 @@ class DualVisionComparator:
         claude_results: List[Dict[str, Any]],
         openai_results: List[Dict[str, Any]],
     ) -> Tuple[List[Dict[str, Any]], Dict[str, str], int]:
-        """Combine results from Claude and OpenAI, taking the more conservative assessment."""
+        """Combine results from Claude and OpenAI, taking the more conservative assessment.
+
+        When only one provider succeeds (returns non-ERROR), use that result and mark
+        as 'single_provider'. This ensures we still get results even if one provider fails.
+        """
         openai_by_id = {str(r.get("requirement_id")): r for r in openai_results}
+        claude_by_id = {str(r.get("requirement_id")): r for r in claude_results}
         combined: List[Dict[str, Any]] = []
         agreement_map: Dict[str, str] = {}
         total_tokens = 0
+        processed_ids: set = set()
 
         for claude_record in claude_results:
             req_id = str(claude_record.get("requirement_id"))
+            processed_ids.add(req_id)
             oai_record = openai_by_id.get(req_id)
+
+            status_a = str(claude_record.get("status", "ERROR")).upper()
+            claude_is_error = status_a == "ERROR"
+            claude_fallback = claude_record.get("fallback_provider") == "gemini"
+
             if oai_record is None:
-                combined.append(claude_record)
-                agreement_map[req_id] = "unknown"
+                # Only Claude has a result for this requirement
+                if claude_is_error:
+                    agreement_map[req_id] = "unknown"
+                else:
+                    agreement_map[req_id] = "single_provider"
+
+                combined.append({
+                    **claude_record,
+                    "agreement_status": agreement_map[req_id],
+                    "source_provider": "claude",
+                    "secondary_provider_status": {
+                        "claude": status_a,
+                        "openai": None,
+                    },
+                    "fallback_used": {
+                        "claude": claude_fallback,
+                        "openai": False,
+                    },
+                })
                 total_tokens += int(claude_record.get("tokens_used", 0) or 0)
                 continue
 
-            status_a = str(claude_record.get("status", "ERROR")).upper()
             status_b = str(oai_record.get("status", "ERROR")).upper()
-            agreement = status_a == status_b
+            openai_is_error = status_b == "ERROR"
+            openai_fallback = oai_record.get("fallback_provider") == "gemini"
 
-            chosen_status = self._more_conservative_status(status_a, status_b)
-            chosen_provider = "claude" if chosen_status == status_a else "openai"
-
-            confidence_a = str(claude_record.get("confidence", claude_record.get("confidence_level", "low"))).lower()
-            confidence_b = str(oai_record.get("confidence", oai_record.get("confidence_level", "low"))).lower()
-            chosen_confidence = self._lower_confidence(confidence_a, confidence_b)
-
-            agreement_map[req_id] = "agreement" if agreement else "conflict"
-
-            if agreement:
-                chosen_record = claude_record or oai_record
+            # Determine agreement status based on whether providers succeeded
+            if claude_is_error and openai_is_error:
+                # Both failed - unknown
+                agreement_map[req_id] = "unknown"
+                chosen_record = claude_record  # Doesn't matter, both are ERROR
+                chosen_status = "ERROR"
+                chosen_provider = "claude"
+                chosen_confidence = "low"
+            elif claude_is_error and not openai_is_error:
+                # Only OpenAI succeeded - single_provider
+                agreement_map[req_id] = "single_provider"
+                chosen_record = oai_record
+                chosen_status = status_b
+                chosen_provider = "openai"
+                chosen_confidence = str(oai_record.get("confidence", oai_record.get("confidence_level", "low"))).lower()
+            elif not claude_is_error and openai_is_error:
+                # Only Claude succeeded - single_provider
+                agreement_map[req_id] = "single_provider"
+                chosen_record = claude_record
+                chosen_status = status_a
+                chosen_provider = "claude"
+                chosen_confidence = str(claude_record.get("confidence", claude_record.get("confidence_level", "low"))).lower()
             else:
-                chosen_record = claude_record if chosen_provider == "claude" else oai_record
+                # Both succeeded - check for agreement or conflict
+                agreement = status_a == status_b
+                agreement_map[req_id] = "agreement" if agreement else "conflict"
+
+                chosen_status = self._more_conservative_status(status_a, status_b)
+                chosen_provider = "claude" if chosen_status == status_a else "openai"
+
+                confidence_a = str(claude_record.get("confidence", claude_record.get("confidence_level", "low"))).lower()
+                confidence_b = str(oai_record.get("confidence", oai_record.get("confidence_level", "low"))).lower()
+                chosen_confidence = self._lower_confidence(confidence_a, confidence_b)
+
+                if agreement:
+                    chosen_record = claude_record
+                else:
+                    chosen_record = claude_record if chosen_provider == "claude" else oai_record
 
             tokens_used = int(claude_record.get("tokens_used", 0) or 0) + int(oai_record.get("tokens_used", 0) or 0)
             total_tokens += tokens_used
-
-            # Track which provider was used and if fallback was involved
-            claude_fallback = claude_record.get("fallback_provider") == "gemini"
-            openai_fallback = oai_record.get("fallback_provider") == "gemini"
 
             combined.append({
                 "requirement_id": req_id,
@@ -1606,7 +1735,7 @@ class DualVisionComparator:
                 "recommendations": chosen_record.get("recommendations", []),
                 "tokens_used": tokens_used,
                 "agreement_status": agreement_map[req_id],
-                "source_provider": "claude" if agreement else chosen_provider,
+                "source_provider": chosen_provider,
                 "secondary_provider_status": {
                     "claude": status_a,
                     "openai": status_b,
@@ -1616,6 +1745,36 @@ class DualVisionComparator:
                     "openai": openai_fallback,
                 },
             })
+
+        # Add any OpenAI-only results (not in Claude results)
+        for oai_record in openai_results:
+            req_id = str(oai_record.get("requirement_id"))
+            if req_id in processed_ids:
+                continue
+
+            status_b = str(oai_record.get("status", "ERROR")).upper()
+            openai_is_error = status_b == "ERROR"
+            openai_fallback = oai_record.get("fallback_provider") == "gemini"
+
+            if openai_is_error:
+                agreement_map[req_id] = "unknown"
+            else:
+                agreement_map[req_id] = "single_provider"
+
+            combined.append({
+                **oai_record,
+                "agreement_status": agreement_map[req_id],
+                "source_provider": "openai",
+                "secondary_provider_status": {
+                    "claude": None,
+                    "openai": status_b,
+                },
+                "fallback_used": {
+                    "claude": False,
+                    "openai": openai_fallback,
+                },
+            })
+            total_tokens += int(oai_record.get("tokens_used", 0) or 0)
 
         return combined, agreement_map, total_tokens
 

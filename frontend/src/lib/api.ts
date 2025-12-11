@@ -42,7 +42,7 @@ export interface RequirementResult {
   evaluation_rationale: string;
   gaps_identified: string[];
   recommendations: string[];
-   agreement_status?: 'agreement' | 'conflict' | 'unknown';
+   agreement_status?: 'agreement' | 'conflict' | 'unknown' | 'single_provider';
   tokens_used?: number;
   evaluation_duration_ms?: number;
   search_results?: Record<string, unknown>[];
@@ -83,7 +83,7 @@ export interface ComplianceReport {
     flagged: number;
     partial?: number;
     not_applicable: number;
-    agreement_by_requirement?: Record<string, 'agreement' | 'conflict' | 'unknown'>;
+    agreement_by_requirement?: Record<string, 'agreement' | 'conflict' | 'unknown' | 'single_provider'>;
   };
   requirements: RequirementResult[];
   high_risk_findings: string[];

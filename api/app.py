@@ -30,6 +30,14 @@ try:
 except ImportError:
     from summary_generator import generate_executive_summary_sync
 
+# Import evaluation queue and rate limiter
+try:
+    from api.evaluation_queue import get_evaluation_queue, EvaluationQueue, QueueConfig
+    from api.rate_limiter import get_rate_limiter
+except ImportError:
+    from evaluation_queue import get_evaluation_queue, EvaluationQueue, QueueConfig
+    from rate_limiter import get_rate_limiter
+
 # Local imports
 import sys
 
@@ -140,6 +148,7 @@ app.add_middleware(
 pipeline: Optional[CompliancePipeline] = None
 vision_evaluator: Optional[VisionResponsesEvaluator] = None
 document_intelligence_service: Optional[DocumentIntelligenceService] = None
+evaluation_queue: Optional[EvaluationQueue] = None
 
 
 @app.get("/api/health")
@@ -529,7 +538,7 @@ class RequirementFeedbackResponse(BaseModel):
 @app.on_event("startup")
 async def startup_event():
     """Initialize pipeline and supporting services on startup"""
-    global pipeline, vision_evaluator, document_intelligence_service
+    global pipeline, vision_evaluator, document_intelligence_service, evaluation_queue
 
     if EVALUATION_PIPELINE == "direct":
         logger.error("Direct evaluation pipeline has been disabled. Set EVALUATION_PIPELINE=vision.")
@@ -576,9 +585,33 @@ async def startup_event():
         else:
             logger.info("Document Intelligence service dependencies not available")
 
+        # Initialize evaluation queue
+        queue_config = QueueConfig(
+            max_concurrent=int(os.getenv("MAX_CONCURRENT_EVALUATIONS", "2")),
+            max_queue_size=int(os.getenv("MAX_QUEUE_SIZE", "100")),
+            processing_timeout_seconds=float(os.getenv("EVALUATION_TIMEOUT_SECONDS", "1800")),
+        )
+        evaluation_queue = get_evaluation_queue(queue_config)
+        evaluation_queue.set_evaluation_callback(run_evaluation)
+        await evaluation_queue.start()
+        logger.info(
+            "Evaluation queue initialized: max_concurrent=%d, max_queue_size=%d",
+            queue_config.max_concurrent,
+            queue_config.max_queue_size
+        )
+
     except Exception as e:
         logger.error(f"Failed to initialize evaluators: {e}")
         raise
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    global evaluation_queue
+    if evaluation_queue is not None:
+        await evaluation_queue.stop()
+        logger.info("Evaluation queue stopped")
 
 
 @app.get("/")
@@ -697,17 +730,17 @@ async def convert_document_to_markdown(
 
 @app.post("/api/upload")
 async def upload_document(
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...)
 ):
     """
-    Upload document and start evaluation process
+    Upload document and add to evaluation queue.
+    Returns queue position if not immediately processing.
     """
     try:
         # Validate file
         if not file.filename:
             raise HTTPException(status_code=400, detail="No filename provided")
-        
+
         if not file.filename.lower().endswith(('.pdf', '.docx')):
             raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported")
 
@@ -721,10 +754,10 @@ async def upload_document(
             temp_file.write(content)
             temp_file_path = temp_file.name
 
-        # Create document evaluation record
+        # Create document evaluation record with 'pending' status (queued)
         evaluation_data = {
             'document_name': file.filename,
-            'status': 'in_progress',
+            'status': 'pending',
             'created_at': datetime.utcnow().isoformat()
         }
 
@@ -740,16 +773,44 @@ async def upload_document(
 
         evaluation_id = result.data[0]['id']
 
-        # Start background evaluation
-        background_tasks.add_task(run_evaluation, evaluation_id, temp_file_path, file.filename)
+        # Add to evaluation queue instead of BackgroundTasks
+        if evaluation_queue is None:
+            raise HTTPException(status_code=503, detail="Evaluation queue not initialized")
+
+        try:
+            queue_item, position = await evaluation_queue.enqueue(
+                evaluation_id=evaluation_id,
+                file_path=temp_file_path,
+                filename=file.filename
+            )
+        except ValueError as queue_error:
+            # Queue is full - update status and return error
+            get_supabase_client().table('document_evaluations').update({
+                'status': 'error',
+                'error_message': str(queue_error),
+            }).eq('id', evaluation_id).execute()
+
+            try:
+                os.remove(temp_file_path)
+            except FileNotFoundError:
+                pass
+
+            raise HTTPException(status_code=503, detail=str(queue_error))
 
         return {
             "evaluation_id": evaluation_id,
             "filename": file.filename,
-            "status": "in_progress",
-            "message": "Document uploaded successfully. Evaluation started."
+            "status": "queued" if position > 0 else "processing",
+            "queue_position": position,
+            "message": (
+                f"Document queued for evaluation. Position: {position}"
+                if position > 0
+                else "Document uploaded successfully. Evaluation started."
+            )
         }
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Upload error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -771,9 +832,11 @@ async def run_evaluation(evaluation_id: str, file_path: str, original_filename: 
         except Exception as version_error:
             logger.warning(f"Unable to read OpenAI SDK metadata: {version_error}")
 
-        # Keep status as in_progress while processing
-        # Note: Database only allows: pending, in_progress, completed, error
-        # The record already has 'in_progress' status, so no need to update here
+        # Update status to in_progress (was 'pending' while queued)
+        get_supabase_client().table('document_evaluations').update({
+            'status': 'in_progress',
+            'updated_at': datetime.utcnow().isoformat(),
+        }).eq('id', evaluation_id).execute()
 
         # Run evaluation using the vision pipeline (uploads to ChatGPT's Files API internally)
         logger.info(
@@ -1320,6 +1383,81 @@ async def upsert_requirement_feedback(evaluation_id: str, payload: RequirementFe
     except Exception as e:
         logger.error(f"Upsert feedback error: {e}")
         raise HTTPException(status_code=500, detail={"detail": str(e)})
+
+
+# Queue status endpoints
+@app.get("/api/queue/status")
+async def get_queue_status() -> Dict[str, Any]:
+    """Get current evaluation queue status."""
+    if evaluation_queue is None:
+        raise HTTPException(status_code=503, detail="Queue not initialized")
+
+    queue_status = await evaluation_queue.get_status()
+    rate_limiter_status = await get_rate_limiter().get_status()
+
+    return {
+        "queue": queue_status,
+        "rate_limiter": rate_limiter_status,
+    }
+
+
+@app.get("/api/queue/position/{evaluation_id}")
+async def get_queue_position(evaluation_id: str) -> Dict[str, Any]:
+    """Get queue position for a specific evaluation."""
+    if evaluation_queue is None:
+        raise HTTPException(status_code=503, detail="Queue not initialized")
+
+    item_status = await evaluation_queue.get_item_status(evaluation_id)
+
+    if item_status is None:
+        # Check if it exists in database
+        try:
+            result = get_supabase_client().table('document_evaluations') \
+                .select('id, status') \
+                .eq('id', evaluation_id) \
+                .single() \
+                .execute()
+
+            if result.data:
+                return {
+                    "evaluation_id": evaluation_id,
+                    "status": result.data['status'],
+                    "queue_position": None,
+                    "message": "Evaluation not in queue"
+                }
+        except Exception:
+            pass
+
+        raise HTTPException(status_code=404, detail="Evaluation not found")
+
+    return {
+        "evaluation_id": evaluation_id,
+        **item_status,
+    }
+
+
+@app.delete("/api/queue/{evaluation_id}")
+async def cancel_queued_evaluation(evaluation_id: str) -> Dict[str, str]:
+    """Cancel a pending evaluation in the queue."""
+    if evaluation_queue is None:
+        raise HTTPException(status_code=503, detail="Queue not initialized")
+
+    cancelled = await evaluation_queue.cancel(evaluation_id)
+
+    if cancelled:
+        # Update database status
+        get_supabase_client().table('document_evaluations').update({
+            'status': 'error',
+            'error_message': 'Cancelled by user',
+            'completed_at': datetime.utcnow().isoformat()
+        }).eq('id', evaluation_id).execute()
+
+        return {"message": "Evaluation cancelled"}
+
+    raise HTTPException(
+        status_code=400,
+        detail="Cannot cancel - evaluation not in queue or already processing"
+    )
 
 
 if __name__ == "__main__":

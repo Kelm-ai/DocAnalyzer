@@ -69,6 +69,10 @@ const AGREEMENT_META: Record<AgreementStatus | "unknown", { label: string; class
     label: "Conflict",
     className: "bg-amber-50 text-amber-700 border border-amber-200",
   },
+  single_provider: {
+    label: "Single Provider",
+    className: "bg-blue-50 text-blue-700 border border-blue-200",
+  },
   unknown: {
     label: "Unknown",
     className: "bg-slate-100 text-slate-600 border border-slate-200",
@@ -101,7 +105,8 @@ function getConfidenceSortValue(row: RequirementResult) {
 }
 
 const AGREEMENT_SORT: Record<AgreementStatus | "unknown", number> = {
-  conflict: 2,
+  conflict: 3,
+  single_provider: 2,
   agreement: 1,
   unknown: 0,
 }

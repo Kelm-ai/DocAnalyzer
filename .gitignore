@@ -102,3 +102,6 @@ htmlcov/
 # Backup files
 *.bak
 *.backup
+
+# Generated output files
+api/output/

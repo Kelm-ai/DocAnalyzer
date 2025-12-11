@@ -39,6 +39,7 @@ interface DataTableProps<TData, TValue> {
   filterColumn?: string
   filterPlaceholder?: string
   initialPageSize?: number
+  initialSorting?: SortingState
   onRowClick?: (row: Row<TData>) => void
   rowClassName?: (row: Row<TData>) => string | undefined
   isRowClickable?: (row: Row<TData>) => boolean
@@ -52,12 +53,13 @@ export function DataTable<TData, TValue>({
   filterColumn = "title",
   filterPlaceholder = "Filter...",
   initialPageSize = 10,
+  initialSorting = [],
   onRowClick,
   rowClassName,
   isRowClickable,
   tableContainerClassName,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [sorting, setSorting] = React.useState<SortingState>(initialSorting)
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
   const table = useReactTable({

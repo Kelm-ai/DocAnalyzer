@@ -4,6 +4,7 @@ import { Upload } from '@/pages/Upload'
 import { Evaluations } from '@/pages/Evaluations'
 import { Results } from '@/pages/Results'
 import { Requirements } from '@/pages/Requirements'
+import { Docs } from '@/pages/Docs'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
             <Route path="/evaluations" element={<Evaluations />} />
             <Route path="/results/:evaluationId" element={<Results />} />
             <Route path="/requirements" element={<Requirements />} />
+            <Route path="/docs" element={<Docs />} />
           </Routes>
         </Layout>
       </Router>
