@@ -175,7 +175,7 @@ export function DocumentUploader() {
         <CardHeader>
           <CardTitle>Upload Document for Evaluation</CardTitle>
           <CardDescription>
-            Upload medical device documentation (PDF, DOCX) to evaluate against ISO 14971 requirements
+            Upload medical device documentation (PDF) to evaluate against ISO 14971 requirements
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -201,7 +201,7 @@ export function DocumentUploader() {
               id="file-upload"
               className="hidden"
               multiple
-              accept=".pdf,.docx"
+              accept=".pdf"
               onChange={handleFileSelect}
             />
             <Button asChild>
@@ -210,7 +210,7 @@ export function DocumentUploader() {
               </label>
             </Button>
             <p className="text-xs text-muted-foreground mt-4">
-              Supported formats: PDF, DOCX (Max 50MB)
+              Supported formats: PDF (Max 50MB)
             </p>
           </div>
         </CardContent>

@@ -5,7 +5,7 @@ export function Docs() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold tracking-tight">Documentation</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Work Instruction</h2>
         <p className="text-muted-foreground mt-2">
           Instructions for using the Risk Management SOP AI Assessment Tool
         </p>
@@ -21,6 +21,10 @@ export function Docs() {
               This tool assesses uploaded Standard Operating Procedures (SOPs) against a list of
               clauses extracted from ISO 14971:2019. It is intended for an initial assessment;
               results may be incorporated into a final assessment including human review and feedback.
+            </p>
+            <p className="mt-3">
+              This tool intends to assess each requirement against two LLMs (e.g. Gemini, Anthropic, etc).
+              In the event one LLM is not available, a single LLM will be utilized.
             </p>
           </CardContent>
         </Card>
@@ -73,6 +77,13 @@ export function Docs() {
                   make final decisions, or supervise high-risk operations.
                 </dd>
               </div>
+              <div className="py-3 grid grid-cols-3 gap-4">
+                <dt className="font-medium text-gray-900">Large Language Model (LLM)</dt>
+                <dd className="col-span-2 text-gray-600">
+                  An AI model that learns patterns from huge datasets (books, internet text) to process,
+                  understand, and create text, code, and other content.
+                </dd>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -95,7 +106,7 @@ export function Docs() {
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-medium">2</span>
                 <div>
                   <p className="font-medium text-gray-900">Upload Your SOP</p>
-                  <p>Add your SOP in PDF or Word format using drag and drop or the "Select Files" button.</p>
+                  <p>Add your SOP in PDF format using drag and drop or the "Select Files" button.</p>
                 </div>
               </li>
               <li className="flex gap-3">
@@ -145,6 +156,33 @@ export function Docs() {
               <div className="flex gap-3 items-start">
                 <span className="inline-block w-24 flex-shrink-0 font-medium text-gray-500">Not Applicable</span>
                 <span className="text-gray-600">The requirement does not apply to this document.</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Confidence Level</CardTitle>
+            <CardDescription>Understanding assessment confidence</CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm">
+            <div className="space-y-3">
+              <div className="flex gap-3 items-start">
+                <span className="inline-block w-32 flex-shrink-0 font-medium text-green-700">High</span>
+                <span className="text-gray-600">Models aligned, assessment is robust.</span>
+              </div>
+              <div className="flex gap-3 items-start">
+                <span className="inline-block w-32 flex-shrink-0 font-medium text-yellow-700">Medium</span>
+                <span className="text-gray-600">Models aligned, but assessment may have alternate interpretation or not be fully corroborated. Human verification is recommended.</span>
+              </div>
+              <div className="flex gap-3 items-start">
+                <span className="inline-block w-32 flex-shrink-0 font-medium text-red-700">Low</span>
+                <span className="text-gray-600">Models not aligned; assessment may be fragmented or questionable. Human verification is required.</span>
+              </div>
+              <div className="flex gap-3 items-start">
+                <span className="inline-block w-32 flex-shrink-0 font-medium text-gray-500">Single Provider</span>
+                <span className="text-gray-600">Assessment performed by 1 model instead of standard 2 models.</span>
               </div>
             </div>
           </CardContent>

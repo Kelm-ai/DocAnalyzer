@@ -103,6 +103,9 @@ if raw_pipeline == "azure":
     logger.warning("EVALUATION_PIPELINE=azure is no longer supported – defaulting to vision pipeline")
 EVALUATION_PIPELINE = "vision" if raw_pipeline == "azure" else raw_pipeline
 
+# Feature flag: Set ADMIN_MODE=true to enable requirement management (create/update/delete)
+ADMIN_MODE = os.getenv("ADMIN_MODE", "false").lower() in {"1", "true", "yes"}
+
 # Vision evaluator (optional)
 try:
     from vision_responses_evaluator import VisionResponsesEvaluator, DualVisionComparator  # type: ignore
@@ -916,6 +919,8 @@ async def list_iso_requirements():
 @app.post("/api/requirements", response_model=ISORequirementResponse, status_code=201)
 async def create_iso_requirement(payload: ISORequirementCreate):
     """Create a new ISO requirement in Supabase."""
+    if not ADMIN_MODE:
+        raise HTTPException(status_code=403, detail="Requirement management is disabled")
     clause = payload.clause.strip()
     title = payload.title.strip()
     display_order = payload.display_order if payload.display_order is not None else None
@@ -972,6 +977,8 @@ async def create_iso_requirement(payload: ISORequirementCreate):
 @app.put("/api/requirements/{requirement_id}", response_model=ISORequirementResponse)
 async def update_iso_requirement(requirement_id: str, payload: ISORequirementUpdate):
     """Update an existing ISO requirement in Supabase."""
+    if not ADMIN_MODE:
+        raise HTTPException(status_code=403, detail="Requirement management is disabled")
     updates: Dict[str, Any] = {}
 
     if payload.clause is not None:
@@ -1040,6 +1047,8 @@ async def update_iso_requirement(requirement_id: str, payload: ISORequirementUpd
 @app.delete("/api/requirements/{requirement_id}", status_code=204)
 async def delete_iso_requirement(requirement_id: str):
     """Delete an ISO requirement from Supabase."""
+    if not ADMIN_MODE:
+        raise HTTPException(status_code=403, detail="Requirement management is disabled")
     supabase = get_supabase_client()
 
     # Ensure requirement exists to return proper 404

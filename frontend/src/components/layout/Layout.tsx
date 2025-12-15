@@ -18,7 +18,7 @@ export function Layout({ children }: LayoutProps) {
             className="flex items-center space-x-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
           >
             <BookOpen className="h-4 w-4" />
-            <span>Docs</span>
+            <span>Work Instruction</span>
           </Link>
         </div>
       </div>

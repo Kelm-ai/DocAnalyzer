@@ -9,6 +9,9 @@ import { Modal } from "@/components/ui/modal"
 import type { ISORequirement } from "@/lib/types"
 import { api, type RequirementCreatePayload, APIError } from "@/lib/api"
 
+// Feature flag: Set VITE_ADMIN_MODE=true to enable requirement management
+const ADMIN_MODE = import.meta.env.VITE_ADMIN_MODE === 'true'
+
 const TITLE_COPY_SUFFIX_REGEX = /\s+\(Copy(?: \d+)?\)$/i
 const CLAUSE_COPY_SUFFIX_REGEX = /-copy(?:-\d+)?$/i
 
@@ -97,23 +100,28 @@ const columnsFactory = ({ onEdit, onDuplicate, onDelete }: RequirementTableActio
       </span>
     ),
   },
-  {
-    id: "actions",
-    header: "",
-    enableSorting: false,
-    meta: {
-      headerClassName: "w-[48px]",
-      cellClassName: "w-[48px] text-right",
-    },
-    cell: ({ row }) => (
-      <RequirementRowActions
-        requirement={row.original}
-        onEdit={onEdit}
-        onDuplicate={onDuplicate}
-        onDelete={onDelete}
-      />
-    ),
-  },
+  // Only show actions column in admin mode
+  ...(ADMIN_MODE
+    ? [
+        {
+          id: "actions",
+          header: "",
+          enableSorting: false,
+          meta: {
+            headerClassName: "w-[48px]",
+            cellClassName: "w-[48px] text-right",
+          },
+          cell: ({ row }: { row: { original: ISORequirement } }) => (
+            <RequirementRowActions
+              requirement={row.original}
+              onEdit={onEdit}
+              onDuplicate={onDuplicate}
+              onDelete={onDelete}
+            />
+          ),
+        } satisfies ColumnDef<ISORequirement>,
+      ]
+    : []),
 ]
 
 interface RequirementRowActionsProps {
@@ -527,9 +535,11 @@ export function Requirements() {
         filterPlaceholder="Filter requirements..."
         initialSorting={[{ id: "display_order", desc: false }]}
         toolbarSlot={
-          <Button onClick={handleOpenCreate}>
-            Add new requirement
-          </Button>
+          ADMIN_MODE ? (
+            <Button onClick={handleOpenCreate}>
+              Add new requirement
+            </Button>
+          ) : null
         }
       />
 
