@@ -1074,8 +1074,10 @@ async def delete_iso_requirement(requirement_id: str):
 async def list_evaluations():
     """Get all document evaluations"""
     try:
+        # Hide evaluations before Dec 16, 2025 (data preserved in DB but not displayed)
         result = get_supabase_client().table('document_evaluations') \
             .select("*") \
+            .gte('created_at', '2025-12-16') \
             .order('created_at', desc=True) \
             .execute()
         

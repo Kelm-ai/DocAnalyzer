@@ -60,12 +60,13 @@ const initialFormState: RequirementFormState = {
 }
 
 interface RequirementTableActions {
+  onView: (requirement: ISORequirement) => void
   onEdit: (requirement: ISORequirement) => void
   onDuplicate: (requirement: ISORequirement) => void
   onDelete: (requirement: ISORequirement) => void
 }
 
-const columnsFactory = ({ onEdit, onDuplicate, onDelete }: RequirementTableActions): ColumnDef<ISORequirement>[] => [
+const columnsFactory = ({ onEdit, onDuplicate, onDelete }: Omit<RequirementTableActions, 'onView'>): ColumnDef<ISORequirement>[] => [
   {
     accessorKey: "title",
     header: "Title",
@@ -280,6 +281,7 @@ export function Requirements() {
   } | null>(null)
   const [confirmError, setConfirmError] = useState<string | null>(null)
   const [isConfirming, setIsConfirming] = useState(false)
+  const [viewingRequirement, setViewingRequirement] = useState<ISORequirement | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -415,6 +417,10 @@ export function Requirements() {
     setIsModalOpen(true)
   }, [resetForm])
 
+  const handleView = useCallback((requirement: ISORequirement) => {
+    setViewingRequirement(requirement)
+  }, [])
+
   const handleEdit = useCallback((requirement: ISORequirement) => {
     setSuccessMessage(null)
     setModalMode("edit")
@@ -534,6 +540,7 @@ export function Requirements() {
         data={requirements}
         filterPlaceholder="Filter requirements..."
         initialSorting={[{ id: "display_order", desc: false }]}
+        onRowClick={(row) => handleView(row.original)}
         toolbarSlot={
           ADMIN_MODE ? (
             <Button onClick={handleOpenCreate}>
@@ -656,6 +663,47 @@ export function Requirements() {
         isConfirming={isConfirming}
         errorMessage={confirmError}
       />
+
+      {/* View Requirement Modal (read-only) */}
+      <Modal
+        open={viewingRequirement !== null}
+        onClose={() => setViewingRequirement(null)}
+        title={viewingRequirement?.title ?? "Requirement Details"}
+        footer={
+          <Button variant="outline" onClick={() => setViewingRequirement(null)}>
+            Close
+          </Button>
+        }
+      >
+        {viewingRequirement && (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <div className="text-sm font-medium text-gray-500">Clause</div>
+                <div className="mt-1 text-sm text-gray-900">{viewingRequirement.clause}</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-500">Order</div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {Number.isFinite(viewingRequirement.display_order) ? viewingRequirement.display_order : "—"}
+                </div>
+              </div>
+            </div>
+            {viewingRequirement.evaluation_type && (
+              <div>
+                <div className="text-sm font-medium text-gray-500">Evaluation Type</div>
+                <div className="mt-1 text-sm text-gray-900">{viewingRequirement.evaluation_type}</div>
+              </div>
+            )}
+            <div>
+              <div className="text-sm font-medium text-gray-500">Requirement Text</div>
+              <div className="mt-1 whitespace-pre-wrap rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900">
+                {viewingRequirement.requirement_text || "No requirement text provided."}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

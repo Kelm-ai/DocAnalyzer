@@ -55,10 +55,14 @@ export function Modal({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      onClick={onClose}
+    >
       <div
         role="dialog"
         aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
         className={cn(
           "w-full rounded-lg bg-white shadow-xl",
           "max-h-[90vh] overflow-y-auto",
