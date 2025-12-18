@@ -135,7 +135,13 @@ Vision handling:
         gemini_api_key: Optional[str] = None,
         model: Optional[str] = None,
         provider: Optional[str] = None,
+        system_prompt: Optional[str] = None,
+        framework_id: Optional[str] = None,
     ) -> None:
+        # Allow custom system prompt to override class-level BASE_INSTRUCTION
+        if system_prompt:
+            self.BASE_INSTRUCTION = system_prompt.strip()
+        self.framework_id = framework_id
         self.provider = (provider or os.getenv("VISION_PROVIDER") or "openai").strip().lower()
         if self.provider not in {"openai", "gemini", "claude"}:
             raise RuntimeError(f"Unsupported VISION_PROVIDER '{self.provider}'. Use 'openai', 'gemini', or 'claude'.")
@@ -1274,13 +1280,17 @@ Vision handling:
         """Fetch ISO requirements from Supabase when available, otherwise use local copy."""
         if self.supabase is not None:
             try:
-                query = self.supabase.table('iso_requirements').select('*').order('id')
+                query = self.supabase.table('iso_requirements').select('*')
+                # Filter by framework_id if provided
+                if self.framework_id:
+                    query = query.eq('framework_id', self.framework_id)
+                query = query.order('display_order').order('id')
                 if self.requirements_limit > 0:
                     query = query.limit(self.requirements_limit)
                 response = query.execute()
                 if response.data:
                     return response.data
-                print("Warning: Supabase returned no requirements. Falling back to local file.")
+                print(f"Warning: Supabase returned no requirements for framework {self.framework_id}. Falling back to local file.")
             except Exception as exc:
                 print(f"Warning: Failed to load requirements from Supabase ({exc}). Falling back to local file.")
 

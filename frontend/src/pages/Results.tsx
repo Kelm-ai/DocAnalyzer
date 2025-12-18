@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { api } from "@/lib/api"
-import type { ComplianceReport, RequirementResult, ExecutiveSummary } from "@/lib/api"
+import type { ComplianceReport, RequirementResult, ExecutiveSummary, Framework } from "@/lib/api"
 import {
   AlertCircle,
   ChevronDown,
@@ -272,6 +272,7 @@ function SummaryView({ executiveSummary }: { executiveSummary?: ExecutiveSummary
 export function Results() {
   const { evaluationId } = useParams<{ evaluationId: string }>()
   const [report, setReport] = useState<ComplianceReport | null>(null)
+  const [framework, setFramework] = useState<Framework | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedRequirementIndex, setSelectedRequirementIndex] = useState<number | null>(null)
@@ -293,9 +294,23 @@ export function Results() {
     const loadReport = async () => {
       try {
         setLoading(true)
-        const data = await api.getComplianceReport(evaluationId)
-        setReport(data)
+        const [reportData, evaluationStatus] = await Promise.all([
+          api.getComplianceReport(evaluationId),
+          api.getEvaluationStatus(evaluationId),
+        ])
+        setReport(reportData)
         setError(null)
+
+        // Load framework if we have a framework_id
+        if (evaluationStatus.framework_id) {
+          try {
+            const frameworkData = await api.getFramework(evaluationStatus.framework_id)
+            setFramework(frameworkData)
+          } catch (frameworkErr) {
+            console.error("Failed to load framework", frameworkErr)
+            // Don't fail the whole page if framework load fails
+          }
+        }
       } catch (err) {
         console.error("Failed to load compliance report", err)
         setError("Failed to load compliance report")
@@ -881,6 +896,16 @@ export function Results() {
             <div className="space-y-1">
               <h1 className="text-2xl font-semibold text-slate-900">Evaluation Results</h1>
               <p className="text-sm text-slate-600">{report.document_name}</p>
+              {framework && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className="text-xs">
+                    {framework.name}
+                  </Badge>
+                  {framework.standard_reference && (
+                    <span className="text-xs text-slate-500">{framework.standard_reference}</span>
+                  )}
+                </div>
+              )}
               <p className="text-xs text-slate-500">Evaluation ID: {report.evaluation_id}</p>
               <p className="text-xs text-slate-500">Generated on {new Date().toLocaleString()}</p>
             </div>
@@ -930,7 +955,7 @@ export function Results() {
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">Requirement breakdown</h2>
                   <p className="text-sm text-slate-600">
-                    Each row represents the evaluation outcome for a single ISO 14971 requirement.
+                    Each row represents the evaluation outcome for a single {framework?.name || "framework"} requirement.
                   </p>
                 </div>
                 {feedbackLoading ? (

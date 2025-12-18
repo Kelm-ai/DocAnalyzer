@@ -5,6 +5,7 @@ export interface ISORequirement {
   requirement_text?: string | null;
   display_order: number;
   evaluation_type?: string;
+  framework_id?: string | null;
 }
 
 export interface RequirementEvaluation extends ISORequirement {
@@ -22,6 +23,7 @@ export interface DocumentEvaluation {
   id: string;
   document_name: string;
   document_type?: string;
+  framework_id?: string;
   status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'error';
   overall_compliance_score: number;
   requirements_passed: number;

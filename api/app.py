@@ -505,6 +505,7 @@ class ISORequirementResponse(BaseModel):
     requirement_text: Optional[str] = None
     display_order: int = 0
     evaluation_type: Optional[str] = None
+    framework_id: Optional[str] = None
 
 
 class ISORequirementCreate(BaseModel):
@@ -513,6 +514,7 @@ class ISORequirementCreate(BaseModel):
     requirement_text: Optional[str] = None
     display_order: Optional[int] = None
     evaluation_type: Optional[str] = None
+    framework_id: str  # Required for new requirements
 
 
 class ISORequirementUpdate(BaseModel):
@@ -521,6 +523,7 @@ class ISORequirementUpdate(BaseModel):
     requirement_text: Optional[str] = None
     display_order: Optional[int] = None
     evaluation_type: Optional[str] = None
+    framework_id: Optional[str] = None
 
 
 class RequirementFeedbackCreate(BaseModel):
@@ -536,6 +539,41 @@ class RequirementFeedbackResponse(BaseModel):
     comment: Optional[str] = None
     created_at: str
     updated_at: str
+
+
+# Framework models for multi-framework support
+class FrameworkResponse(BaseModel):
+    id: str
+    name: str
+    slug: str
+    description: Optional[str] = None
+    standard_reference: Optional[str] = None
+    system_prompt: str
+    is_active: bool = True
+    display_order: int = 0
+    created_at: str
+    updated_at: str
+    requirements_count: Optional[int] = None
+
+
+class FrameworkCreate(BaseModel):
+    name: str
+    slug: str
+    description: Optional[str] = None
+    standard_reference: Optional[str] = None
+    system_prompt: str
+    is_active: bool = True
+    display_order: Optional[int] = None
+
+
+class FrameworkUpdate(BaseModel):
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    description: Optional[str] = None
+    standard_reference: Optional[str] = None
+    system_prompt: Optional[str] = None
+    is_active: Optional[bool] = None
+    display_order: Optional[int] = None
 
 
 @app.on_event("startup")
@@ -733,7 +771,8 @@ async def convert_document_to_markdown(
 
 @app.post("/api/upload")
 async def upload_document(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    framework_id: str = Query(..., description="Framework ID to evaluate against")
 ):
     """
     Upload document and add to evaluation queue.
@@ -746,6 +785,27 @@ async def upload_document(
 
         if not file.filename.lower().endswith(('.pdf', '.docx')):
             raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported")
+
+        # Validate framework_id
+        if not framework_id or not framework_id.strip():
+            raise HTTPException(status_code=400, detail="Framework ID is required")
+
+        framework_id = framework_id.strip()
+        supabase = get_supabase_client()
+
+        # Verify framework exists and is active
+        try:
+            framework_response = supabase.table('frameworks').select('id, name, system_prompt, is_active').eq('id', framework_id).single().execute()
+            framework_data = getattr(framework_response, 'data', None)
+            if not framework_data:
+                raise HTTPException(status_code=400, detail="Framework not found")
+            if not framework_data.get('is_active', True):
+                raise HTTPException(status_code=400, detail="Framework is not active")
+        except HTTPException:
+            raise
+        except Exception as error:
+            logger.error(f"Failed to validate framework {framework_id}: {error}")
+            raise HTTPException(status_code=500, detail="Failed to validate framework")
 
         content = await file.read()
         if not content:
@@ -761,11 +821,12 @@ async def upload_document(
         evaluation_data = {
             'document_name': file.filename,
             'status': 'pending',
+            'framework_id': framework_id,
             'created_at': datetime.utcnow().isoformat()
         }
 
         try:
-            result = get_supabase_client().table('document_evaluations').insert(evaluation_data).execute()
+            result = supabase.table('document_evaluations').insert(evaluation_data).execute()
         except Exception as insert_error:
             logger.error(f"Failed to create evaluation record: {insert_error}")
             try:
@@ -835,8 +896,27 @@ async def run_evaluation(evaluation_id: str, file_path: str, original_filename: 
         except Exception as version_error:
             logger.warning(f"Unable to read OpenAI SDK metadata: {version_error}")
 
+        supabase = get_supabase_client()
+
+        # Fetch evaluation record to get framework_id
+        eval_response = supabase.table('document_evaluations').select('framework_id').eq('id', evaluation_id).single().execute()
+        eval_data = getattr(eval_response, 'data', None)
+        framework_id = eval_data.get('framework_id') if eval_data else None
+
+        # Fetch framework's system prompt
+        system_prompt = None
+        if framework_id:
+            try:
+                framework_response = supabase.table('frameworks').select('system_prompt').eq('id', framework_id).single().execute()
+                framework_data = getattr(framework_response, 'data', None)
+                if framework_data:
+                    system_prompt = framework_data.get('system_prompt')
+                    logger.info(f"Using custom system prompt from framework {framework_id}")
+            except Exception as fw_error:
+                logger.warning(f"Could not fetch framework {framework_id}: {fw_error}. Using default prompt.")
+
         # Update status to in_progress (was 'pending' while queued)
-        get_supabase_client().table('document_evaluations').update({
+        supabase.table('document_evaluations').update({
             'status': 'in_progress',
             'updated_at': datetime.utcnow().isoformat(),
         }).eq('id', evaluation_id).execute()
@@ -847,9 +927,15 @@ async def run_evaluation(evaluation_id: str, file_path: str, original_filename: 
             get_active_pipeline_name(),
             get_active_provider_name(),
         )
-        if vision_evaluator is None or EVALUATION_PIPELINE != "vision":
+        if EVALUATION_PIPELINE != "vision" or VisionResponsesEvaluator is None:
             raise RuntimeError("Vision evaluator pipeline is not configured")
-        summary = await vision_evaluator.evaluate_document(file_path)
+
+        # Create evaluator with framework-specific configuration
+        framework_evaluator = VisionResponsesEvaluator(
+            system_prompt=system_prompt,
+            framework_id=framework_id,
+        )
+        summary = await framework_evaluator.evaluate_document(file_path)
         persist_vision_results(evaluation_id, summary)
 
         logger.info(f"Evaluation completed for {display_name}")
@@ -869,16 +955,315 @@ async def run_evaluation(evaluation_id: str, file_path: str, original_filename: 
             pass
 
 
-@app.get("/api/requirements", response_model=List[ISORequirementResponse])
-async def list_iso_requirements():
-    """Return ISO requirements from Supabase."""
+# ============================================================================
+# Framework CRUD Endpoints
+# ============================================================================
+
+@app.get("/api/frameworks", response_model=List[FrameworkResponse])
+async def list_frameworks(active_only: bool = Query(False, description="Filter to active frameworks only")):
+    """Return all evaluation frameworks from Supabase."""
     supabase = get_supabase_client()
     try:
-        response = supabase.table('iso_requirements') \
-            .select('*') \
-            .order('display_order') \
-            .order('clause') \
+        query = supabase.table('frameworks').select('*')
+        if active_only:
+            query = query.eq('is_active', True)
+        response = query.order('display_order').order('name').execute()
+    except Exception as error:
+        logger.error(f"Failed to fetch frameworks: {error}")
+        raise HTTPException(status_code=500, detail="Failed to load frameworks")
+
+    data = getattr(response, 'data', []) or []
+
+    # Get requirement counts per framework
+    try:
+        req_counts_response = supabase.table('iso_requirements') \
+            .select('framework_id') \
             .execute()
+        req_data = getattr(req_counts_response, 'data', []) or []
+        counts: Dict[str, int] = {}
+        for row in req_data:
+            fid = row.get('framework_id')
+            if fid:
+                counts[str(fid)] = counts.get(str(fid), 0) + 1
+    except Exception:
+        counts = {}
+
+    frameworks: List[FrameworkResponse] = []
+    for row in data:
+        framework_id = row.get('id')
+        if not framework_id:
+            continue
+        frameworks.append(FrameworkResponse(
+            id=str(framework_id),
+            name=str(row.get('name', '')),
+            slug=str(row.get('slug', '')),
+            description=row.get('description'),
+            standard_reference=row.get('standard_reference'),
+            system_prompt=str(row.get('system_prompt', '')),
+            is_active=bool(row.get('is_active', True)),
+            display_order=int(row.get('display_order', 0) or 0),
+            created_at=str(row.get('created_at', '')),
+            updated_at=str(row.get('updated_at', '')),
+            requirements_count=counts.get(str(framework_id), 0),
+        ))
+
+    return frameworks
+
+
+@app.get("/api/frameworks/{framework_id}", response_model=FrameworkResponse)
+async def get_framework(framework_id: str):
+    """Return a single framework by ID."""
+    supabase = get_supabase_client()
+    try:
+        response = supabase.table('frameworks').select('*').eq('id', framework_id).single().execute()
+    except Exception as error:
+        logger.error(f"Failed to fetch framework {framework_id}: {error}")
+        raise HTTPException(status_code=500, detail="Failed to load framework")
+
+    data = getattr(response, 'data', None)
+    if not data:
+        raise HTTPException(status_code=404, detail="Framework not found")
+
+    # Get requirement count for this framework
+    try:
+        req_count_response = supabase.table('iso_requirements') \
+            .select('id', count='exact') \
+            .eq('framework_id', framework_id) \
+            .execute()
+        requirements_count = req_count_response.count if hasattr(req_count_response, 'count') else 0
+    except Exception:
+        requirements_count = 0
+
+    return FrameworkResponse(
+        id=str(data.get('id')),
+        name=str(data.get('name', '')),
+        slug=str(data.get('slug', '')),
+        description=data.get('description'),
+        standard_reference=data.get('standard_reference'),
+        system_prompt=str(data.get('system_prompt', '')),
+        is_active=bool(data.get('is_active', True)),
+        display_order=int(data.get('display_order', 0) or 0),
+        created_at=str(data.get('created_at', '')),
+        updated_at=str(data.get('updated_at', '')),
+        requirements_count=requirements_count,
+    )
+
+
+@app.post("/api/frameworks", response_model=FrameworkResponse, status_code=201)
+async def create_framework(payload: FrameworkCreate):
+    """Create a new evaluation framework."""
+    if not ADMIN_MODE:
+        raise HTTPException(status_code=403, detail="Framework management is disabled")
+
+    name = payload.name.strip()
+    slug = payload.slug.strip().lower()
+    system_prompt = payload.system_prompt.strip()
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Name is required")
+    if not slug:
+        raise HTTPException(status_code=400, detail="Slug is required")
+    if not system_prompt:
+        raise HTTPException(status_code=400, detail="System prompt is required")
+
+    # Validate slug format (lowercase, alphanumeric, hyphens only)
+    import re
+    if not re.match(r'^[a-z0-9-]+$', slug):
+        raise HTTPException(status_code=400, detail="Slug must contain only lowercase letters, numbers, and hyphens")
+
+    framework_id = str(uuid.uuid4())
+    now = datetime.utcnow().isoformat()
+    record = {
+        'id': framework_id,
+        'name': name,
+        'slug': slug,
+        'description': _normalize_optional_text(payload.description),
+        'standard_reference': _normalize_optional_text(payload.standard_reference),
+        'system_prompt': system_prompt,
+        'is_active': payload.is_active,
+        'display_order': payload.display_order if payload.display_order is not None else 0,
+        'created_at': now,
+        'updated_at': now,
+    }
+
+    supabase = get_supabase_client()
+    try:
+        response = supabase.table('frameworks').insert(record).execute()
+    except Exception as error:
+        logger.error(f"Failed to insert framework: {error}")
+        if _is_unique_violation(error):
+            raise HTTPException(status_code=409, detail="A framework with this slug already exists")
+        raise HTTPException(status_code=500, detail="Failed to create framework")
+
+    data = getattr(response, 'data', None)
+    saved = data[0] if data else record
+
+    return FrameworkResponse(
+        id=str(saved.get('id', framework_id)),
+        name=str(saved.get('name', name)),
+        slug=str(saved.get('slug', slug)),
+        description=saved.get('description'),
+        standard_reference=saved.get('standard_reference'),
+        system_prompt=str(saved.get('system_prompt', system_prompt)),
+        is_active=bool(saved.get('is_active', True)),
+        display_order=int(saved.get('display_order', 0) or 0),
+        created_at=str(saved.get('created_at', now)),
+        updated_at=str(saved.get('updated_at', now)),
+        requirements_count=0,
+    )
+
+
+@app.put("/api/frameworks/{framework_id}", response_model=FrameworkResponse)
+async def update_framework(framework_id: str, payload: FrameworkUpdate):
+    """Update an existing evaluation framework."""
+    if not ADMIN_MODE:
+        raise HTTPException(status_code=403, detail="Framework management is disabled")
+
+    updates: Dict[str, Any] = {}
+
+    if payload.name is not None:
+        name = payload.name.strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="Name cannot be empty")
+        updates['name'] = name
+
+    if payload.slug is not None:
+        slug = payload.slug.strip().lower()
+        if not slug:
+            raise HTTPException(status_code=400, detail="Slug cannot be empty")
+        import re
+        if not re.match(r'^[a-z0-9-]+$', slug):
+            raise HTTPException(status_code=400, detail="Slug must contain only lowercase letters, numbers, and hyphens")
+        updates['slug'] = slug
+
+    if payload.description is not None:
+        updates['description'] = _normalize_optional_text(payload.description)
+
+    if payload.standard_reference is not None:
+        updates['standard_reference'] = _normalize_optional_text(payload.standard_reference)
+
+    if payload.system_prompt is not None:
+        system_prompt = payload.system_prompt.strip()
+        if not system_prompt:
+            raise HTTPException(status_code=400, detail="System prompt cannot be empty")
+        updates['system_prompt'] = system_prompt
+
+    if payload.is_active is not None:
+        updates['is_active'] = payload.is_active
+
+    if payload.display_order is not None:
+        updates['display_order'] = payload.display_order
+
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields provided for update")
+
+    updates['updated_at'] = datetime.utcnow().isoformat()
+
+    supabase = get_supabase_client()
+
+    # Ensure framework exists
+    try:
+        existing = supabase.table('frameworks').select('id').eq('id', framework_id).single().execute()
+    except Exception as error:
+        logger.error(f"Failed to fetch framework {framework_id}: {error}")
+        raise HTTPException(status_code=500, detail="Failed to update framework")
+
+    if not getattr(existing, 'data', None):
+        raise HTTPException(status_code=404, detail="Framework not found")
+
+    try:
+        response = supabase.table('frameworks').update(updates).eq('id', framework_id).execute()
+    except Exception as error:
+        logger.error(f"Failed to update framework {framework_id}: {error}")
+        if _is_unique_violation(error):
+            raise HTTPException(status_code=409, detail="A framework with this slug already exists")
+        raise HTTPException(status_code=500, detail="Failed to update framework")
+
+    data = getattr(response, 'data', []) or []
+    saved = data[0] if data else None
+    if saved is None:
+        raise HTTPException(status_code=500, detail="Failed to load updated framework")
+
+    # Get requirement count
+    try:
+        req_count_response = supabase.table('iso_requirements') \
+            .select('id', count='exact') \
+            .eq('framework_id', framework_id) \
+            .execute()
+        requirements_count = req_count_response.count if hasattr(req_count_response, 'count') else 0
+    except Exception:
+        requirements_count = 0
+
+    return FrameworkResponse(
+        id=str(saved.get('id', framework_id)),
+        name=str(saved.get('name', '')),
+        slug=str(saved.get('slug', '')),
+        description=saved.get('description'),
+        standard_reference=saved.get('standard_reference'),
+        system_prompt=str(saved.get('system_prompt', '')),
+        is_active=bool(saved.get('is_active', True)),
+        display_order=int(saved.get('display_order', 0) or 0),
+        created_at=str(saved.get('created_at', '')),
+        updated_at=str(saved.get('updated_at', '')),
+        requirements_count=requirements_count,
+    )
+
+
+@app.delete("/api/frameworks/{framework_id}", status_code=204)
+async def delete_framework(framework_id: str):
+    """Delete an evaluation framework."""
+    if not ADMIN_MODE:
+        raise HTTPException(status_code=403, detail="Framework management is disabled")
+
+    supabase = get_supabase_client()
+
+    # Ensure framework exists
+    try:
+        existing = supabase.table('frameworks').select('id').eq('id', framework_id).single().execute()
+    except Exception as error:
+        logger.error(f"Failed to fetch framework {framework_id}: {error}")
+        raise HTTPException(status_code=500, detail="Failed to delete framework")
+
+    if not getattr(existing, 'data', None):
+        raise HTTPException(status_code=404, detail="Framework not found")
+
+    # Check if any evaluations use this framework
+    try:
+        evals_response = supabase.table('document_evaluations') \
+            .select('id', count='exact') \
+            .eq('framework_id', framework_id) \
+            .execute()
+        eval_count = evals_response.count if hasattr(evals_response, 'count') else 0
+        if eval_count and eval_count > 0:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Cannot delete framework with {eval_count} existing evaluation(s). Deactivate it instead."
+            )
+    except HTTPException:
+        raise
+    except Exception as error:
+        logger.warning(f"Could not check evaluations for framework {framework_id}: {error}")
+
+    try:
+        supabase.table('frameworks').delete().eq('id', framework_id).execute()
+    except Exception as error:
+        logger.error(f"Failed to delete framework {framework_id}: {error}")
+        raise HTTPException(status_code=500, detail="Failed to delete framework")
+
+
+# ============================================================================
+# Requirements Endpoints
+# ============================================================================
+
+@app.get("/api/requirements", response_model=List[ISORequirementResponse])
+async def list_iso_requirements(framework_id: Optional[str] = Query(None, description="Filter by framework ID")):
+    """Return ISO requirements from Supabase, optionally filtered by framework."""
+    supabase = get_supabase_client()
+    try:
+        query = supabase.table('iso_requirements').select('*')
+        if framework_id:
+            query = query.eq('framework_id', framework_id)
+        response = query.order('display_order').order('clause').execute()
     except Exception as error:
         logger.error(f"Failed to fetch ISO requirements: {error}")
         raise HTTPException(status_code=500, detail="Failed to load requirements")
@@ -911,6 +1296,7 @@ async def list_iso_requirements():
             requirement_text=row.get('requirement_text'),
             display_order=display_order_value,
             evaluation_type=row.get('evaluation_type'),
+            framework_id=row.get('framework_id'),
         ))
 
     return requirements
@@ -925,13 +1311,27 @@ async def create_iso_requirement(payload: ISORequirementCreate):
     title = payload.title.strip()
     display_order = payload.display_order if payload.display_order is not None else None
     requirement_text = _normalize_optional_text(payload.requirement_text)
+    framework_id = payload.framework_id.strip() if payload.framework_id else None
 
     if not clause:
         raise HTTPException(status_code=400, detail="Clause is required")
     if not title:
         raise HTTPException(status_code=400, detail="Title is required")
+    if not framework_id:
+        raise HTTPException(status_code=400, detail="Framework ID is required")
     if display_order is not None and display_order < 0:
         raise HTTPException(status_code=400, detail="Order must be zero or a positive integer")
+
+    # Validate framework exists
+    supabase = get_supabase_client()
+    try:
+        framework_check = supabase.table('frameworks').select('id').eq('id', framework_id).single().execute()
+        if not getattr(framework_check, 'data', None):
+            raise HTTPException(status_code=400, detail="Framework not found")
+    except HTTPException:
+        raise
+    except Exception as error:
+        logger.warning(f"Could not validate framework {framework_id}: {error}")
 
     resolved_order = display_order if display_order is not None else 0
 
@@ -943,10 +1343,10 @@ async def create_iso_requirement(payload: ISORequirementCreate):
         'requirement_text': requirement_text,
         'display_order': display_order if display_order is not None else resolved_order,
         'evaluation_type': _normalize_optional_text(payload.evaluation_type),
+        'framework_id': framework_id,
         'updated_at': datetime.utcnow().isoformat(),
     }
 
-    supabase = get_supabase_client()
     try:
         response = supabase.table('iso_requirements').insert(record).execute()
     except Exception as error:
@@ -971,6 +1371,7 @@ async def create_iso_requirement(payload: ISORequirementCreate):
         requirement_text=saved.get('requirement_text'),
         display_order=int(saved.get('display_order', record.get('display_order', 0)) or 0),
         evaluation_type=saved.get('evaluation_type'),
+        framework_id=saved.get('framework_id'),
     )
 
 
@@ -1004,12 +1405,29 @@ async def update_iso_requirement(requirement_id: str, payload: ISORequirementUpd
     if payload.evaluation_type is not None:
         updates['evaluation_type'] = _normalize_optional_text(payload.evaluation_type)
 
+    if payload.framework_id is not None:
+        framework_id = payload.framework_id.strip()
+        if not framework_id:
+            raise HTTPException(status_code=400, detail="Framework ID cannot be empty")
+        updates['framework_id'] = framework_id
+
     if not updates:
         raise HTTPException(status_code=400, detail="No fields provided for update")
 
     updates['updated_at'] = datetime.utcnow().isoformat()
 
     supabase = get_supabase_client()
+
+    # Validate framework if being updated
+    if 'framework_id' in updates:
+        try:
+            framework_check = supabase.table('frameworks').select('id').eq('id', updates['framework_id']).single().execute()
+            if not getattr(framework_check, 'data', None):
+                raise HTTPException(status_code=400, detail="Framework not found")
+        except HTTPException:
+            raise
+        except Exception as error:
+            logger.warning(f"Could not validate framework {updates['framework_id']}: {error}")
 
     # Ensure requirement exists before attempting update
     try:
@@ -1041,6 +1459,7 @@ async def update_iso_requirement(requirement_id: str, payload: ISORequirementUpd
         requirement_text=saved.get('requirement_text', updates.get('requirement_text')),
         display_order=int(saved.get('display_order', updates.get('display_order', 0)) or 0),
         evaluation_type=saved.get('evaluation_type'),
+        framework_id=saved.get('framework_id'),
     )
 
 

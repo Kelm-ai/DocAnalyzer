@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 import {
   Upload,
   FileSearch,
-  ListChecks,
+  Layers,
 } from "lucide-react"
 
 const navItems = [
@@ -14,10 +14,10 @@ const navItems = [
     description: "Upload documents for evaluation"
   },
   {
-    title: "Requirements",
-    href: "/requirements",
-    icon: ListChecks,
-    description: "Manage ISO requirements"
+    title: "Frameworks",
+    href: "/frameworks",
+    icon: Layers,
+    description: "Manage evaluation frameworks"
   },
   {
     title: "Evaluations",

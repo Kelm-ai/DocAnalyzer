@@ -7,16 +7,20 @@ import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { api } from "@/lib/api"
-import type { EvaluationStatus as EvaluationStatusType } from "@/lib/api"
+import type { EvaluationStatus as EvaluationStatusType, Framework } from "@/lib/api"
 import { useNavigate } from "react-router-dom"
 
 export function EvaluationStatus() {
   const [evaluations, setEvaluations] = useState<EvaluationStatusType[]>([])
+  const [frameworks, setFrameworks] = useState<Framework[]>([])
   const [loading, setLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const hasLoadedRef = useRef(false)
   const navigate = useNavigate()
+
+  // Create a map of framework_id -> framework for quick lookup
+  const frameworkMap = new Map(frameworks.map(f => [f.id, f]))
 
   // Load evaluations from API
   const loadEvaluations = async (options: { forceLoading?: boolean; trackRefresh?: boolean } = {}) => {
@@ -51,6 +55,19 @@ export function EvaluationStatus() {
       }
     }
   }
+
+  // Load frameworks on mount
+  useEffect(() => {
+    const loadFrameworks = async () => {
+      try {
+        const data = await api.getFrameworks()
+        setFrameworks(data)
+      } catch (err) {
+        console.error('Failed to load frameworks:', err)
+      }
+    }
+    void loadFrameworks()
+  }, [])
 
   useEffect(() => {
     loadEvaluations({ forceLoading: true })
@@ -128,6 +145,28 @@ export function EvaluationStatus() {
             </p>
           </div>
         ),
+      },
+      {
+        id: "framework",
+        header: "Framework",
+        accessorFn: (row) => {
+          const framework = row.framework_id ? frameworkMap.get(row.framework_id) : null
+          return framework?.name || ""
+        },
+        cell: ({ row }) => {
+          const framework = row.original.framework_id ? frameworkMap.get(row.original.framework_id) : null
+          if (!framework) {
+            return <span className="text-sm text-muted-foreground">-</span>
+          }
+          return (
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">{framework.name}</p>
+              {framework.standard_reference && (
+                <p className="text-xs text-muted-foreground">{framework.standard_reference}</p>
+              )}
+            </div>
+          )
+        },
       },
       {
         accessorKey: "status",

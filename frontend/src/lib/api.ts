@@ -3,10 +3,46 @@
  */
 import type { ISORequirement } from "./types"
 
+// Framework types for multi-framework support
+export interface Framework {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  standard_reference?: string | null;
+  system_prompt: string;
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+  requirements_count?: number;
+}
+
+export interface FrameworkCreatePayload {
+  name: string;
+  slug: string;
+  description?: string | null;
+  standard_reference?: string | null;
+  system_prompt: string;
+  is_active?: boolean;
+  display_order?: number;
+}
+
+export interface FrameworkUpdatePayload {
+  name?: string;
+  slug?: string;
+  description?: string | null;
+  standard_reference?: string | null;
+  system_prompt?: string;
+  is_active?: boolean;
+  display_order?: number;
+}
+
 export interface EvaluationStatus {
   id: string;
   status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'error';
   document_name: string;
+  framework_id?: string;
   progress?: number;
   created_at: string;
   completed_at?: string;
@@ -97,6 +133,7 @@ export interface RequirementCreatePayload {
   requirement_text?: string | null
   display_order?: number
   evaluation_type?: string
+  framework_id: string  // Required for new requirements
 }
 
 const API_BASE_URL = (() => {
@@ -170,10 +207,86 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export const api = {
+  // ============================================================================
+  // Framework Methods
+  // ============================================================================
+
+  /**
+   * Get all evaluation frameworks
+   */
+  async getFrameworks(activeOnly: boolean = false): Promise<Framework[]> {
+    const url = new URL(`${API_BASE_URL}/frameworks`);
+    if (activeOnly) {
+      url.searchParams.set('active_only', 'true');
+    }
+    const response = await fetch(url.toString(), { cache: "no-store" });
+    return handleResponse(response);
+  },
+
+  /**
+   * Get a single framework by ID
+   */
+  async getFramework(frameworkId: string): Promise<Framework> {
+    const response = await fetch(`${API_BASE_URL}/frameworks/${frameworkId}`, { cache: "no-store" });
+    return handleResponse(response);
+  },
+
+  /**
+   * Create a new framework
+   */
+  async createFramework(payload: FrameworkCreatePayload): Promise<Framework> {
+    const response = await fetch(`${API_BASE_URL}/frameworks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Update an existing framework
+   */
+  async updateFramework(frameworkId: string, payload: FrameworkUpdatePayload): Promise<Framework> {
+    const response = await fetch(`${API_BASE_URL}/frameworks/${frameworkId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Delete a framework
+   */
+  async deleteFramework(frameworkId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/frameworks/${frameworkId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorBody = await response.text();
+      let message = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const data = JSON.parse(errorBody);
+        message = data.detail || message;
+      } catch {
+        // fall back to default message
+      }
+      throw new APIError(message, response.status);
+    }
+  },
+
+  // ============================================================================
+  // Document Upload
+  // ============================================================================
+
   /**
    * Upload a document for evaluation
    */
-  async uploadDocument(file: File): Promise<{
+  async uploadDocument(file: File, frameworkId: string): Promise<{
     evaluation_id: string;
     filename: string;
     status: string;
@@ -181,12 +294,16 @@ export const api = {
   }> {
     const formData = new FormData();
     formData.append('file', file);
-    
-    const response = await fetch(`${API_BASE_URL}/upload`, {
+
+    // framework_id is passed as a query parameter
+    const url = new URL(`${API_BASE_URL}/upload`);
+    url.searchParams.set('framework_id', frameworkId);
+
+    const response = await fetch(url.toString(), {
       method: 'POST',
       body: formData,
     });
-    
+
     return handleResponse(response);
   },
 
@@ -251,10 +368,14 @@ export const api = {
   },
 
   /**
-   * Fetch ISO requirements from backend
+   * Fetch ISO requirements from backend, optionally filtered by framework
    */
-  async getRequirements(): Promise<ISORequirement[]> {
-    const response = await fetch(`${API_BASE_URL}/requirements`, { cache: "no-store" })
+  async getRequirements(frameworkId?: string): Promise<ISORequirement[]> {
+    const url = new URL(`${API_BASE_URL}/requirements`);
+    if (frameworkId) {
+      url.searchParams.set('framework_id', frameworkId);
+    }
+    const response = await fetch(url.toString(), { cache: "no-store" })
     return handleResponse(response)
   },
 

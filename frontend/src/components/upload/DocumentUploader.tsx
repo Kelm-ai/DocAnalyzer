@@ -1,11 +1,11 @@
-import { useState, useCallback } from "react"
-import { Upload, File, X, AlertCircle, CheckCircle, Play } from "lucide-react"
+import { useState, useCallback, useEffect } from "react"
+import { Upload, File, X, AlertCircle, CheckCircle, Play, ChevronDown } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { api, APIError } from "@/lib/api"
+import { api, APIError, type Framework } from "@/lib/api"
 import type { EvaluationStatus as EvaluationStatusData } from "@/lib/api"
 import { useNavigate } from "react-router-dom"
 
@@ -33,7 +33,42 @@ interface UploadedFile {
 export function DocumentUploader() {
   const [isDragging, setIsDragging] = useState(false)
   const [files, setFiles] = useState<UploadedFile[]>([])
+  const [frameworks, setFrameworks] = useState<Framework[]>([])
+  const [selectedFrameworkId, setSelectedFrameworkId] = useState<string>("")
+  const [frameworksLoading, setFrameworksLoading] = useState(true)
+  const [frameworksError, setFrameworksError] = useState<string | null>(null)
   const navigate = useNavigate()
+
+  // Load frameworks on mount
+  useEffect(() => {
+    let isMounted = true
+    const loadFrameworks = async () => {
+      try {
+        setFrameworksLoading(true)
+        setFrameworksError(null)
+        const data = await api.getFrameworks(true) // Only active frameworks
+        if (isMounted) {
+          setFrameworks(data)
+          // Auto-select the first framework if only one exists
+          if (data.length === 1) {
+            setSelectedFrameworkId(data[0].id)
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setFrameworksError(err instanceof Error ? err.message : "Failed to load frameworks")
+        }
+      } finally {
+        if (isMounted) {
+          setFrameworksLoading(false)
+        }
+      }
+    }
+    void loadFrameworks()
+    return () => { isMounted = false }
+  }, [])
+
+  const selectedFramework = frameworks.find(f => f.id === selectedFrameworkId)
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -84,8 +119,8 @@ export function DocumentUploader() {
         f.id === fileId ? { ...f, status: "uploading", progress: 30 } : f
       ))
 
-      // Upload to backend
-      const result = await api.uploadDocument(fileData.file)
+      // Upload to backend with selected framework
+      const result = await api.uploadDocument(fileData.file, selectedFrameworkId)
 
       // Update with success and evaluation ID
       setFiles(prev => prev.map(f => 
@@ -175,10 +210,53 @@ export function DocumentUploader() {
         <CardHeader>
           <CardTitle>Upload Document for Evaluation</CardTitle>
           <CardDescription>
-            Upload medical device documentation (PDF) to evaluate against ISO 14971 requirements
+            {selectedFramework
+              ? `Upload documentation to evaluate against ${selectedFramework.name} requirements`
+              : "Select a framework and upload documentation for compliance evaluation"
+            }
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          {/* Framework Selector */}
+          <div className="space-y-2">
+            <label htmlFor="framework-select" className="text-sm font-medium">
+              Evaluation Framework
+            </label>
+            {frameworksLoading ? (
+              <div className="text-sm text-muted-foreground">Loading frameworks...</div>
+            ) : frameworksError ? (
+              <div className="text-sm text-destructive">{frameworksError}</div>
+            ) : frameworks.length === 0 ? (
+              <div className="text-sm text-muted-foreground">
+                No active frameworks available. Please configure a framework first.
+              </div>
+            ) : (
+              <div className="relative">
+                <select
+                  id="framework-select"
+                  value={selectedFrameworkId}
+                  onChange={(e) => setSelectedFrameworkId(e.target.value)}
+                  className={cn(
+                    "w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background",
+                    "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                    "appearance-none cursor-pointer",
+                    !selectedFrameworkId && "text-muted-foreground"
+                  )}
+                >
+                  <option value="">Select a framework...</option>
+                  {frameworks.map(framework => (
+                    <option key={framework.id} value={framework.id}>
+                      {framework.name}{framework.standard_reference ? ` (${framework.standard_reference})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
+              </div>
+            )}
+            {selectedFramework?.description && (
+              <p className="text-xs text-muted-foreground">{selectedFramework.description}</p>
+            )}
+          </div>
           <div
             className={cn(
               "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
@@ -281,9 +359,9 @@ export function DocumentUploader() {
                       />
                       <div className="flex items-center justify-between text-xs">
                         <p className="text-muted-foreground">
-                          {file.status === "uploading" 
-                            ? "Uploading to Azure Storage..." 
-                            : file.evaluationProgress?.message || "Evaluating against 38 ISO 14971 requirements..."}
+                          {file.status === "uploading"
+                            ? "Uploading to Azure Storage..."
+                            : file.evaluationProgress?.message || `Evaluating against ${selectedFramework?.name || "framework"} requirements...`}
                         </p>
                         {file.status === "processing" && file.evaluationProgress && (
                           <p className="text-muted-foreground font-mono">
@@ -308,13 +386,15 @@ export function DocumentUploader() {
             
             <div className="mt-6 flex justify-between">
               {files.some(f => f.status === "pending") && (
-                <Button 
+                <Button
                   size="lg"
+                  disabled={!selectedFrameworkId}
                   onClick={() => {
                     files.filter(f => f.status === "pending").forEach(f => {
                       uploadFile(f.id)
                     })
                   }}
+                  title={!selectedFrameworkId ? "Please select a framework first" : undefined}
                 >
                   <Upload className="h-4 w-4 mr-2" />
                   Start Upload & Evaluation
