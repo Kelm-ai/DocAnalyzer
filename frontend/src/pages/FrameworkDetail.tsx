@@ -169,6 +169,7 @@ export function FrameworkDetail() {
   const [deleteConfirm, setDeleteConfirm] = useState<ISORequirement | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [viewingRequirement, setViewingRequirement] = useState<ISORequirement | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -337,6 +338,10 @@ export function FrameworkDetail() {
     setDeleteConfirm(req)
   }, [])
 
+  const handleView = useCallback((req: ISORequirement) => {
+    setViewingRequirement(req)
+  }, [])
+
   const handleConfirmDelete = async () => {
     if (!deleteConfirm) return
     try {
@@ -470,6 +475,7 @@ export function FrameworkDetail() {
           data={requirements}
           filterPlaceholder="Filter requirements..."
           initialSorting={[{ id: "display_order", desc: false }]}
+          onRowClick={(row) => handleView(row.original)}
         />
       </div>
 
@@ -559,6 +565,47 @@ export function FrameworkDetail() {
         </p>
         {deleteError && (
           <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{deleteError}</div>
+        )}
+      </Modal>
+
+      {/* View Requirement Modal (read-only) */}
+      <Modal
+        open={viewingRequirement !== null}
+        onClose={() => setViewingRequirement(null)}
+        title={viewingRequirement?.title ?? "Requirement Details"}
+        footer={
+          <Button variant="outline" onClick={() => setViewingRequirement(null)}>
+            Close
+          </Button>
+        }
+      >
+        {viewingRequirement && (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <div className="text-sm font-medium text-gray-500">Clause</div>
+                <div className="mt-1 text-sm text-gray-900">{viewingRequirement.clause}</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-500">Order</div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {Number.isFinite(viewingRequirement.display_order) ? viewingRequirement.display_order : "—"}
+                </div>
+              </div>
+            </div>
+            {viewingRequirement.evaluation_type && (
+              <div>
+                <div className="text-sm font-medium text-gray-500">Evaluation Type</div>
+                <div className="mt-1 text-sm text-gray-900">{viewingRequirement.evaluation_type}</div>
+              </div>
+            )}
+            <div>
+              <div className="text-sm font-medium text-gray-500">Requirement Text</div>
+              <div className="mt-1 whitespace-pre-wrap rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900">
+                {viewingRequirement.requirement_text || "No requirement text provided."}
+              </div>
+            </div>
+          </div>
         )}
       </Modal>
     </div>

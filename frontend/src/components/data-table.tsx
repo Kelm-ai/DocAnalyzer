@@ -143,18 +143,13 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
+                <tr
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  onClick={
-                    onRowClick && (isRowClickable ? isRowClickable(row) : true)
-                      ? () => onRowClick(row)
-                      : undefined
-                  }
+                  style={onRowClick ? { cursor: "pointer" } : undefined}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={cn(
-                    onRowClick && (isRowClickable ? isRowClickable(row) : true)
-                      ? "cursor-pointer"
-                      : undefined,
+                    "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
                     rowClassName?.(row)
                   )}
                 >
@@ -166,7 +161,7 @@ export function DataTable<TData, TValue>({
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
-                </TableRow>
+                </tr>
               ))
             ) : (
               <TableRow>
