@@ -415,28 +415,33 @@ export function FrameworkDetail() {
       )}
 
       {/* System Prompt Section */}
-      {ADMIN_MODE && (
-        <div className="rounded-lg border border-gray-200 bg-white">
-          <button
-            type="button"
-            onClick={() => setPromptExpanded(!promptExpanded)}
-            className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-gray-50"
-          >
-            <span className="font-medium text-gray-900">System Prompt</span>
-            {promptExpanded ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
-          </button>
-          {promptExpanded && (
-            <div className="border-t border-gray-200 p-4 space-y-3">
-              <textarea
-                value={editedPrompt}
-                onChange={(e) => setEditedPrompt(e.target.value)}
-                className="w-full min-h-[300px] rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-mono shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                placeholder="Enter the system prompt that will instruct the AI during evaluations..."
-              />
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">
-                  This prompt instructs the AI how to evaluate documents against this framework's requirements.
-                </span>
+      <div className="rounded-lg border border-gray-200 bg-white">
+        <button
+          type="button"
+          onClick={() => setPromptExpanded(!promptExpanded)}
+          className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-gray-50"
+        >
+          <span className="font-medium text-gray-900">System Prompt</span>
+          {promptExpanded ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+        </button>
+        {promptExpanded && (
+          <div className="border-t border-gray-200 p-4 space-y-3">
+            <textarea
+              value={editedPrompt}
+              onChange={(e) => ADMIN_MODE && setEditedPrompt(e.target.value)}
+              readOnly={!ADMIN_MODE}
+              className={`w-full min-h-[300px] rounded-md border border-gray-200 px-3 py-2 text-sm font-mono shadow-sm transition ${
+                ADMIN_MODE
+                  ? "bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  : "bg-gray-50 text-gray-700 cursor-default"
+              }`}
+              placeholder="Enter the system prompt that will instruct the AI during evaluations..."
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">
+                This prompt instructs the AI how to evaluate documents against this framework's requirements.
+              </span>
+              {ADMIN_MODE && (
                 <Button
                   onClick={handleSavePrompt}
                   disabled={!promptDirty || isSavingPrompt}
@@ -445,11 +450,11 @@ export function FrameworkDetail() {
                   <Save className="mr-2 h-4 w-4" />
                   {isSavingPrompt ? "Saving..." : "Save Prompt"}
                 </Button>
-              </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* Requirements Section */}
       <div className="space-y-4">
