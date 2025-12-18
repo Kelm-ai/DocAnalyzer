@@ -930,11 +930,23 @@ async def run_evaluation(evaluation_id: str, file_path: str, original_filename: 
         if EVALUATION_PIPELINE != "vision" or VisionResponsesEvaluator is None:
             raise RuntimeError("Vision evaluator pipeline is not configured")
 
+        # Check for dual provider mode
+        use_dual = os.getenv("VISION_COMPARE_BOTH", "").lower() in {"1", "true", "yes"} or \
+                   os.getenv("VISION_PROVIDER", "").lower() in {"dual", "both"}
+
         # Create evaluator with framework-specific configuration
-        framework_evaluator = VisionResponsesEvaluator(
-            system_prompt=system_prompt,
-            framework_id=framework_id,
-        )
+        if use_dual:
+            if DualVisionComparator is None:
+                raise RuntimeError("DualVisionComparator is unavailable")
+            framework_evaluator = DualVisionComparator(
+                system_prompt=system_prompt,
+                framework_id=framework_id,
+            )
+        else:
+            framework_evaluator = VisionResponsesEvaluator(
+                system_prompt=system_prompt,
+                framework_id=framework_id,
+            )
         summary = await framework_evaluator.evaluate_document(file_path)
         persist_vision_results(evaluation_id, summary)
 

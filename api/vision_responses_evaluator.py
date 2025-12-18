@@ -1480,10 +1480,25 @@ class DualVisionComparator:
     }
     CONFIDENCE_PRIORITY = {"low": 0, "medium": 1, "high": 2}
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        system_prompt: Optional[str] = None,
+        framework_id: Optional[str] = None,
+    ) -> None:
         self.provider = "dual"
-        self.primary = VisionResponsesEvaluator(provider="claude")  # type: ignore[arg-type]
-        self.secondary = VisionResponsesEvaluator(provider="openai")  # type: ignore[arg-type]
+        self.system_prompt = system_prompt
+        self.framework_id = framework_id
+        self.primary = VisionResponsesEvaluator(
+            provider="claude",
+            system_prompt=system_prompt,
+            framework_id=framework_id,
+        )
+        self.secondary = VisionResponsesEvaluator(
+            provider="openai",
+            system_prompt=system_prompt,
+            framework_id=framework_id,
+        )
         self.model = f"{self.primary.model}+{self.secondary.model}"
         self.supabase = self.primary.supabase or self.secondary.supabase
         # Shared Gemini fallback evaluator (lazily initialized)
@@ -1492,7 +1507,11 @@ class DualVisionComparator:
     def _get_gemini_fallback(self) -> "VisionResponsesEvaluator":
         """Get or create a Gemini evaluator for fallback."""
         if self._gemini_fallback is None:
-            self._gemini_fallback = VisionResponsesEvaluator(provider="gemini")  # type: ignore[arg-type]
+            self._gemini_fallback = VisionResponsesEvaluator(
+                provider="gemini",
+                system_prompt=self.system_prompt,
+                framework_id=self.framework_id,
+            )
         return self._gemini_fallback
 
     async def evaluate_document(self, file_path: str) -> Dict[str, Any]:
