@@ -98,6 +98,25 @@ except ImportError:
     SUPABASE_AVAILABLE = False
     print("Warning: Supabase not available. Will use local requirements file.")
 
+# Import document summarizer for multi-doc support
+try:
+    from api.document_summarizer import (
+        get_document_summaries_for_evaluation,
+        format_summaries_for_context
+    )
+except ImportError:
+    try:
+        from document_summarizer import (
+            get_document_summaries_for_evaluation,
+            format_summaries_for_context
+        )
+    except ImportError:
+        # Fallback: define no-op functions if module not available
+        async def get_document_summaries_for_evaluation(supabase_client, evaluation_id):
+            return []
+        def format_summaries_for_context(summaries):
+            return ""
+
 logger = logging.getLogger(__name__)
 
 
@@ -137,11 +156,18 @@ Vision handling:
         provider: Optional[str] = None,
         system_prompt: Optional[str] = None,
         framework_id: Optional[str] = None,
+        evaluation_id: Optional[str] = None,
     ) -> None:
         # Allow custom system prompt to override class-level BASE_INSTRUCTION
         if system_prompt:
             self.BASE_INSTRUCTION = system_prompt.strip()
         self.framework_id = framework_id
+        self.evaluation_id = evaluation_id
+        # Supporting document summaries context (loaded lazily)
+        self._supporting_docs_context: Optional[str] = None
+        self._supporting_docs_loaded: bool = False
+        # Track supporting document names for prompt clarity
+        self._supporting_doc_names: List[str] = []
         self.provider = (provider or os.getenv("VISION_PROVIDER") or "openai").strip().lower()
         if self.provider not in {"openai", "gemini", "claude"}:
             raise RuntimeError(f"Unsupported VISION_PROVIDER '{self.provider}'. Use 'openai', 'gemini', or 'claude'.")
@@ -264,6 +290,132 @@ Vision handling:
                 self.concurrent_requests,
             )
 
+    async def _load_supporting_docs_context(self) -> str:
+        """
+        Load supporting document summaries for this evaluation.
+        Returns formatted context string to include in prompts.
+        """
+        if self._supporting_docs_loaded:
+            return self._supporting_docs_context or ""
+
+        self._supporting_docs_loaded = True
+
+        if not self.evaluation_id or not self.supabase:
+            return ""
+
+        try:
+            summaries = await get_document_summaries_for_evaluation(
+                self.supabase,
+                self.evaluation_id
+            )
+            if summaries:
+                self._supporting_docs_context = format_summaries_for_context(summaries)
+                logger.info(
+                    f"Loaded {len(summaries)} supporting document summaries for evaluation {self.evaluation_id}"
+                )
+            else:
+                self._supporting_docs_context = ""
+        except Exception as e:
+            logger.warning(f"Failed to load supporting docs for {self.evaluation_id}: {e}")
+            self._supporting_docs_context = ""
+
+        return self._supporting_docs_context or ""
+
+    async def _load_supporting_doc_file_refs(self) -> List[Dict[str, Any]]:
+        """
+        Load supporting documents from storage and upload to LLM provider.
+        Returns list of file references for inclusion in evaluation context.
+        """
+        if not self.evaluation_id or not self.supabase:
+            return []
+
+        try:
+            # Get supporting documents for this evaluation
+            response = self.supabase.table("evaluation_documents").select(
+                "id, file_name, storage_path, file_hash"
+            ).eq("evaluation_id", self.evaluation_id).eq(
+                "document_role", "supporting"
+            ).order("display_order").execute()
+
+            docs = response.data or []
+            if not docs:
+                return []
+
+            logger.info(f"Loading {len(docs)} supporting documents for evaluation {self.evaluation_id}")
+
+            file_refs = []
+            for doc in docs:
+                try:
+                    # Check if we already have a valid provider reference in the DB
+                    provider_field = f"{self.provider}_file_id"
+                    existing_ref = self.supabase.table("evaluation_documents").select(
+                        f"{provider_field}, file_name"
+                    ).eq("id", doc["id"]).single().execute()
+
+                    existing_file_id = existing_ref.data.get(provider_field) if existing_ref.data else None
+
+                    if existing_file_id:
+                        # Reuse existing provider reference
+                        file_refs.append({
+                            "file_id": existing_file_id,
+                            "file_name": doc["file_name"],
+                            "provider": self.provider,
+                        })
+                        logger.debug(f"Reusing cached file ref for {doc['file_name']}")
+                        continue
+
+                    # Download from Supabase Storage
+                    storage_path = doc["storage_path"]
+                    # storage_path format: documents/evaluations/{eval_id}/supporting/{hash}_{filename}
+                    bucket_path = storage_path.replace("documents/", "", 1)
+
+                    file_bytes = self.supabase.storage.from_("documents").download(bucket_path)
+
+                    # Create a temp file for upload
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+                        temp_file.write(file_bytes)
+                        temp_path = Path(temp_file.name)
+
+                    try:
+                        # Upload to provider
+                        file_meta = await self._upload_to_provider(temp_path, doc["file_hash"])
+
+                        # Cache the provider reference in the DB
+                        update_data = {
+                            f"{self.provider}_file_id": file_meta.get("file_id"),
+                            f"{self.provider}_uploaded_at": datetime.utcnow().isoformat(),
+                        }
+                        if self.provider == "gemini" and file_meta.get("file_uri"):
+                            update_data["gemini_file_uri"] = file_meta.get("file_uri")
+
+                        self.supabase.table("evaluation_documents").update(
+                            update_data
+                        ).eq("id", doc["id"]).execute()
+
+                        file_refs.append({
+                            "file_id": file_meta.get("file_id"),
+                            "file_uri": file_meta.get("file_uri"),
+                            "file_name": doc["file_name"],
+                            "provider": self.provider,
+                        })
+                        logger.info(f"Uploaded supporting doc {doc['file_name']} to {self.provider}")
+
+                    finally:
+                        # Clean up temp file
+                        try:
+                            os.remove(temp_path)
+                        except:
+                            pass
+
+                except Exception as e:
+                    logger.warning(f"Failed to load supporting doc {doc.get('file_name')}: {e}")
+                    continue
+
+            return file_refs
+
+        except Exception as e:
+            logger.error(f"Failed to load supporting doc file refs: {e}")
+            return []
 
     async def evaluate_document(self, file_path: str) -> Dict:
         document_path = Path(file_path)
@@ -272,7 +424,19 @@ Vision handling:
         if document_path.suffix.lower() != ".pdf":
             raise ValueError("Vision evaluator currently supports PDF files only")
 
+        # Load supporting document summaries for multi-doc evaluations (for prompt context)
+        await self._load_supporting_docs_context()
+
+        # Load and upload supporting documents to provider (for full vision access)
+        supporting_file_refs = await self._load_supporting_doc_file_refs()
+        if supporting_file_refs:
+            logger.info(f"Loaded {len(supporting_file_refs)} supporting doc file refs for vision access")
+            # Track supporting doc names for clear prompt instructions
+            self._supporting_doc_names = [ref.get("file_name", "") for ref in supporting_file_refs if ref.get("file_name")]
+
         file_ref, file_hash, cache_hit = await self.ensure_file_ref(document_path)
+        # Store supporting refs in the primary file_ref dict for passing to evaluation
+        file_ref["supporting_docs"] = supporting_file_refs
 
         raw_requirements = self._load_requirements()
         requirements: List[Dict] = []
@@ -820,7 +984,7 @@ Vision handling:
             )
         else:
             result = await self._fallback_evaluator._evaluate_single_requirement_openai(
-                file_ref.get("file_id", ""), requirement, fallback_semaphore, run_responses_dir
+                file_ref, requirement, fallback_semaphore, run_responses_dir
             )
 
         result["fallback_provider"] = fallback_provider
@@ -847,7 +1011,7 @@ Vision handling:
                 )
             else:
                 result = await self._evaluate_single_requirement_openai(
-                    file_ref.get("file_id", ""), requirement, semaphore, run_responses_dir
+                    file_ref, requirement, semaphore, run_responses_dir
                 )
 
             # Check for retryable errors in result
@@ -942,13 +1106,29 @@ Vision handling:
 
     async def _evaluate_single_requirement_openai(
         self,
-        file_id: str,
+        file_ref: Dict,
         requirement: Dict,
         semaphore: asyncio.Semaphore,
         run_responses_dir: Path,
     ) -> Dict:
         async with semaphore:
             prompt = self._build_prompt(requirement)
+            file_id = file_ref.get("file_id", "")
+            supporting_docs = file_ref.get("supporting_docs", [])
+
+            # Build content array with primary document and supporting docs
+            content_items = [
+                {"type": "input_text", "text": prompt},
+                {"type": "input_file", "file_id": file_id},
+            ]
+
+            # Add supporting documents for full vision access
+            for supporting_doc in supporting_docs:
+                if supporting_doc.get("file_id"):
+                    content_items.append({
+                        "type": "input_file",
+                        "file_id": supporting_doc["file_id"],
+                    })
 
             try:
                 response = await asyncio.to_thread(
@@ -958,10 +1138,7 @@ Vision handling:
                     input=[
                         {
                             "role": "user",
-                            "content": [
-                                {"type": "input_text", "text": prompt},
-                                {"type": "input_file", "file_id": file_id},
-                            ],
+                            "content": content_items,
                         }
                     ],
                     text_format=RequirementEvaluationSchema,
@@ -1016,12 +1193,33 @@ Vision handling:
         async with semaphore:
             prompt = self._build_prompt(requirement)
             file_id = file_ref.get("file_id")
+            supporting_docs = file_ref.get("supporting_docs", [])
 
             if not file_id:
                 return self._error_result(requirement, "Missing file_id for Claude evaluation", "File reference missing")
 
+            # Build content array with primary document and supporting docs
+            content_items = [
+                {
+                    "type": "document",
+                    "source": {"type": "file", "file_id": file_id}
+                },
+            ]
+
+            # Add supporting documents for full vision access
+            for supporting_doc in supporting_docs:
+                if supporting_doc.get("file_id"):
+                    content_items.append({
+                        "type": "document",
+                        "source": {"type": "file", "file_id": supporting_doc["file_id"]}
+                    })
+
+            # Add the prompt text at the end
+            content_items.append({"type": "text", "text": prompt})
+
             # Estimate tokens for this request (prompt + file reference overhead)
-            estimated_tokens = self._estimate_tokens(prompt) + 4000  # Base overhead for PDF
+            # Add overhead for each supporting document
+            estimated_tokens = self._estimate_tokens(prompt) + 4000 + (len(supporting_docs) * 4000)
 
             # Acquire rate limit permission (model-specific)
             rate_limiter = get_rate_limiter(model=self.model)
@@ -1041,13 +1239,7 @@ Vision handling:
                     betas=self.claude_betas,
                     messages=[{
                         "role": "user",
-                        "content": [
-                            {
-                                "type": "document",
-                                "source": {"type": "file", "file_id": file_id}
-                            },
-                            {"type": "text", "text": prompt},
-                        ]
+                        "content": content_items
                     }]
                 )
             except Exception as exc:
@@ -1108,9 +1300,28 @@ Vision handling:
             prompt = self._build_prompt(requirement)
             file_uri = file_ref.get("file_uri") or file_ref.get("file_id")
             mime_type = file_ref.get("mime_type") or "application/pdf"
+            supporting_docs = file_ref.get("supporting_docs", [])
 
             try:
+                # Build contents array with primary document and supporting docs
                 file_part = genai_types.Part(file_data=genai_types.FileData(file_uri=file_uri, mime_type=mime_type))  # type: ignore[arg-type]
+                contents = [file_part]
+
+                # Add supporting documents for full vision access
+                for supporting_doc in supporting_docs:
+                    supporting_uri = supporting_doc.get("file_uri") or supporting_doc.get("file_id")
+                    if supporting_uri:
+                        supporting_part = genai_types.Part(
+                            file_data=genai_types.FileData(
+                                file_uri=supporting_uri,
+                                mime_type="application/pdf"
+                            )
+                        )  # type: ignore[arg-type]
+                        contents.append(supporting_part)
+
+                # Add prompt at the end
+                contents.append(prompt)
+
                 gen_config_kwargs = {
                     "response_mime_type": "application/json",
                     "response_schema": self.gemini_response_schema,
@@ -1124,7 +1335,7 @@ Vision handling:
                 response = await asyncio.to_thread(
                     self.gemini_client.models.generate_content,  # type: ignore[union-attr]
                     model=self.model,
-                    contents=[file_part, prompt],
+                    contents=contents,
                     config=genai_types.GenerateContentConfig(**gen_config_kwargs),
                 )
             except Exception as exc:
@@ -1192,12 +1403,29 @@ Vision handling:
             ]
         ).strip()
 
+        # Build document hierarchy instructions if supporting docs are present
+        if self._supporting_doc_names:
+            doc_list = "\n".join([f"   - {name}" for name in self._supporting_doc_names])
+            document_hierarchy_instruction = (
+                "DOCUMENT HIERARCHY:\n"
+                "Multiple documents are attached. The FIRST document is the PRIMARY document being evaluated.\n"
+                "Supporting documents are ONLY to be consulted when the primary document explicitly references them.\n"
+                f"Supporting documents available:\n{doc_list}\n\n"
+                "IMPORTANT: Your evaluation should focus on the PRIMARY document. Only look at supporting documents\n"
+                "if the primary document mentions them by name or reference (e.g., 'see Training Policy', 'per SOP-XXX').\n"
+                "When citing evidence, clearly indicate which document it came from.\n\n"
+            )
+        else:
+            document_hierarchy_instruction = ""
+
         instruction_block = (
+            document_hierarchy_instruction +
             "MANDATORY METHOD:\n"
-            "1. Review the attached PDF for visuals (tables, charts, signatures) whenever the text layer is insufficient.\n"
+            "1. Review the PRIMARY document (first attached PDF) for visuals (tables, charts, signatures) whenever the text layer is insufficient.\n"
             "2. Evaluate ONLY the requested clause; cite page or section references for evidence. Treat clear cross-references to other SOPs/records as evidence that those processes/records exist.\n"
-            "3. Decision logic: PASS if the requirement is clearly addressed and practicable; FAIL if the process/records are missing/contradicted; FLAGGED when evidence is incomplete or genuinely uncertain; NOT_APPLICABLE only when the clause truly does not apply.\n"
-            "4. Before finalising, confirm the chosen status best matches the evidence; do not default to FLAGGED when PASS or FAIL is supported.\n"
+            "3. If the primary document references a supporting document by name, you may consult that supporting document to verify the cross-reference.\n"
+            "4. Decision logic: PASS if the requirement is clearly addressed and practicable; FAIL if the process/records are missing/contradicted; FLAGGED when evidence is incomplete or genuinely uncertain; NOT_APPLICABLE only when the clause truly does not apply.\n"
+            "5. Before finalising, confirm the chosen status best matches the evidence; do not default to FLAGGED when PASS or FAIL is supported.\n"
             "Respond strictly with JSON using this schema:\n"
             "{\n"
             "  \"status\": \"PASS|FAIL|FLAGGED|NOT_APPLICABLE\",\n"
@@ -1221,9 +1449,16 @@ Vision handling:
 
         prompt_sections = [
             self.BASE_INSTRUCTION,
+        ]
+
+        # Include supporting document summaries if available (multi-doc support)
+        if self._supporting_docs_context:
+            prompt_sections.append(self._supporting_docs_context)
+
+        prompt_sections.extend([
             "".join(instruction_block),
             "Requirement:\n" + requirement_details,
-        ]
+        ])
 
         return "\n\n".join(prompt_sections)
 
@@ -1485,19 +1720,23 @@ class DualVisionComparator:
         *,
         system_prompt: Optional[str] = None,
         framework_id: Optional[str] = None,
+        evaluation_id: Optional[str] = None,
     ) -> None:
         self.provider = "dual"
         self.system_prompt = system_prompt
         self.framework_id = framework_id
+        self.evaluation_id = evaluation_id
         self.primary = VisionResponsesEvaluator(
             provider="claude",
             system_prompt=system_prompt,
             framework_id=framework_id,
+            evaluation_id=evaluation_id,
         )
         self.secondary = VisionResponsesEvaluator(
             provider="openai",
             system_prompt=system_prompt,
             framework_id=framework_id,
+            evaluation_id=evaluation_id,
         )
         self.model = f"{self.primary.model}+{self.secondary.model}"
         self.supabase = self.primary.supabase or self.secondary.supabase

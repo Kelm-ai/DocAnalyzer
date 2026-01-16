@@ -30,6 +30,22 @@ try:
 except ImportError:
     from summary_generator import generate_executive_summary_sync
 
+# Import document summarizer for multi-doc support
+try:
+    from api.document_summarizer import (
+        summarize_all_supporting_docs,
+        get_document_summaries_for_evaluation,
+        format_summaries_for_context,
+        compute_file_hash
+    )
+except ImportError:
+    from document_summarizer import (
+        summarize_all_supporting_docs,
+        get_document_summaries_for_evaluation,
+        format_summaries_for_context,
+        compute_file_hash
+    )
+
 # Import evaluation queue and rate limiter
 try:
     from api.evaluation_queue import get_evaluation_queue, EvaluationQueue, QueueConfig
@@ -37,6 +53,12 @@ try:
 except ImportError:
     from evaluation_queue import get_evaluation_queue, EvaluationQueue, QueueConfig
     from rate_limiter import get_rate_limiter
+
+# Import document converter for Word to PDF conversion
+try:
+    from api.document_converter import ensure_pdf
+except ImportError:
+    from document_converter import ensure_pdf
 
 # Local imports
 import sys
@@ -576,6 +598,38 @@ class FrameworkUpdate(BaseModel):
     display_order: Optional[int] = None
 
 
+# Multi-document upload models
+class DocumentRole(BaseModel):
+    """Role assignment for an uploaded document."""
+    role: Literal["primary", "supporting"]
+    display_order: Optional[int] = None
+
+
+class EvaluationDocumentResponse(BaseModel):
+    """Response model for evaluation documents."""
+    id: str
+    evaluation_id: str
+    document_role: str
+    file_name: str
+    file_size_bytes: Optional[int] = None
+    storage_path: str
+    summary_text: Optional[str] = None
+    summary_generated_at: Optional[str] = None
+    display_order: int = 0
+    created_at: str
+
+
+class MultiDocumentUploadResponse(BaseModel):
+    """Response model for multi-document upload."""
+    evaluation_id: str
+    primary_document: str
+    supporting_documents: List[str]
+    supporting_docs_count: int
+    status: str
+    summaries_status: str
+    message: str
+
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize pipeline and supporting services on startup"""
@@ -783,8 +837,8 @@ async def upload_document(
         if not file.filename:
             raise HTTPException(status_code=400, detail="No filename provided")
 
-        if not file.filename.lower().endswith(('.pdf', '.docx')):
-            raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported")
+        if not file.filename.lower().endswith(('.pdf', '.docx', '.doc')):
+            raise HTTPException(status_code=400, detail="Only PDF, DOCX, and DOC files are supported")
 
         # Validate framework_id
         if not framework_id or not framework_id.strip():
@@ -811,15 +865,27 @@ async def upload_document(
         if not content:
             raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
+        # Convert Word docs to PDF if needed (model providers require PDF)
+        original_filename = file.filename
+        try:
+            content, processing_filename, was_converted = await ensure_pdf(content, file.filename)
+            if was_converted:
+                logger.info(f"Converted {original_filename} to PDF")
+        except ValueError as conv_err:
+            raise HTTPException(status_code=400, detail=str(conv_err))
+        except RuntimeError as conv_err:
+            logger.error(f"Document conversion failed for {file.filename}: {conv_err}")
+            raise HTTPException(status_code=500, detail=f"Document conversion failed: {conv_err}")
+
         # Store locally for the vision pipeline (ChatGPT file upload handled inside evaluator)
-        file_extension = Path(file.filename).suffix
+        file_extension = Path(processing_filename).suffix
         with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
             temp_file.write(content)
             temp_file_path = temp_file.name
 
         # Create document evaluation record with 'pending' status (queued)
         evaluation_data = {
-            'document_name': file.filename,
+            'document_name': original_filename,
             'status': 'pending',
             'framework_id': framework_id,
             'created_at': datetime.utcnow().isoformat()
@@ -879,6 +945,300 @@ async def upload_document(
         logger.error(f"Upload error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.post("/api/upload-multi", response_model=MultiDocumentUploadResponse)
+async def upload_documents_multi(
+    files: List[UploadFile] = File(...),
+    roles: str = Query(..., description="JSON array of document roles, e.g., [{\"role\": \"primary\"}, {\"role\": \"supporting\", \"display_order\": 1}]"),
+    framework_id: str = Query(..., description="Framework ID to evaluate against"),
+    background_tasks: BackgroundTasks = None
+):
+    """
+    Upload multiple documents for evaluation with primary/supporting roles.
+
+    - First file with role="primary" is the main document to evaluate
+    - Files with role="supporting" provide evidence context
+    - Supporting documents are summarized before evaluation begins
+    """
+    import hashlib
+
+    try:
+        # Parse roles
+        try:
+            roles_list = json.loads(roles)
+            if not isinstance(roles_list, list):
+                raise ValueError("roles must be a JSON array")
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid roles JSON: {e}")
+
+        # Validate file count matches roles count
+        if len(files) != len(roles_list):
+            raise HTTPException(
+                status_code=400,
+                detail=f"File count ({len(files)}) must match roles count ({len(roles_list)})"
+            )
+
+        # Validate exactly one primary document
+        primary_count = sum(1 for r in roles_list if r.get("role") == "primary")
+        if primary_count != 1:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Exactly one primary document required, got {primary_count}"
+            )
+
+        # Validate supporting document count
+        supporting_count = sum(1 for r in roles_list if r.get("role") == "supporting")
+        if supporting_count > 10:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Maximum 10 supporting documents allowed, got {supporting_count}"
+            )
+
+        # Validate framework
+        framework_id = framework_id.strip()
+        supabase = get_supabase_client()
+
+        try:
+            framework_response = supabase.table('frameworks').select(
+                'id, name, system_prompt, is_active'
+            ).eq('id', framework_id).single().execute()
+            framework_data = getattr(framework_response, 'data', None)
+            if not framework_data:
+                raise HTTPException(status_code=400, detail="Framework not found")
+            if not framework_data.get('is_active', True):
+                raise HTTPException(status_code=400, detail="Framework is not active")
+        except HTTPException:
+            raise
+        except Exception as error:
+            logger.error(f"Failed to validate framework {framework_id}: {error}")
+            raise HTTPException(status_code=500, detail="Failed to validate framework")
+
+        # Create evaluation record
+        evaluation_id = str(uuid.uuid4())
+        primary_filename = None
+
+        for i, (file, role_info) in enumerate(zip(files, roles_list)):
+            if role_info.get("role") == "primary":
+                primary_filename = file.filename
+                break
+
+        evaluation_data = {
+            'id': evaluation_id,
+            'document_name': primary_filename,
+            'status': 'pending',
+            'framework_id': framework_id,
+            'supporting_docs_count': supporting_count,
+            'summaries_status': 'pending' if supporting_count > 0 else 'not_required',
+            'created_at': datetime.utcnow().isoformat()
+        }
+
+        try:
+            supabase.table('document_evaluations').insert(evaluation_data).execute()
+        except Exception as insert_error:
+            logger.error(f"Failed to create evaluation record: {insert_error}")
+            raise HTTPException(status_code=500, detail="Unable to create evaluation record")
+
+        # Process and store each file
+        primary_file_path = None
+        supporting_docs = []
+
+        for i, (file, role_info) in enumerate(zip(files, roles_list)):
+            role = role_info.get("role")
+            display_order = role_info.get("display_order", i)
+
+            # Validate file
+            if not file.filename:
+                raise HTTPException(status_code=400, detail=f"No filename provided for file {i}")
+            if not file.filename.lower().endswith(('.pdf', '.docx', '.doc')):
+                raise HTTPException(status_code=400, detail="Only PDF, DOCX, and DOC files are supported")
+
+            content = await file.read()
+            if not content:
+                raise HTTPException(status_code=400, detail=f"File {file.filename} is empty")
+
+            # Convert Word docs to PDF if needed (model providers require PDF)
+            original_filename = file.filename
+            try:
+                content, processing_filename, was_converted = await ensure_pdf(content, file.filename)
+                if was_converted:
+                    logger.info(f"Converted {original_filename} to PDF")
+            except ValueError as conv_err:
+                raise HTTPException(status_code=400, detail=str(conv_err))
+            except RuntimeError as conv_err:
+                logger.error(f"Document conversion failed for {file.filename}: {conv_err}")
+                raise HTTPException(status_code=500, detail=f"Document conversion failed: {conv_err}")
+
+            file_hash = hashlib.sha256(content).hexdigest()
+            file_size = len(content)
+
+            # Determine storage path (use PDF filename after conversion)
+            subfolder = "primary" if role == "primary" else "supporting"
+            storage_path = f"documents/evaluations/{evaluation_id}/{subfolder}/{file_hash}_{processing_filename}"
+
+            # Upload to Supabase Storage
+            try:
+                supabase.storage.from_("documents").upload(
+                    path=f"evaluations/{evaluation_id}/{subfolder}/{file_hash}_{processing_filename}",
+                    file=content,
+                    file_options={"content-type": "application/pdf"}
+                )
+            except Exception as storage_error:
+                logger.error(f"Failed to upload {original_filename} to storage: {storage_error}")
+                # Continue anyway - we'll also store locally for primary doc
+                if role == "primary":
+                    pass  # Will handle below
+                else:
+                    raise HTTPException(status_code=500, detail=f"Failed to upload {original_filename}")
+
+            # Create evaluation_documents record (keep original filename for display)
+            doc_record = {
+                'id': str(uuid.uuid4()),
+                'evaluation_id': evaluation_id,
+                'document_role': role,
+                'file_name': original_filename,
+                'file_hash': file_hash,
+                'storage_path': storage_path,
+                'file_size_bytes': file_size,
+                'display_order': display_order,
+                'created_at': datetime.utcnow().isoformat()
+            }
+
+            try:
+                result = supabase.table('evaluation_documents').insert(doc_record).execute()
+                doc_id = result.data[0]['id']
+            except Exception as doc_error:
+                logger.error(f"Failed to create document record for {original_filename}: {doc_error}")
+                raise HTTPException(status_code=500, detail=f"Failed to save document record")
+
+            if role == "primary":
+                # Also store locally for the evaluation pipeline
+                file_extension = Path(processing_filename).suffix
+                with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
+                    temp_file.write(content)
+                    primary_file_path = temp_file.name
+            else:
+                supporting_docs.append({
+                    'id': doc_id,
+                    'file_name': original_filename,
+                    'storage_path': storage_path
+                })
+
+        # If there are supporting documents, generate summaries before queueing evaluation
+        if supporting_docs:
+            logger.info(f"Triggering summary generation for {len(supporting_docs)} supporting documents")
+
+            # Run summary generation as a background task
+            async def generate_summaries_and_queue():
+                try:
+                    await summarize_all_supporting_docs(
+                        documents=supporting_docs,
+                        supabase_client=get_supabase_client(),
+                        evaluation_id=evaluation_id
+                    )
+
+                    # After summaries complete, queue the evaluation
+                    if evaluation_queue is not None and primary_file_path:
+                        try:
+                            await evaluation_queue.enqueue(
+                                evaluation_id=evaluation_id,
+                                file_path=primary_file_path,
+                                filename=primary_filename
+                            )
+                        except ValueError as queue_error:
+                            get_supabase_client().table('document_evaluations').update({
+                                'status': 'error',
+                                'error_message': str(queue_error),
+                            }).eq('id', evaluation_id).execute()
+                except Exception as e:
+                    logger.error(f"Summary generation failed for {evaluation_id}: {e}")
+                    get_supabase_client().table('document_evaluations').update({
+                        'summaries_status': 'failed',
+                        'status': 'error',
+                        'error_message': f"Summary generation failed: {e}"
+                    }).eq('id', evaluation_id).execute()
+
+            # Schedule the background task
+            asyncio.create_task(generate_summaries_and_queue())
+
+            return MultiDocumentUploadResponse(
+                evaluation_id=evaluation_id,
+                primary_document=primary_filename,
+                supporting_documents=[d['file_name'] for d in supporting_docs],
+                supporting_docs_count=len(supporting_docs),
+                status="pending",
+                summaries_status="pending",
+                message=f"Documents uploaded. Generating summaries for {len(supporting_docs)} supporting documents before evaluation."
+            )
+
+        else:
+            # No supporting documents - queue evaluation immediately
+            if evaluation_queue is None:
+                raise HTTPException(status_code=503, detail="Evaluation queue not initialized")
+
+            try:
+                queue_item, position = await evaluation_queue.enqueue(
+                    evaluation_id=evaluation_id,
+                    file_path=primary_file_path,
+                    filename=primary_filename
+                )
+            except ValueError as queue_error:
+                get_supabase_client().table('document_evaluations').update({
+                    'status': 'error',
+                    'error_message': str(queue_error),
+                }).eq('id', evaluation_id).execute()
+                raise HTTPException(status_code=503, detail=str(queue_error))
+
+            return MultiDocumentUploadResponse(
+                evaluation_id=evaluation_id,
+                primary_document=primary_filename,
+                supporting_documents=[],
+                supporting_docs_count=0,
+                status="queued" if position > 0 else "processing",
+                summaries_status="not_required",
+                message="Document uploaded. Evaluation started."
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Multi-document upload error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/evaluations/{evaluation_id}/documents", response_model=List[EvaluationDocumentResponse])
+async def get_evaluation_documents(evaluation_id: str):
+    """
+    Get all documents (primary + supporting) for an evaluation.
+    """
+    try:
+        supabase = get_supabase_client()
+
+        response = supabase.table('evaluation_documents').select('*').eq(
+            'evaluation_id', evaluation_id
+        ).order('document_role', desc=True).order('display_order').execute()
+
+        if not response.data:
+            return []
+
+        return [
+            EvaluationDocumentResponse(
+                id=doc['id'],
+                evaluation_id=doc['evaluation_id'],
+                document_role=doc['document_role'],
+                file_name=doc['file_name'],
+                file_size_bytes=doc.get('file_size_bytes'),
+                storage_path=doc['storage_path'],
+                summary_text=doc.get('summary_text'),
+                summary_generated_at=doc.get('summary_generated_at'),
+                display_order=doc.get('display_order', 0),
+                created_at=doc['created_at']
+            )
+            for doc in response.data
+        ]
+
+    except Exception as e:
+        logger.error(f"Failed to get evaluation documents: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 async def run_evaluation(evaluation_id: str, file_path: str, original_filename: Optional[str] = None):
@@ -941,11 +1301,13 @@ async def run_evaluation(evaluation_id: str, file_path: str, original_filename: 
             framework_evaluator = DualVisionComparator(
                 system_prompt=system_prompt,
                 framework_id=framework_id,
+                evaluation_id=evaluation_id,
             )
         else:
             framework_evaluator = VisionResponsesEvaluator(
                 system_prompt=system_prompt,
                 framework_id=framework_id,
+                evaluation_id=evaluation_id,
             )
         summary = await framework_evaluator.evaluate_document(file_path)
         persist_vision_results(evaluation_id, summary)

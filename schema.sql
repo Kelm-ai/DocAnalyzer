@@ -21,7 +21,8 @@ COMMENT ON COLUMN iso_requirements.display_order IS 'Integer value controlling t
 CREATE TABLE IF NOT EXISTS document_evaluations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_name TEXT NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('in_progress', 'completed', 'failed')),
+    status TEXT NOT NULL CHECK (status IN ('pending', 'in_progress', 'completed', 'failed', 'error')),
+    framework_id UUID REFERENCES frameworks(id),
     started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     completed_at TIMESTAMP WITH TIME ZONE,
     total_requirements INTEGER,
@@ -32,6 +33,10 @@ CREATE TABLE IF NOT EXISTS document_evaluations (
     overall_compliance_score NUMERIC(5,2),
     evaluation_method TEXT,
     model_used TEXT,
+    error_message TEXT,
+    -- Multi-document support
+    supporting_docs_count INTEGER DEFAULT 0,
+    summaries_status TEXT CHECK (summaries_status IN ('pending', 'generating', 'completed', 'failed', 'not_required')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -70,6 +75,38 @@ CREATE TABLE IF NOT EXISTS compliance_reports (
     generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Evaluation Documents table (primary + supporting documents per evaluation)
+-- Supports multi-document uploads where supporting docs provide evidence context
+CREATE TABLE IF NOT EXISTS evaluation_documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    evaluation_id UUID NOT NULL REFERENCES document_evaluations(id) ON DELETE CASCADE,
+    document_role TEXT NOT NULL CHECK (document_role IN ('primary', 'supporting')),
+    file_name TEXT NOT NULL,
+    file_hash TEXT NOT NULL,
+    storage_path TEXT NOT NULL,
+    file_size_bytes INTEGER,
+    page_count INTEGER,
+    mime_type TEXT DEFAULT 'application/pdf',
+    -- Summary fields (for supporting docs)
+    summary_text TEXT,
+    summary_generated_at TIMESTAMPTZ,
+    summary_model TEXT,
+    summary_tokens_used INTEGER,
+    -- Provider file references (cached for LLM uploads)
+    openai_file_id TEXT,
+    openai_uploaded_at TIMESTAMPTZ,
+    gemini_file_id TEXT,
+    gemini_file_uri TEXT,
+    gemini_uploaded_at TIMESTAMPTZ,
+    gemini_expires_at TIMESTAMPTZ,
+    claude_file_id TEXT,
+    claude_uploaded_at TIMESTAMPTZ,
+    -- Ordering for supporting docs
+    display_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Processed document cache (Document Intelligence output)
 CREATE TABLE IF NOT EXISTS processed_documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -88,6 +125,9 @@ CREATE INDEX IF NOT EXISTS idx_requirement_evaluations_req_id ON requirement_eva
 CREATE INDEX IF NOT EXISTS idx_requirement_evaluations_status ON requirement_evaluations(status);
 CREATE INDEX IF NOT EXISTS idx_compliance_reports_doc_id ON compliance_reports(document_evaluation_id);
 CREATE INDEX IF NOT EXISTS idx_processed_documents_filename ON processed_documents(filename);
+CREATE INDEX IF NOT EXISTS idx_eval_docs_evaluation_id ON evaluation_documents(evaluation_id);
+CREATE INDEX IF NOT EXISTS idx_eval_docs_role ON evaluation_documents(document_role);
+CREATE INDEX IF NOT EXISTS idx_eval_docs_file_hash ON evaluation_documents(file_hash);
 
 -- Repeatability testing results
 CREATE TABLE IF NOT EXISTS eval_results (
@@ -124,6 +164,7 @@ ALTER TABLE requirement_evaluations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE compliance_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE processed_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE eval_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE evaluation_documents ENABLE ROW LEVEL SECURITY;
 
 -- Create policies (example - adjust based on your authentication needs)
 CREATE POLICY "Allow read access to iso_requirements" ON iso_requirements FOR SELECT USING (true);
@@ -132,3 +173,4 @@ CREATE POLICY "Allow full access to requirement_evaluations" ON requirement_eval
 CREATE POLICY "Allow full access to compliance_reports" ON compliance_reports FOR ALL USING (true);
 CREATE POLICY "Allow full access to processed_documents" ON processed_documents FOR ALL USING (true);
 CREATE POLICY "Allow full access to eval_results" ON eval_results FOR ALL USING (true);
+CREATE POLICY "Allow full access to evaluation_documents" ON evaluation_documents FOR ALL USING (true);

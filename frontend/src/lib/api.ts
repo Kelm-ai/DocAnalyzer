@@ -54,6 +54,9 @@ export interface EvaluationStatus {
   requirements_na?: number;
   error_message?: string;
   total_requirements?: number;
+  // Multi-document support fields
+  supporting_docs_count?: number;
+  summaries_status?: 'pending' | 'generating' | 'completed' | 'failed' | 'not_required';
   metadata?: {
     progress_percent?: number;
     completed_requirements?: number;
@@ -65,6 +68,30 @@ export interface EvaluationStatus {
     batch_size?: number;
     last_requirement_id?: string;
   };
+}
+
+// Multi-document upload types
+export interface MultiDocumentUploadResponse {
+  evaluation_id: string;
+  primary_document: string;
+  supporting_documents: string[];
+  supporting_docs_count: number;
+  status: string;
+  summaries_status: string;
+  message: string;
+}
+
+export interface EvaluationDocument {
+  id: string;
+  evaluation_id: string;
+  document_role: 'primary' | 'supporting';
+  file_name: string;
+  file_size_bytes?: number;
+  storage_path: string;
+  summary_text?: string;
+  summary_generated_at?: string;
+  display_order: number;
+  created_at: string;
 }
 
 export interface RequirementResult {
@@ -304,6 +331,53 @@ export const api = {
       body: formData,
     });
 
+    return handleResponse(response);
+  },
+
+  /**
+   * Upload multiple documents for evaluation (primary + supporting)
+   */
+  async uploadDocumentsMulti(
+    primaryFile: File,
+    supportingFiles: File[],
+    frameworkId: string
+  ): Promise<MultiDocumentUploadResponse> {
+    const formData = new FormData();
+
+    // Add primary file first
+    formData.append('files', primaryFile);
+
+    // Add supporting files
+    for (const file of supportingFiles) {
+      formData.append('files', file);
+    }
+
+    // Build roles array
+    const roles = [
+      { role: 'primary' },
+      ...supportingFiles.map((_, i) => ({ role: 'supporting', display_order: i + 1 }))
+    ];
+
+    const url = new URL(`${API_BASE_URL}/upload-multi`);
+    url.searchParams.set('framework_id', frameworkId);
+    url.searchParams.set('roles', JSON.stringify(roles));
+
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      body: formData,
+    });
+
+    return handleResponse(response);
+  },
+
+  /**
+   * Get documents for an evaluation
+   */
+  async getEvaluationDocuments(evaluationId: string): Promise<EvaluationDocument[]> {
+    const response = await fetch(
+      `${API_BASE_URL}/evaluations/${evaluationId}/documents`,
+      { cache: "no-store" }
+    );
     return handleResponse(response);
   },
 

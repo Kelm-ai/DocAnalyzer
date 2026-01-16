@@ -1,12 +1,17 @@
 import { useState } from "react"
-import { HelpCircle, AlertTriangle } from "lucide-react"
+import { HelpCircle, AlertTriangle, FileText, Files } from "lucide-react"
 import { DocumentUploader } from "@/components/upload/DocumentUploader"
+import { MultiDocumentUploader } from "@/components/upload/MultiDocumentUploader"
 import { Modal } from "@/components/ui/modal"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+
+type UploadMode = "single" | "multi"
 
 export function Upload() {
   const [helpOpen, setHelpOpen] = useState(false)
+  const [uploadMode, setUploadMode] = useState<UploadMode>("single")
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -43,7 +48,31 @@ export function Upload() {
         </CardContent>
       </Card>
 
-      <DocumentUploader />
+      {/* Upload Mode Toggle */}
+      <div className="mb-6 flex gap-2">
+        <Button
+          variant={uploadMode === "single" ? "default" : "outline"}
+          onClick={() => setUploadMode("single")}
+          className="flex items-center gap-2"
+        >
+          <FileText className="h-4 w-4" />
+          Single Document
+        </Button>
+        <Button
+          variant={uploadMode === "multi" ? "default" : "outline"}
+          onClick={() => setUploadMode("multi")}
+          className="flex items-center gap-2"
+        >
+          <Files className="h-4 w-4" />
+          Multi-Document
+        </Button>
+      </div>
+
+      {uploadMode === "single" ? (
+        <DocumentUploader />
+      ) : (
+        <MultiDocumentUploader />
+      )}
 
       <Modal
         open={helpOpen}
@@ -57,13 +86,34 @@ export function Upload() {
       >
         <div className="space-y-4">
           <div>
+            <h4 className="font-medium text-gray-900 mb-2">Upload Modes</h4>
+            <ul className="text-sm text-gray-600 list-disc list-inside space-y-2">
+              <li><span className="font-medium">Single Document:</span> Upload one document for evaluation</li>
+              <li><span className="font-medium">Multi-Document:</span> Upload a primary document with supporting evidence (SOPs, policies, templates)</li>
+            </ul>
+          </div>
+
+          <div>
             <h4 className="font-medium text-gray-900 mb-2">Process</h4>
             <ol className="text-sm text-gray-600 list-decimal list-inside space-y-2">
-              <li>Add your SOP (PDF or DOCX) using drag and drop or the "Select Files" button.</li>
-              <li>Once uploaded, your SOP will appear in the upload queue.</li>
-              <li>Click "Start Upload & Evaluation" to begin processing. This may take a few minutes.</li>
-              <li>When the status updates to "Complete", click "View Results" for the assessment.</li>
+              <li>Select upload mode (Single or Multi-Document)</li>
+              <li>Add your primary SOP (PDF) using drag and drop or the "Select Files" button</li>
+              <li>For Multi-Document: add supporting documents as evidence context</li>
+              <li>Click "Start Upload & Evaluation" to begin processing</li>
+              <li>When complete, click "View Results" for the assessment</li>
             </ol>
+          </div>
+
+          <div>
+            <h4 className="font-medium text-gray-900 mb-2">Multi-Document Benefits</h4>
+            <p className="text-sm text-gray-600 mb-2">
+              Supporting documents provide context when the primary document references external materials:
+            </p>
+            <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
+              <li>Training policies referenced in your procedure</li>
+              <li>Work instructions or templates mentioned</li>
+              <li>Related SOPs for cross-reference verification</li>
+            </ul>
           </div>
 
           <div>
