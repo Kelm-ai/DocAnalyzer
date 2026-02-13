@@ -33,7 +33,7 @@ export function ComplianceSummary() {
   const complianceLevel = getComplianceLevel(evaluation.overall_compliance_score)
 
   const highRiskFindings = [
-    "Missing formal competency matrix for risk management team",
+    "Missing formal competency matrix for the process team",
     "Incomplete training documentation for 3 team members",
     "No role-based competency profiles defined"
   ]
@@ -92,7 +92,7 @@ export function ComplianceSummary() {
               </div>
               <div className="mt-4 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Based on ISO 14971:2019 requirements
+                  Based on framework requirements
                 </p>
               </div>
             </div>
@@ -129,7 +129,7 @@ export function ComplianceSummary() {
         <CardHeader>
           <CardTitle>Compliance by Clause</CardTitle>
           <CardDescription>
-            Performance breakdown across ISO 14971 clauses
+            Performance breakdown by requirement area
           </CardDescription>
         </CardHeader>
         <CardContent>

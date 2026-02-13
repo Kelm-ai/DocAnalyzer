@@ -126,7 +126,7 @@ export function RequirementsTable() {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Evaluation")
 
     const timestamp = new Date().toISOString().split("T")[0]
-    const filename = `iso14971-evaluation-${timestamp}.xlsx`
+    const filename = `compliance-evaluation-${timestamp}.xlsx`
     XLSX.writeFile(workbook, filename)
   }, [filteredRequirements])
 
@@ -136,7 +136,7 @@ export function RequirementsTable() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>ISO 14971 Requirements Evaluation</CardTitle>
+              <CardTitle>Requirements Evaluation</CardTitle>
               <CardDescription>
                 Detailed compliance assessment for each requirement
               </CardDescription>

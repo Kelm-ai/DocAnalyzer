@@ -27,7 +27,7 @@ export function Upload() {
           </button>
         </div>
         <p className="text-muted-foreground mt-2">
-          Assess uploaded SOPs against clauses extracted from ISO 14971:2019
+          Assess uploaded documents against your selected evaluation framework
         </p>
       </div>
 

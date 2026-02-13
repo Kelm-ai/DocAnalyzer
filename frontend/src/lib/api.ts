@@ -1,5 +1,5 @@
 /**
- * API client for ISO 14971 Compliance Pipeline
+ * API client for Document Compliance Evaluation Pipeline
  */
 import type { ISORequirement } from "./types"
 

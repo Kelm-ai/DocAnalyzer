@@ -19,12 +19,12 @@ export function Header({ onMenuClick }: HeaderProps) {
         </Button>
         <div className="flex items-center space-x-2">
           <Shield className="h-6 w-6 text-blue-600" />
-          <h1 className="text-xl font-bold">ISO 14971 Compliance Evaluator</h1>
+          <h1 className="text-xl font-bold">Document Compliance Evaluator</h1>
         </div>
         <div className="ml-auto flex items-center space-x-4">
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <FileText className="h-4 w-4" />
-            <span>Medical Device Risk Management</span>
+            <span>Regulatory Document Assessment</span>
           </div>
         </div>
       </div>

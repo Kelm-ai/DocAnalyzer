@@ -275,7 +275,7 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
             onFilesChange={setPrimaryFiles}
             disabled={uploadPhase !== "idle"}
             label="Drop your primary document here"
-            description="This is the document that will be evaluated (e.g., Risk Management Plan, Procedure)"
+            description="This is the document that will be evaluated (e.g., SOP, Policy, Plan)"
           />
         </CardContent>
       </Card>

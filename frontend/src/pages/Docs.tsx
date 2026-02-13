@@ -7,7 +7,7 @@ export function Docs() {
       <div className="mb-8">
         <h2 className="text-3xl font-bold tracking-tight">Work Instruction</h2>
         <p className="text-muted-foreground mt-2">
-          Instructions for using the Risk Management SOP AI Assessment Tool
+          Instructions for using the Document AI Assessment Tool
         </p>
       </div>
 
@@ -18,8 +18,8 @@ export function Docs() {
           </CardHeader>
           <CardContent className="text-sm text-gray-600">
             <p>
-              This tool assesses uploaded Standard Operating Procedures (SOPs) against a list of
-              clauses extracted from ISO 14971:2019. It is intended for an initial assessment;
+              This tool assesses uploaded documents against
+              requirements from the selected evaluation framework. It is intended for an initial assessment;
               results may be incorporated into a final assessment including human review and feedback.
             </p>
             <p className="mt-3">
@@ -37,13 +37,12 @@ export function Docs() {
             <div>
               <p className="font-medium text-gray-900 mb-2">In Scope:</p>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Assessment of Standard Operating Procedures against ISO 14971:2019</li>
+                <li>Assessment of regulatory documents against configured evaluation frameworks</li>
               </ul>
             </div>
             <div>
               <p className="font-medium text-gray-900 mb-2">Out of Scope:</p>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Assessment against any other standard, regulation, or guidance</li>
                 <li>Combination product-specific or drug elements</li>
               </ul>
             </div>
@@ -195,7 +194,7 @@ export function Docs() {
           <CardContent className="space-y-3 text-sm text-gray-600">
             <div>
               <p className="font-medium text-gray-900 mb-1">Requirements Tab</p>
-              <p>View all clauses extracted from ISO 14971:2019. Each clause has a title, clause number, and requirement text with criteria and examples.</p>
+              <p>View the requirements for the selected framework. Each requirement has a title, reference, and evaluation criteria with examples.</p>
             </div>
             <div>
               <p className="font-medium text-gray-900 mb-1">Export to Excel</p>
