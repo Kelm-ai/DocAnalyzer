@@ -11,15 +11,15 @@ export function ComplianceSummary() {
   const evaluation = mockDocumentEvaluation
   
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600"
-    if (score >= 60) return "text-yellow-600"
-    return "text-red-600"
+    if (score >= 80) return "text-status-pass"
+    if (score >= 60) return "text-status-flagged"
+    return "text-status-fail"
   }
 
   const getScoreBackground = (score: number) => {
-    if (score >= 80) return "bg-green-100"
-    if (score >= 60) return "bg-yellow-100"
-    return "bg-red-100"
+    if (score >= 80) return "bg-status-pass-bg"
+    if (score >= 60) return "bg-status-flagged-bg"
+    return "bg-status-fail-bg"
   }
 
   const getComplianceLevel = (score: number) => {
@@ -100,22 +100,22 @@ export function ComplianceSummary() {
             {/* Statistics */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col items-center p-4 border rounded-lg">
-                <CheckCircle2 className="h-8 w-8 text-green-600 mb-2" />
+                <CheckCircle2 className="h-8 w-8 text-status-pass mb-2" />
                 <div className="text-2xl font-bold">{evaluation.requirements_passed}</div>
                 <div className="text-sm text-muted-foreground">Passed</div>
               </div>
               <div className="flex flex-col items-center p-4 border rounded-lg">
-                <XCircle className="h-8 w-8 text-red-600 mb-2" />
+                <XCircle className="h-8 w-8 text-status-fail mb-2" />
                 <div className="text-2xl font-bold">{evaluation.requirements_failed}</div>
                 <div className="text-sm text-muted-foreground">Failed</div>
               </div>
               <div className="flex flex-col items-center p-4 border rounded-lg">
-                <AlertCircle className="h-8 w-8 text-yellow-600 mb-2" />
+                <AlertCircle className="h-8 w-8 text-sc-gold-dark mb-2" />
                 <div className="text-2xl font-bold">{evaluation.requirements_flagged ?? evaluation.requirements_partial ?? 0}</div>
                 <div className="text-sm text-muted-foreground">Flagged</div>
               </div>
               <div className="flex flex-col items-center p-4 border rounded-lg">
-                <FileText className="h-8 w-8 text-gray-400 mb-2" />
+                <FileText className="h-8 w-8 text-status-na mb-2" />
                 <div className="text-2xl font-bold">{evaluation.requirements_na}</div>
                 <div className="text-sm text-muted-foreground">N/A</div>
               </div>
@@ -161,7 +161,7 @@ export function ComplianceSummary() {
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <AlertTriangle className="h-5 w-5 text-status-fail" />
               <CardTitle>High Risk Findings</CardTitle>
             </div>
             <CardDescription>
@@ -172,7 +172,7 @@ export function ComplianceSummary() {
             <ul className="space-y-3">
               {highRiskFindings.map((finding, i) => (
                 <li key={i} className="flex items-start space-x-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 mt-1.5 flex-shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-status-fail mt-1.5 flex-shrink-0" />
                   <span className="text-sm">{finding}</span>
                 </li>
               ))}
@@ -184,7 +184,7 @@ export function ComplianceSummary() {
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-blue-600" />
+              <TrendingUp className="h-5 w-5 text-sc" />
               <CardTitle>Key Recommendations</CardTitle>
             </div>
             <CardDescription>
@@ -194,7 +194,7 @@ export function ComplianceSummary() {
           <CardContent>
             <div className="space-y-3">
               {keyRecommendations.map((rec, i) => (
-                <div key={i} className="border-l-2 border-blue-600 pl-3 py-1">
+                <div key={i} className="border-l-2 border-sc pl-3 py-1">
                   <div className="flex items-center space-x-2 mb-1">
                     <Badge 
                       variant={rec.priority === "High" ? "destructive" : "secondary"}

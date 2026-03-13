@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guided Walkthrough — Compliance Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #faf7f2;
+    color: #5a4a3f;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  /* ── Top bar ── */
+  .top-bar {
+    background: #fff;
+    border-bottom: 1px solid #e8e0d8;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .top-bar-logo {
+    width: 28px;
+    height: 28px;
+    background: #da7756;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .top-bar-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #3d3028;
+  }
+
+  .top-bar-badge {
+    font-size: 11px;
+    color: #9a897d;
+    border: 1px solid #e8e0d8;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-weight: 500;
+  }
+
+  /* ── Progress indicator ── */
+  .progress-bar-container {
+    background: #fff;
+    border-bottom: 1px solid #e8e0d8;
+    padding: 20px 32px;
+    overflow-x: auto;
+  }
+
+  .progress-track {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-width: 700px;
+    gap: 0;
+    position: relative;
+  }
+
+  .progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+    cursor: pointer;
+    max-width: 120px;
+  }
+
+  .progress-step.disabled {
+    cursor: default;
+  }
+
+  .progress-dot-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    position: relative;
+    justify-content: center;
+  }
+
+  .progress-line-left,
+  .progress-line-right {
+    flex: 1;
+    height: 2px;
+    background: #e8e0d8;
+    transition: background 0.3s ease;
+  }
+
+  .progress-line-left.done,
+  .progress-line-right.done {
+    background: #da7756;
+  }
+
+  .progress-step:first-child .progress-line-left {
+    visibility: hidden;
+  }
+
+  .progress-step:last-child .progress-line-right {
+    visibility: hidden;
+  }
+
+  .progress-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #e8e0d8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #b8a99e;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .progress-dot.active {
+    background: #da7756;
+    border-color: #da7756;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(218, 119, 86, 0.15);
+  }
+
+  .progress-dot.completed {
+    background: #da7756;
+    border-color: #da7756;
+    color: #fff;
+  }
+
+  .progress-dot .check-icon {
+    display: none;
+    width: 14px;
+    height: 14px;
+  }
+
+  .progress-dot.completed .check-icon {
+    display: block;
+  }
+
+  .progress-dot.completed .dot-number {
+    display: none;
+  }
+
+  .progress-label {
+    font-size: 10px;
+    color: #b8a99e;
+    margin-top: 6px;
+    text-align: center;
+    line-height: 1.3;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .progress-step.active .progress-label,
+  .progress-step.completed .progress-label {
+    color: #5a4a3f;
+  }
+
+  .progress-step.active .progress-label {
+    font-weight: 600;
+    color: #da7756;
+  }
+
+  /* ── Main content area ── */
+  .main-content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 24px 100px;
+  }
+
+  /* ── Step panels ── */
+  .step-panel {
+    display: none;
+    animation: fadeIn 0.35s ease;
+  }
+
+  .step-panel.visible {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(90, 74, 63, 0.06), 0 0 0 1px rgba(90, 74, 63, 0.04);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .card-tight {
+    padding: 20px 24px;
+  }
+
+  /* ── Step 1: Overview ── */
+  .welcome-heading {
+    font-size: 22px;
+    font-weight: 600;
+    color: #3d3028;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+
+  .welcome-sub {
+    font-size: 15px;
+    color: #9a897d;
+    margin-bottom: 28px;
+  }
+
+  .doc-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .doc-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .doc-info-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #b8a99e;
+    font-weight: 600;
+  }
+
+  .doc-info-value {
+    font-size: 14px;
+    color: #3d3028;
+    font-weight: 500;
+  }
+
+  .score-display {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    background: #faf7f2;
+    border-radius: 10px;
+    margin-bottom: 24px;
+  }
+
+  .score-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .score-circle.moderate {
+    background: linear-gradient(135deg, #da7756, #c96a4b);
+  }
+
+  .score-text {
+    flex: 1;
+  }
+
+  .score-text h3 {
+    font-size: 15px;
+    color: #3d3028;
+    margin-bottom: 2px;
+  }
+
+  .score-text p {
+    font-size: 13px;
+    color: #9a897d;
+  }
+
+  .summary-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .stat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .stat-chip.fail { background: #fef2f0; color: #c0392b; }
+  .stat-chip.fail .stat-dot { background: #e74c3c; }
+
+  .stat-chip.flagged { background: #fef9ee; color: #b8860b; }
+  .stat-chip.flagged .stat-dot { background: #f0ad4e; }
+
+  .stat-chip.pass { background: #f0f8f0; color: #27754a; }
+  .stat-chip.pass .stat-dot { background: #2ecc71; }
+
+  .stat-chip.na { background: #f5f3f0; color: #9a897d; }
+  .stat-chip.na .stat-dot { background: #b8a99e; }
+
+  .walkthrough-note {
+    font-size: 14px;
+    color: #7a6a5e;
+    background: #faf7f2;
+    padding: 16px 20px;
+    border-radius: 10px;
+    border-left: 3px solid #da7756;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  /* ── Finding cards (Steps 2-7) ── */
+  .finding-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .finding-step-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #b8a99e;
+    font-weight: 600;
+  }
+
+  .finding-step-label.critical { color: #c0392b; }
+  .finding-step-label.attention { color: #b8860b; }
+
+  .finding-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #3d3028;
+    margin-bottom: 20px;
+    letter-spacing: -0.01em;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .status-badge.fail {
+    background: #fef2f0;
+    color: #c0392b;
+    border: 1px solid #f5c6c0;
+  }
+
+  .status-badge.flagged {
+    background: #fef9ee;
+    color: #b8860b;
+    border: 1px solid #f0dca8;
+  }
+
+  .status-badge.pass {
+    background: #f0f8f0;
+    color: #27754a;
+    border: 1px solid #b8e0c4;
+  }
+
+  .status-badge.na {
+    background: #f5f3f0;
+    color: #9a897d;
+    border: 1px solid #e0d8d0;
+  }
+
+  .finding-meta {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .meta-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #b8a99e;
+    font-weight: 600;
+  }
+
+  .meta-value {
+    font-size: 14px;
+    color: #3d3028;
+    font-weight: 500;
+  }
+
+  .confidence-inline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .confidence-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .confidence-dot.high { background: #2ecc71; }
+  .confidence-dot.medium { background: #f0ad4e; }
+  .confidence-dot.low { background: #e74c3c; }
+
+  .section-divider {
+    height: 1px;
+    background: #ede8e2;
+    margin: 20px 0;
+  }
+
+  .detail-block {
+    margin-bottom: 20px;
+  }
+
+  .detail-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #b8a99e;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .confidence-explanation {
+    font-size: 13px;
+    color: #7a6a5e;
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  .evidence-block {
+    background: #faf7f2;
+    border-left: 3px solid #da7756;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    font-size: 14px;
+    color: #5a4a3f;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  .detail-text {
+    font-size: 14px;
+    color: #5a4a3f;
+    line-height: 1.6;
+  }
+
+  .recommendation-block {
+    background: #f9f6f1;
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 14px;
+    color: #5a4a3f;
+    line-height: 1.6;
+  }
+
+  /* ── Review actions ── */
+  .review-actions {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid #ede8e2;
+  }
+
+  .review-actions-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #3d3028;
+    margin-bottom: 12px;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: 2px solid #e8e0d8;
+    background: #fff;
+    color: #5a4a3f;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .action-btn:hover {
+    border-color: #d0c8c0;
+    background: #faf7f2;
+  }
+
+  .action-btn.selected-agree {
+    background: #f0f8f0;
+    border-color: #6dc08a;
+    color: #27754a;
+  }
+
+  .action-btn.selected-disagree {
+    background: #fef2f0;
+    border-color: #e8a098;
+    color: #c0392b;
+  }
+
+  .action-btn.selected-skip {
+    background: #fef9ee;
+    border-color: #e8d8a8;
+    color: #b8860b;
+  }
+
+  /* ── Nav buttons ── */
+  .nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    gap: 16px;
+  }
+
+  .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .nav-btn.primary {
+    background: #da7756;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(218, 119, 86, 0.25);
+  }
+
+  .nav-btn.primary:hover {
+    background: #c96a4b;
+    box-shadow: 0 4px 12px rgba(218, 119, 86, 0.35);
+  }
+
+  .nav-btn.primary:disabled {
+    background: #e8e0d8;
+    color: #b8a99e;
+    box-shadow: none;
+    cursor: default;
+  }
+
+  .nav-btn.secondary {
+    background: #fff;
+    color: #5a4a3f;
+    border: 1px solid #e8e0d8;
+  }
+
+  .nav-btn.secondary:hover {
+    background: #faf7f2;
+    border-color: #d0c8c0;
+  }
+
+  .nav-btn.secondary:disabled {
+    color: #d0c8c0;
+    cursor: default;
+  }
+
+  .nav-spacer {
+    flex: 1;
+  }
+
+  /* ── Step 8: Passed items ── */
+  .passed-intro {
+    font-size: 14px;
+    color: #7a6a5e;
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .passed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .passed-item {
+    background: #fff;
+    border: 1px solid #ede8e2;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+  }
+
+  .passed-item:hover {
+    border-color: #d0c8c0;
+  }
+
+  .passed-item-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .passed-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #e8f5e9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .passed-check svg {
+    width: 12px;
+    height: 12px;
+    color: #27754a;
+  }
+
+  .passed-item-id {
+    font-size: 12px;
+    font-weight: 600;
+    color: #b8a99e;
+    min-width: 70px;
+  }
+
+  .passed-item-title {
+    font-size: 14px;
+    color: #3d3028;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .passed-item-confidence {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .passed-item-confidence.high {
+    background: #f0f8f0;
+    color: #27754a;
+  }
+
+  .passed-item-confidence.medium {
+    background: #fef9ee;
+    color: #b8860b;
+  }
+
+  .passed-item-chevron {
+    width: 16px;
+    height: 16px;
+    color: #b8a99e;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .passed-item.expanded .passed-item-chevron {
+    transform: rotate(90deg);
+  }
+
+  .passed-item-body {
+    display: none;
+    padding: 0 18px 16px;
+    border-top: 1px solid #ede8e2;
+  }
+
+  .passed-item.expanded .passed-item-body {
+    display: block;
+  }
+
+  .passed-evidence {
+    font-size: 13px;
+    color: #7a6a5e;
+    font-style: italic;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #faf7f2;
+    border-radius: 8px;
+    line-height: 1.5;
+  }
+
+  .passed-confidence-note {
+    font-size: 12px;
+    color: #9a897d;
+    margin-top: 8px;
+  }
+
+  .accept-all-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: 2px solid #6dc08a;
+    background: #f0f8f0;
+    color: #27754a;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .accept-all-btn:hover {
+    background: #e0f2e0;
+  }
+
+  .accept-all-btn.accepted {
+    background: #27754a;
+    color: #fff;
+    border-color: #27754a;
+  }
+
+  /* ── Step 9: Summary ── */
+  .summary-heading {
+    font-size: 22px;
+    font-weight: 600;
+    color: #3d3028;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+
+  .summary-sub {
+    font-size: 15px;
+    color: #9a897d;
+    margin-bottom: 28px;
+    text-align: center;
+  }
+
+  .summary-icon {
+    width: 56px;
+    height: 56px;
+    background: #f0f8f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+  }
+
+  .summary-icon svg {
+    width: 28px;
+    height: 28px;
+    color: #27754a;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .summary-stat {
+    background: #faf7f2;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .summary-stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: #3d3028;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .summary-stat-label {
+    font-size: 12px;
+    color: #9a897d;
+    font-weight: 500;
+  }
+
+  .summary-stat.agreed .summary-stat-number { color: #27754a; }
+  .summary-stat.disagreed .summary-stat-number { color: #c0392b; }
+  .summary-stat.skipped .summary-stat-number { color: #b8860b; }
+  .summary-stat.auto .summary-stat-number { color: #6b8fbd; }
+
+  .summary-decisions {
+    margin-bottom: 24px;
+  }
+
+  .summary-decision-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #ede8e2;
+    font-size: 14px;
+  }
+
+  .summary-decision-row:last-child {
+    border-bottom: none;
+  }
+
+  .decision-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .decision-dot.agree { background: #2ecc71; }
+  .decision-dot.disagree { background: #e74c3c; }
+  .decision-dot.skip { background: #f0ad4e; }
+  .decision-dot.auto { background: #6b8fbd; }
+
+  .decision-id {
+    font-weight: 600;
+    color: #3d3028;
+    min-width: 72px;
+  }
+
+  .decision-name {
+    flex: 1;
+    color: #5a4a3f;
+  }
+
+  .decision-action {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 6px;
+  }
+
+  .decision-action.agree { background: #f0f8f0; color: #27754a; }
+  .decision-action.disagree { background: #fef2f0; color: #c0392b; }
+  .decision-action.skip { background: #fef9ee; color: #b8860b; }
+  .decision-action.auto { background: #eef3f9; color: #5a7fa0; }
+
+  .summary-notice {
+    background: #faf7f2;
+    border-left: 3px solid #da7756;
+    padding: 14px 18px;
+    border-radius: 0 10px 10px 0;
+    font-size: 13px;
+    color: #7a6a5e;
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+
+  .summary-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* ── Toast notification ── */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #3d3028;
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(61, 48, 40, 0.25);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .top-bar { padding: 12px 16px; }
+    .progress-bar-container { padding: 14px 16px; }
+    .main-content { padding: 24px 16px 80px; }
+    .card { padding: 20px; }
+    .doc-info-grid { grid-template-columns: 1fr; }
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+    .nav-buttons { flex-wrap: wrap; }
+    .nav-btn { flex: 1; justify-content: center; min-width: 120px; }
+    .finding-meta { gap: 12px; }
+    .action-buttons { flex-direction: column; }
+    .action-btn { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <div class="top-bar-logo">C</div>
+    <span class="top-bar-title">Compliance Review</span>
+  </div>
+  <span class="top-bar-badge">AI Assessment &mdash; Human verification required</span>
+</div>
+
+<!-- Progress indicator -->
+<div class="progress-bar-container">
+  <div class="progress-track" id="progressTrack">
+    <!-- Rendered by JS -->
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="main-content">
+  <!-- Step panels rendered by JS -->
+  <div id="stepContainer"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ────────────────────────────
+     MOCK DATA
+  ──────────────────────────── */
+  var requirements = [
+    // FAILURES (3)
+    {
+      id: 'REQ-6.1.2',
+      title: 'Risk Assessment Process',
+      clause: '6.1',
+      status: 'fail',
+      confidence: 'medium',
+      confidenceReason: 'General risk language detected but no structured methodology present',
+      evidence: 'The organization shall ensure information security risks are managed appropriately (Section 4.2)',
+      gap: 'No documented risk assessment methodology found. The policy references risk management in general terms but lacks a specific, repeatable process for identifying, analyzing, and evaluating information security risks.',
+      recommendation: 'Develop and document a formal risk assessment methodology including criteria for risk acceptance and assessment frequency.'
+    },
+    {
+      id: 'REQ-8.1.1',
+      title: 'Operational Planning and Control',
+      clause: '8.1',
+      status: 'fail',
+      confidence: 'high',
+      confidenceReason: 'Clear absence of operational procedures in the document',
+      evidence: 'Security controls shall be implemented as deemed necessary by management (Section 7.1)',
+      gap: 'Missing documented operational procedures for security controls. While the policy states controls should be implemented, there are no references to specific operational procedures or work instructions.',
+      recommendation: 'Create detailed operational procedures for each security control, including responsibilities, frequency, and documentation requirements.'
+    },
+    {
+      id: 'REQ-6.2.1',
+      title: 'Information Security Objectives',
+      clause: '6.2',
+      status: 'fail',
+      confidence: 'high',
+      confidenceReason: 'Only aspirational language found; no measurable objectives present',
+      evidence: 'The organization is committed to maintaining a high level of information security (Section 1.3)',
+      gap: 'No measurable information security objectives defined. The policy contains aspirational statements but lacks specific, measurable, achievable, relevant, and time-bound (SMART) objectives.',
+      recommendation: 'Define SMART information security objectives aligned with the overall business objectives and communicate them throughout the organization.'
+    },
+    // FLAGGED (3)
+    {
+      id: 'REQ-7.2.1',
+      title: 'Competence Requirements',
+      clause: '7.2',
+      status: 'flagged',
+      confidence: 'low',
+      confidenceReason: 'Training framework partially present; implementation evidence unclear from policy text alone',
+      evidence: 'Staff shall receive appropriate information security training upon joining and annually thereafter (Section 5.4)',
+      gap: 'Partial competence framework found but missing evidence of implementation. Training requirements are listed but no records of completion or effectiveness evaluation.',
+      recommendation: 'Implement a competence tracking system with records of training completion, competency assessments, and periodic reviews.'
+    },
+    {
+      id: 'REQ-9.1.1',
+      title: 'Monitoring and Measurement',
+      clause: '9.1',
+      status: 'flagged',
+      confidence: 'medium',
+      confidenceReason: 'Monitoring mentioned but lacks specificity on metrics and methods',
+      evidence: 'Information security performance shall be monitored and reported to management (Section 8.2)',
+      gap: 'Monitoring requirements mentioned but no specific metrics or KPIs defined. The policy states monitoring should occur but doesn\'t specify what, how, or when.',
+      recommendation: 'Define specific security metrics and KPIs, establish measurement methods, and create a reporting schedule.'
+    },
+    {
+      id: 'REQ-9.3.1',
+      title: 'Management Review Inputs',
+      clause: '9.3',
+      status: 'flagged',
+      confidence: 'medium',
+      confidenceReason: 'Review process present but required inputs are only partially addressed',
+      evidence: 'Management shall review the ISMS at planned intervals to ensure its continuing suitability (Section 9.1)',
+      gap: 'Management review process exists but input requirements are incomplete. Missing several required input items per ISO 27001.',
+      recommendation: 'Update the management review procedure to include all required inputs: status of actions, changes in external/internal issues, feedback, and improvement opportunities.'
+    },
+    // PASSED (8)
+    {
+      id: 'REQ-5.1.1',
+      title: 'Leadership Commitment',
+      clause: '5.1',
+      status: 'pass',
+      confidence: 'high',
+      confidenceReason: 'Explicit leadership commitment with specific actions documented',
+      evidence: 'The Board of Directors and Senior Management are committed to supporting information security through adequate resource allocation, policy endorsement, and regular review (Section 2.1)'
+    },
+    {
+      id: 'REQ-5.2.1',
+      title: 'Information Security Policy',
+      clause: '5.2',
+      status: 'pass',
+      confidence: 'high',
+      confidenceReason: 'Policy document itself serves as direct evidence of this requirement',
+      evidence: 'This Information Security Policy establishes the framework for managing information security risks and demonstrates our commitment to protecting information assets (Section 1.1)'
+    },
+    {
+      id: 'REQ-5.3.1',
+      title: 'Organizational Roles',
+      clause: '5.3',
+      status: 'pass',
+      confidence: 'medium',
+      confidenceReason: 'Key roles defined but granularity of responsibilities could be improved',
+      evidence: 'The Chief Information Security Officer (CISO) is responsible for the overall ISMS. Department heads are responsible for implementing security controls within their areas (Section 3.1)'
+    },
+    {
+      id: 'REQ-7.1.1',
+      title: 'Resources',
+      clause: '7.1',
+      status: 'pass',
+      confidence: 'high',
+      confidenceReason: 'Explicit resource commitment with annual budget review cycle',
+      evidence: 'The organization shall determine and provide the resources needed for the ISMS including budget allocation reviewed annually (Section 5.1)'
+    },
+    {
+      id: 'REQ-7.3.1',
+      title: 'Awareness',
+      clause: '7.3',
+      status: 'pass',
+      confidence: 'high',
+      confidenceReason: 'Comprehensive awareness requirements covering all ISO 27001 elements',
+      evidence: 'All employees shall be made aware of the information security policy, their contribution to the ISMS effectiveness, and implications of non-conformance (Section 5.5)'
+    },
+    {
+      id: 'REQ-7.4.1',
+      title: 'Communication',
+      clause: '7.4',
+      status: 'pass',
+      confidence: 'medium',
+      confidenceReason: 'Communication plan referenced but detail level could be deeper',
+      evidence: 'Internal and external communications regarding information security shall follow the defined communication plan including what to communicate, when, and to whom (Section 5.6)'
+    },
+    {
+      id: 'REQ-9.2.1',
+      title: 'Internal Audit',
+      clause: '9.2',
+      status: 'pass',
+      confidence: 'high',
+      confidenceReason: 'Clear audit requirements with frequency, independence, and qualification criteria',
+      evidence: 'Internal audits of the ISMS shall be conducted at planned intervals, at least annually, by qualified auditors independent of the areas being audited (Section 8.3)'
+    },
+    {
+      id: 'REQ-7.5.1',
+      title: 'Documented Information',
+      clause: '7.5',
+      status: 'pass',
+      confidence: 'high',
+      confidenceReason: 'Comprehensive documentation controls including versioning and access management',
+      evidence: 'All ISMS documentation shall be controlled, versioned, and maintained in the document management system with appropriate access controls (Section 5.7)'
+    },
+    // N/A (1)
+    {
+      id: 'REQ-8.2.1',
+      title: 'Information Security Risk Assessment',
+      clause: '8.2',
+      status: 'na',
+      confidence: 'high',
+      confidenceReason: 'Clear overlap with REQ-6.1.2 assessment',
+      evidence: 'Assessed under REQ-6.1.2. This requirement is covered by the risk assessment process evaluation.'
+    }
+  ];
+
+  var failures = requirements.filter(function(r) { return r.status === 'fail'; });
+  var flagged = requirements.filter(function(r) { return r.status === 'flagged'; });
+  var passed = requirements.filter(function(r) { return r.status === 'pass'; });
+
+  /* ────────────────────────────
+     STATE
+  ──────────────────────────── */
+  var stepLabels = [
+    'Overview',
+    'Critical 1',
+    'Critical 2',
+    'Critical 3',
+    'Flagged 1',
+    'Flagged 2',
+    'Flagged 3',
+    'Passed',
+    'Summary'
+  ];
+
+  var currentStep = 0;
+  var decisions = {}; // keyed by requirement id: 'agree' | 'disagree' | 'skip'
+  var passedAccepted = false;
+
+  /* ────────────────────────────
+     HELPERS
+  ──────────────────────────── */
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    setTimeout(function() { t.classList.remove('visible'); }, 2200);
+  }
+
+  function confidenceLabel(level) {
+    var map = {
+      high: 'The AI is highly confident in this assessment',
+      medium: 'The AI is moderately confident in this assessment',
+      low: 'The AI has low confidence \u2014 your expertise is especially important here'
+    };
+    return map[level] || '';
+  }
+
+  function checkSvg() {
+    return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.5 3.5 6.5-7"/></svg>';
+  }
+
+  function chevronRightSvg() {
+    return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>';
+  }
+
+  /* ────────────────────────────
+     RENDER PROGRESS BAR
+  ──────────────────────────── */
+  function renderProgress() {
+    var track = document.getElementById('progressTrack');
+    var html = '';
+    for (var i = 0; i < stepLabels.length; i++) {
+      var isCompleted = i < currentStep;
+      var isActive = i === currentStep;
+      var cls = '';
+      if (isCompleted) cls = 'completed';
+      else if (isActive) cls = 'active';
+
+      var lineLeftCls = i <= currentStep ? 'done' : '';
+      var lineRightCls = i < currentStep ? 'done' : '';
+
+      html += '<div class="progress-step ' + cls + (i > currentStep ? ' disabled' : '') + '" onclick="window._goToStep(' + i + ')">';
+      html += '<div class="progress-dot-row">';
+      html += '<div class="progress-line-left ' + lineLeftCls + '"></div>';
+      html += '<div class="progress-dot ' + (isCompleted ? 'completed' : '') + (isActive ? ' active' : '') + '">';
+      html += '<span class="check-icon">' + checkSvg() + '</span>';
+      html += '<span class="dot-number">' + (i + 1) + '</span>';
+      html += '</div>';
+      html += '<div class="progress-line-right ' + lineRightCls + '"></div>';
+      html += '</div>';
+      html += '<div class="progress-label">' + esc(stepLabels[i]) + '</div>';
+      html += '</div>';
+    }
+    track.innerHTML = html;
+  }
+
+  /* ────────────────────────────
+     RENDER STEP PANELS
+  ──────────────────────────── */
+  function renderStep() {
+    var container = document.getElementById('stepContainer');
+    var html = '';
+
+    if (currentStep === 0) {
+      html = renderOverview();
+    } else if (currentStep >= 1 && currentStep <= 3) {
+      html = renderCriticalFinding(currentStep - 1);
+    } else if (currentStep >= 4 && currentStep <= 6) {
+      html = renderFlaggedFinding(currentStep - 4);
+    } else if (currentStep === 7) {
+      html = renderPassedItems();
+    } else if (currentStep === 8) {
+      html = renderSummary();
+    }
+
+    container.innerHTML = '<div class="step-panel visible">' + html + '</div>';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* Step 1: Overview */
+  function renderOverview() {
+    var h = '';
+    h += '<div class="card">';
+    h += '<div class="welcome-heading">Let\'s review the compliance assessment for your document.</div>';
+    h += '<div class="welcome-sub">A guided walkthrough of your ISO 27001 assessment results.</div>';
+
+    h += '<div class="doc-info-grid">';
+    h += '<div class="doc-info-item"><span class="doc-info-label">Document</span><span class="doc-info-value">Information Security Management Policy v3.2</span></div>';
+    h += '<div class="doc-info-item"><span class="doc-info-label">Framework</span><span class="doc-info-value">ISO 27001:2022</span></div>';
+    h += '<div class="doc-info-item"><span class="doc-info-label">Assessment Date</span><span class="doc-info-value">2024-01-15</span></div>';
+    h += '<div class="doc-info-item"><span class="doc-info-label">Total Requirements</span><span class="doc-info-value">15</span></div>';
+    h += '</div>';
+
+    h += '<div class="score-display">';
+    h += '<div class="score-circle moderate">73%</div>';
+    h += '<div class="score-text"><h3>Overall Compliance Score</h3><p>Based on automated analysis of your document against the ISO 27001:2022 framework.</p></div>';
+    h += '</div>';
+
+    h += '<div class="summary-stats">';
+    h += '<span class="stat-chip fail"><span class="stat-dot"></span>3 Failures</span>';
+    h += '<span class="stat-chip flagged"><span class="stat-dot"></span>3 Flagged</span>';
+    h += '<span class="stat-chip pass"><span class="stat-dot"></span>8 Passed</span>';
+    h += '<span class="stat-chip na"><span class="stat-dot"></span>1 N/A</span>';
+    h += '</div>';
+
+    h += '<div class="walkthrough-note">We\'ll walk through each finding that needs your attention, starting with the most critical. You\'ll be asked to agree, disagree, or skip each finding. At the end, you\'ll review passed items and see a full summary.</div>';
+    h += '</div>';
+
+    h += '<div class="nav-buttons">';
+    h += '<span class="nav-spacer"></span>';
+    h += '<button class="nav-btn primary" onclick="window._nextStep()">Begin Review <span>&rarr;</span></button>';
+    h += '</div>';
+
+    return h;
+  }
+
+  /* Steps 2-4: Critical findings */
+  function renderCriticalFinding(index) {
+    var req = failures[index];
+    var num = index + 1;
+    var decKey = req.id;
+    var currentDec = decisions[decKey] || null;
+
+    var h = '';
+    h += '<div class="card">';
+
+    h += '<div class="finding-header">';
+    h += '<span class="finding-step-label critical">Critical Finding ' + num + ' of ' + failures.length + '</span>';
+    h += '<span class="status-badge fail">Fail</span>';
+    h += '</div>';
+
+    h += '<div class="finding-title">' + esc(req.id) + ' &mdash; ' + esc(req.title) + '</div>';
+
+    h += '<div class="finding-meta">';
+    h += '<div class="meta-item"><span class="meta-label">Clause</span><span class="meta-value">' + esc(req.clause) + '</span></div>';
+    h += '<div class="meta-item"><span class="meta-label">Confidence</span><span class="meta-value"><span class="confidence-inline"><span class="confidence-dot ' + req.confidence + '"></span>' + req.confidence.charAt(0).toUpperCase() + req.confidence.slice(1) + '</span></span></div>';
+    h += '</div>';
+
+    h += '<div class="confidence-explanation">' + esc(confidenceLabel(req.confidence)) + '</div>';
+
+    h += '<div class="section-divider"></div>';
+
+    h += '<div class="detail-block"><div class="detail-label">Evidence Found</div>';
+    h += '<div class="evidence-block">&ldquo;' + esc(req.evidence) + '&rdquo;</div></div>';
+
+    h += '<div class="detail-block"><div class="detail-label">Gap Identified</div>';
+    h += '<div class="detail-text">' + esc(req.gap) + '</div></div>';
+
+    h += '<div class="detail-block"><div class="detail-label">Recommendation</div>';
+    h += '<div class="recommendation-block">' + esc(req.recommendation) + '</div></div>';
+
+    h += renderReviewActions(decKey, currentDec);
+
+    h += '</div>'; // card
+
+    h += renderNavButtons(currentDec);
+
+    return h;
+  }
+
+  /* Steps 5-7: Flagged findings */
+  function renderFlaggedFinding(index) {
+    var req = flagged[index];
+    var num = index + 1;
+    var decKey = req.id;
+    var currentDec = decisions[decKey] || null;
+
+    var h = '';
+    h += '<div class="card">';
+
+    h += '<div class="finding-header">';
+    h += '<span class="finding-step-label attention">Flagged Item ' + num + ' of ' + flagged.length + ' &mdash; Needs Your Attention</span>';
+    h += '<span class="status-badge flagged">Flagged</span>';
+    h += '</div>';
+
+    h += '<div class="finding-title">' + esc(req.id) + ' &mdash; ' + esc(req.title) + '</div>';
+
+    h += '<div class="finding-meta">';
+    h += '<div class="meta-item"><span class="meta-label">Clause</span><span class="meta-value">' + esc(req.clause) + '</span></div>';
+    h += '<div class="meta-item"><span class="meta-label">Confidence</span><span class="meta-value"><span class="confidence-inline"><span class="confidence-dot ' + req.confidence + '"></span>' + req.confidence.charAt(0).toUpperCase() + req.confidence.slice(1) + '</span></span></div>';
+    h += '</div>';
+
+    h += '<div class="confidence-explanation">' + esc(confidenceLabel(req.confidence)) + '</div>';
+
+    h += '<div class="section-divider"></div>';
+
+    h += '<div class="detail-block"><div class="detail-label">Evidence Found</div>';
+    h += '<div class="evidence-block">&ldquo;' + esc(req.evidence) + '&rdquo;</div></div>';
+
+    h += '<div class="detail-block"><div class="detail-label">Gap Identified</div>';
+    h += '<div class="detail-text">' + esc(req.gap) + '</div></div>';
+
+    h += '<div class="detail-block"><div class="detail-label">Recommendation</div>';
+    h += '<div class="recommendation-block">' + esc(req.recommendation) + '</div></div>';
+
+    h += renderReviewActions(decKey, currentDec);
+
+    h += '</div>'; // card
+
+    h += renderNavButtons(currentDec);
+
+    return h;
+  }
+
+  /* Review action buttons */
+  function renderReviewActions(decKey, currentDec) {
+    var h = '';
+    h += '<div class="review-actions">';
+    h += '<div class="review-actions-label">Your assessment:</div>';
+    h += '<div class="action-buttons">';
+
+    var agreeClass = currentDec === 'agree' ? ' selected-agree' : '';
+    var disagreeClass = currentDec === 'disagree' ? ' selected-disagree' : '';
+    var skipClass = currentDec === 'skip' ? ' selected-skip' : '';
+
+    h += '<button class="action-btn' + agreeClass + '" onclick="window._setDecision(\'' + decKey + '\', \'agree\')">Agree</button>';
+    h += '<button class="action-btn' + disagreeClass + '" onclick="window._setDecision(\'' + decKey + '\', \'disagree\')">Disagree</button>';
+    h += '<button class="action-btn' + skipClass + '" onclick="window._setDecision(\'' + decKey + '\', \'skip\')">Skip for now</button>';
+    h += '</div>';
+    h += '</div>';
+    return h;
+  }
+
+  /* Nav buttons */
+  function renderNavButtons(currentDec) {
+    var h = '';
+    h += '<div class="nav-buttons">';
+    if (currentStep > 0) {
+      h += '<button class="nav-btn secondary" onclick="window._prevStep()"><span>&larr;</span> Back</button>';
+    } else {
+      h += '<span class="nav-spacer"></span>';
+    }
+    var disabled = !currentDec ? ' disabled' : '';
+    h += '<button class="nav-btn primary" ' + disabled + ' onclick="window._nextStep()">Continue <span>&rarr;</span></button>';
+    h += '</div>';
+    return h;
+  }
+
+  /* Step 8: Passed items */
+  function renderPassedItems() {
+    var h = '';
+    h += '<div class="card">';
+    h += '<div class="welcome-heading">Passed Requirements</div>';
+    h += '<div class="welcome-sub">' + passed.length + ' items appear to be satisfied</div>';
+    h += '<div class="passed-intro">These requirements appear to be satisfied based on evidence found in your document. You can expand any item to review the details, or accept them all at once.</div>';
+
+    h += '<div class="passed-list">';
+    for (var i = 0; i < passed.length; i++) {
+      var r = passed[i];
+      h += '<div class="passed-item" id="passed-item-' + i + '">';
+      h += '<div class="passed-item-header" onclick="window._togglePassedItem(' + i + ')">';
+      h += '<div class="passed-check">' + checkSvg() + '</div>';
+      h += '<span class="passed-item-id">' + esc(r.id) + '</span>';
+      h += '<span class="passed-item-title">' + esc(r.title) + '</span>';
+      h += '<span class="passed-item-confidence ' + r.confidence + '">' + r.confidence.charAt(0).toUpperCase() + r.confidence.slice(1) + '</span>';
+      h += '<span class="passed-item-chevron">' + chevronRightSvg() + '</span>';
+      h += '</div>';
+      h += '<div class="passed-item-body">';
+      h += '<div class="passed-evidence">&ldquo;' + esc(r.evidence) + '&rdquo;</div>';
+      h += '<div class="passed-confidence-note">Confidence: ' + r.confidence.charAt(0).toUpperCase() + r.confidence.slice(1) + ' &mdash; ' + esc(r.confidenceReason) + '</div>';
+      h += '</div>';
+      h += '</div>';
+    }
+    h += '</div>';
+
+    var acceptCls = passedAccepted ? ' accepted' : '';
+    var acceptLabel = passedAccepted ? 'All passed items accepted' : 'Accept all passed items';
+    h += '<button class="accept-all-btn' + acceptCls + '" onclick="window._acceptAllPassed()">' + (passedAccepted ? checkSvg() + ' ' : '') + acceptLabel + '</button>';
+
+    h += '</div>'; // card
+
+    h += '<div class="nav-buttons">';
+    h += '<button class="nav-btn secondary" onclick="window._prevStep()"><span>&larr;</span> Back</button>';
+    var disabled = !passedAccepted ? ' disabled' : '';
+    h += '<button class="nav-btn primary"' + disabled + ' onclick="window._nextStep()">View Summary <span>&rarr;</span></button>';
+    h += '</div>';
+
+    return h;
+  }
+
+  /* Step 9: Summary */
+  function renderSummary() {
+    var agreed = 0, disagreed = 0, skipped = 0, autoAccepted = 0;
+
+    // Count individual decisions
+    var reviewableIds = failures.concat(flagged).map(function(r) { return r.id; });
+    for (var i = 0; i < reviewableIds.length; i++) {
+      var d = decisions[reviewableIds[i]];
+      if (d === 'agree') agreed++;
+      else if (d === 'disagree') disagreed++;
+      else if (d === 'skip') skipped++;
+    }
+
+    if (passedAccepted) autoAccepted = passed.length;
+
+    var h = '';
+    h += '<div class="card" style="text-align:center;">';
+    h += '<div class="summary-icon">' + checkSvg() + '</div>';
+    h += '<div class="summary-heading">Review Complete</div>';
+    h += '<div class="summary-sub">You\'ve reviewed all findings in this compliance assessment.</div>';
+
+    h += '<div class="summary-grid">';
+    h += '<div class="summary-stat agreed"><div class="summary-stat-number">' + agreed + '</div><div class="summary-stat-label">Agreed</div></div>';
+    h += '<div class="summary-stat disagreed"><div class="summary-stat-number">' + disagreed + '</div><div class="summary-stat-label">Disagreed</div></div>';
+    h += '<div class="summary-stat skipped"><div class="summary-stat-number">' + skipped + '</div><div class="summary-stat-label">Skipped</div></div>';
+    h += '<div class="summary-stat auto"><div class="summary-stat-number">' + autoAccepted + '</div><div class="summary-stat-label">Auto-accepted</div></div>';
+    h += '</div>';
+    h += '</div>';
+
+    // Decision detail list
+    h += '<div class="card">';
+    h += '<div style="font-size:15px; font-weight:600; color:#3d3028; margin-bottom:16px;">Decision Details</div>';
+    h += '<div class="summary-decisions">';
+
+    // Failures + Flagged
+    var reviewable = failures.concat(flagged);
+    for (var j = 0; j < reviewable.length; j++) {
+      var r = reviewable[j];
+      var dec = decisions[r.id] || 'skip';
+      var dotCls = dec;
+      if (dotCls === 'agree') dotCls = 'agree';
+      else if (dotCls === 'disagree') dotCls = 'disagree';
+      else dotCls = 'skip';
+      var actionLabel = dec.charAt(0).toUpperCase() + dec.slice(1);
+      if (dec === 'agree') actionLabel = 'Agreed';
+      else if (dec === 'disagree') actionLabel = 'Disagreed';
+      else actionLabel = 'Skipped';
+
+      h += '<div class="summary-decision-row">';
+      h += '<span class="decision-dot ' + dotCls + '"></span>';
+      h += '<span class="decision-id">' + esc(r.id) + '</span>';
+      h += '<span class="decision-name">' + esc(r.title) + '</span>';
+      h += '<span class="decision-action ' + dotCls + '">' + actionLabel + '</span>';
+      h += '</div>';
+    }
+
+    // Passed
+    for (var k = 0; k < passed.length; k++) {
+      h += '<div class="summary-decision-row">';
+      h += '<span class="decision-dot auto"></span>';
+      h += '<span class="decision-id">' + esc(passed[k].id) + '</span>';
+      h += '<span class="decision-name">' + esc(passed[k].title) + '</span>';
+      h += '<span class="decision-action auto">Auto-accepted</span>';
+      h += '</div>';
+    }
+
+    h += '</div>'; // summary-decisions
+    h += '</div>'; // card
+
+    h += '<div class="summary-notice">Your review is complete. Remember to have a qualified compliance officer verify these findings before taking formal action on the assessment results.</div>';
+
+    h += '<div class="summary-actions">';
+    h += '<button class="nav-btn secondary" onclick="window._exportReport()">Export Report</button>';
+    h += '<button class="nav-btn secondary" onclick="window._reviewAgain()">Review Again</button>';
+    h += '<button class="nav-btn primary" onclick="window._done()">Done</button>';
+    h += '</div>';
+
+    return h;
+  }
+
+  /* ────────────────────────────
+     NAVIGATION
+  ──────────────────────────── */
+  window._nextStep = function() {
+    if (currentStep < stepLabels.length - 1) {
+      currentStep++;
+      renderProgress();
+      renderStep();
+    }
+  };
+
+  window._prevStep = function() {
+    if (currentStep > 0) {
+      currentStep--;
+      renderProgress();
+      renderStep();
+    }
+  };
+
+  window._goToStep = function(step) {
+    // Only allow going to completed steps or current step
+    if (step <= currentStep) {
+      currentStep = step;
+      renderProgress();
+      renderStep();
+    }
+  };
+
+  /* ────────────────────────────
+     DECISIONS
+  ──────────────────────────── */
+  window._setDecision = function(reqId, action) {
+    // Toggle off if clicking same
+    if (decisions[reqId] === action) {
+      delete decisions[reqId];
+    } else {
+      decisions[reqId] = action;
+    }
+    renderStep(); // re-render to update button states
+  };
+
+  /* ────────────────────────────
+     PASSED ITEMS
+  ──────────────────────────── */
+  window._togglePassedItem = function(index) {
+    var el = document.getElementById('passed-item-' + index);
+    if (el) {
+      el.classList.toggle('expanded');
+    }
+  };
+
+  window._acceptAllPassed = function() {
+    passedAccepted = !passedAccepted;
+    renderStep();
+    if (passedAccepted) {
+      showToast('All ' + passed.length + ' passed items accepted');
+    }
+  };
+
+  /* ────────────────────────────
+     SUMMARY ACTIONS
+  ──────────────────────────── */
+  window._exportReport = function() {
+    showToast('Report exported successfully');
+  };
+
+  window._reviewAgain = function() {
+    currentStep = 0;
+    decisions = {};
+    passedAccepted = false;
+    renderProgress();
+    renderStep();
+    showToast('Review reset \u2014 starting from the beginning');
+  };
+
+  window._done = function() {
+    showToast('Review saved. You may close this page.');
+  };
+
+  /* ────────────────────────────
+     INIT
+  ──────────────────────────── */
+  renderProgress();
+  renderStep();
+
+})();
+</script>
+</body>
+</html>

@@ -3,6 +3,7 @@ import { Layout } from '@/components/layout/Layout'
 import { Upload } from '@/pages/Upload'
 import { Evaluations } from '@/pages/Evaluations'
 import { Results } from '@/pages/Results'
+import { ResultsV2 } from '@/pages/ResultsV2'
 import { Frameworks } from '@/pages/Frameworks'
 import { FrameworkDetail } from '@/pages/FrameworkDetail'
 import { Docs } from '@/pages/Docs'
@@ -17,6 +18,7 @@ function App() {
             <Route path="/" element={<Upload />} />
             <Route path="/evaluations" element={<Evaluations />} />
             <Route path="/results/:evaluationId" element={<Results />} />
+            <Route path="/results-v2/:evaluationId" element={<ResultsV2 />} />
             <Route path="/frameworks" element={<Frameworks />} />
             <Route path="/frameworks/:id" element={<FrameworkDetail />} />
             {/* Redirect old requirements route to frameworks */}

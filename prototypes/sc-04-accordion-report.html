@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SC-04 Accordion Report — Suttons Creek Compliance</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
+    background: #F7F9F9;
+    color: #2D1A33;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  .sc-header {
+    border-top: 2px solid #FFC000;
+    background: #FFF;
+    height: 56px;
+    border-bottom: 1px solid #E2E5E8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    flex-shrink: 0;
+  }
+  .sc-header-left { display: flex; align-items: center; gap: 10px; }
+  .sc-logo {
+    width: 32px; height: 32px; border-radius: 4px;
+    background: #00978F; display: flex; align-items: center; justify-content: center;
+    color: #FFF; font-weight: 700; font-size: 13px; letter-spacing: 0.02em;
+  }
+  .sc-brand {
+    font-weight: 300; font-size: 18px; letter-spacing: 0.025em; color: #00978F;
+  }
+  .sc-nav { display: flex; gap: 24px; }
+  .sc-nav a {
+    text-decoration: none; font-size: 14px; font-weight: 500;
+    color: #6B7280; padding: 17px 0; border-bottom: 2px solid transparent;
+    transition: color .15s;
+  }
+  .sc-nav a:hover { color: #00978F; }
+  .sc-nav a.active { color: #00978F; border-bottom-color: #00978F; }
+  .sc-nav-sep { color: #D1D5DB; font-size: 14px; user-select: none; align-self: center; }
+
+  /* ── Main ── */
+  .sc-main { flex: 1; padding: 28px 32px 40px; max-width: 960px; width: 100%; margin: 0 auto; }
+
+  .sc-page-title {
+    font-weight: 300; text-transform: uppercase; color: #52315B;
+    font-size: 24px; letter-spacing: 0.04em; margin-bottom: 4px;
+  }
+  .sc-meta { font-size: 14px; color: #6B7280; margin-bottom: 20px; }
+
+  /* ── Summary Bar ── */
+  .sc-summary {
+    background: #FFF; border: 1px solid #E2E5E8; border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); padding: 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+  }
+  .sc-summary-counts { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .sc-summary-item { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #2D1A33; }
+  .sc-summary-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .sc-summary-sep { color: #D1D5DB; font-size: 14px; user-select: none; }
+  .sc-summary-compliance { font-size: 16px; font-weight: 600; }
+
+  /* ── Status Pills ── */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    border-radius: 9999px; padding: 2px 10px; font-size: 12px; font-weight: 600;
+    white-space: nowrap; line-height: 20px;
+  }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .pill-pass { background: #E6F5F3; color: #0D7A6F; }
+  .pill-pass .dot { background: #0D9488; }
+  .pill-fail { background: #FEF2F2; color: #DC2626; }
+  .pill-fail .dot { background: #DC2626; }
+  .pill-flagged { background: #FFF8E1; color: #946000; }
+  .pill-flagged .dot { background: #D4A017; }
+  .pill-na { background: #F3F4F6; color: #6B7280; }
+  .pill-na .dot { background: #9CA3AF; }
+
+  /* Confidence pills */
+  .conf-high { background: #E6F5F3; color: #0D7A6F; }
+  .conf-medium { background: #FFF8E1; color: #946000; }
+  .conf-low { background: #F3F4F6; color: #6B7280; }
+
+  /* ── Clause Card ── */
+  .clause-card {
+    background: #FFF; border: 1px solid #E2E5E8; border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .clause-card.border-fail { border-left: 3px solid #DC2626; }
+  .clause-card.border-flagged { border-left: 3px solid #D4A017; }
+  .clause-card.border-pass { border-left: 3px solid #0D9488; }
+
+  .clause-header {
+    display: flex; align-items: center; padding: 16px 20px;
+    cursor: pointer; user-select: none; transition: background .12s;
+    gap: 14px;
+  }
+  .clause-header:hover { background: #F7F9F9; }
+  .clause-chevron {
+    font-size: 14px; color: #9CA3AF; width: 16px; text-align: center;
+    transition: transform .2s; flex-shrink: 0;
+  }
+  .clause-card.open > .clause-header .clause-chevron { transform: rotate(90deg); }
+  .clause-name { font-weight: 600; font-size: 16px; flex-shrink: 0; }
+  .clause-ratio { font-size: 13px; color: #6B7280; margin-left: auto; white-space: nowrap; }
+  .clause-dots { display: flex; gap: 4px; align-items: center; margin-left: 14px; flex-shrink: 0; }
+  .clause-dots .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .dot-pass { background: #0D9488; }
+  .dot-fail { background: #DC2626; }
+  .dot-flagged { background: #D4A017; }
+  .dot-na { background: #9CA3AF; }
+
+  .clause-body { display: none; }
+  .clause-card.open > .clause-body { display: block; }
+
+  /* ── Requirement Row ── */
+  .req-row {
+    border-top: 1px solid rgba(226,229,232,0.3);
+    cursor: pointer; transition: background .12s;
+  }
+  .req-row:hover { background: #FAFBFB; }
+  .req-row-header {
+    display: flex; align-items: center; padding: 12px 20px; gap: 12px;
+  }
+  .req-id {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 12px; color: #6B7280; flex-shrink: 0; min-width: 80px;
+  }
+  .req-title { font-size: 14px; font-weight: 600; flex: 1; }
+  .req-chevron {
+    font-size: 12px; color: #9CA3AF; width: 14px; text-align: center;
+    transition: transform .2s; flex-shrink: 0;
+  }
+  .req-row.open > .req-row-header .req-chevron { transform: rotate(90deg); }
+
+  /* ── Requirement Detail ── */
+  .req-detail { display: none; padding: 4px 20px 16px 20px; }
+  .req-row.open > .req-detail { display: block; }
+
+  .req-detail-section { margin-bottom: 12px; }
+  .req-detail-label { font-size: 11px; text-transform: uppercase; color: #9CA3AF; letter-spacing: 0.06em; margin-bottom: 4px; font-weight: 600; }
+
+  .req-evidence {
+    border-left: 3px solid #00978F; padding: 10px 14px;
+    font-style: italic; color: #4B5563; font-size: 13px;
+    background: #FAFBFB; border-radius: 0 4px 4px 0;
+  }
+  .req-gap {
+    background: #FEF2F2; color: #DC2626; border-radius: 6px; padding: 12px;
+    font-size: 13px; line-height: 1.5;
+  }
+  .req-recommendation {
+    font-size: 13px; color: #2D1A33; line-height: 1.5;
+    padding: 10px 14px; background: #F7F9F9; border-radius: 6px;
+  }
+  .req-confidence-text { font-size: 12px; color: #9CA3AF; line-height: 1.4; }
+  .req-na-reason {
+    font-size: 13px; color: #6B7280; font-style: italic;
+    padding: 10px 14px; background: #F3F4F6; border-radius: 6px;
+  }
+
+  .req-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .btn {
+    border: none; border-radius: 6px; padding: 7px 16px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: background .15s, opacity .15s;
+  }
+  .btn:active { opacity: .85; }
+  .btn-approve { background: #00978F; color: #FFF; }
+  .btn-approve:hover { background: #005C57; }
+  .btn-reject { background: #DC2626; color: #FFF; }
+  .btn-reject:hover { background: #B91C1C; }
+  .btn-secondary {
+    background: #FFF; color: #6B7280; border: 1px solid #E2E5E8;
+  }
+  .btn-secondary:hover { background: #F7F9F9; }
+
+  .review-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; font-weight: 600; border-radius: 9999px;
+    padding: 2px 10px; line-height: 20px;
+  }
+  .review-approved { background: #E6F5F3; color: #0D7A6F; }
+  .review-rejected { background: #FEF2F2; color: #DC2626; }
+
+  /* ── Footer ── */
+  .sc-footer {
+    background: #FFF; border-top: 1px solid #E2E5E8; padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0; flex-wrap: wrap; gap: 12px;
+  }
+  .sc-footer-left { display: flex; align-items: center; gap: 16px; }
+  .sc-footer-reviewed { font-size: 14px; color: #6B7280; }
+  .sc-footer-reviewed strong { color: #2D1A33; }
+
+  /* ── AI Notice ── */
+  .ai-notice {
+    text-align: center; font-size: 12px; color: #9CA3AF;
+    padding: 12px; background: #F7F9F9;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="sc-header">
+  <div class="sc-header-left">
+    <div class="sc-logo">SC</div>
+    <span class="sc-brand">Suttons Creek Compliance</span>
+  </div>
+  <nav class="sc-nav">
+    <a href="#">Upload</a>
+    <span class="sc-nav-sep">&middot;</span>
+    <a href="#">Frameworks</a>
+    <span class="sc-nav-sep">&middot;</span>
+    <a href="#" class="active">Evaluation</a>
+  </nav>
+</header>
+
+<!-- Main Content -->
+<main class="sc-main">
+  <h1 class="sc-page-title">COMPLIANCE REPORT</h1>
+  <p class="sc-meta">Information Security Management Policy v3.2 / ISO 27001:2022 / 73%</p>
+
+  <!-- Summary Bar -->
+  <div class="sc-summary">
+    <div class="sc-summary-counts">
+      <span class="sc-summary-item"><span class="dot" style="background:#DC2626"></span>3 failed</span>
+      <span class="sc-summary-sep">&middot;</span>
+      <span class="sc-summary-item"><span class="dot" style="background:#D4A017"></span>3 flagged</span>
+      <span class="sc-summary-sep">&middot;</span>
+      <span class="sc-summary-item"><span class="dot" style="background:#0D9488"></span>8 passed</span>
+      <span class="sc-summary-sep">&middot;</span>
+      <span class="sc-summary-item"><span class="dot" style="background:#9CA3AF"></span>1 n/a</span>
+    </div>
+    <span class="sc-summary-compliance" style="color:#00978F">73% compliance</span>
+  </div>
+
+  <!-- Accordion container -->
+  <div id="accordion-root"></div>
+</main>
+
+<!-- Footer -->
+<footer class="sc-footer">
+  <div class="sc-footer-left">
+    <span class="sc-footer-reviewed" id="review-count"><strong>0</strong> of 15 reviewed</span>
+  </div>
+  <button class="btn btn-secondary" onclick="handleExport()">Export</button>
+</footer>
+
+<!-- AI Notice -->
+<div class="ai-notice">AI assessment — human verification required</div>
+
+<script>
+const DATA = [
+  { id:"REQ-6.1.2", title:"Risk Assessment Process", clause:"6.1", status:"fail", confidence:"medium", gap:"No documented risk assessment methodology found. The policy references risk management in general terms but lacks a specific, repeatable process.", evidence:"The organization shall ensure information security risks are managed appropriately (Section 4.2)", recommendation:"Develop and document a formal risk assessment methodology.", reason:null, review:"pending" },
+  { id:"REQ-8.1.1", title:"Operational Planning and Control", clause:"8.1", status:"fail", confidence:"high", gap:"Missing documented operational procedures for security controls.", evidence:"Security controls shall be implemented as deemed necessary by management (Section 7.1)", recommendation:"Create detailed operational procedures for each security control.", reason:null, review:"pending" },
+  { id:"REQ-6.2.1", title:"Information Security Objectives", clause:"6.2", status:"fail", confidence:"high", gap:"No measurable information security objectives defined.", evidence:"The organization is committed to maintaining a high level of information security (Section 1.3)", recommendation:"Define SMART information security objectives.", reason:null, review:"pending" },
+  { id:"REQ-7.2.1", title:"Competence Requirements", clause:"7.2", status:"flagged", confidence:"low", gap:"Partial competence framework found but missing evidence of implementation.", evidence:"Staff shall receive appropriate information security training upon joining and annually thereafter (Section 5.4)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-9.1.1", title:"Monitoring and Measurement", clause:"9.1", status:"flagged", confidence:"medium", gap:"Monitoring requirements mentioned but no specific metrics or KPIs defined.", evidence:"Information security performance shall be monitored and reported to management (Section 8.2)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-9.3.1", title:"Management Review Inputs", clause:"9.3", status:"flagged", confidence:"medium", gap:"Management review process exists but input requirements are incomplete.", evidence:"Management shall review the ISMS at planned intervals (Section 9.1)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-5.1.1", title:"Leadership Commitment", clause:"5.1", status:"pass", confidence:"high", gap:null, evidence:"The Board of Directors and Senior Management are committed to supporting information security (Section 2.1)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-5.2.1", title:"Information Security Policy", clause:"5.2", status:"pass", confidence:"high", gap:null, evidence:"This Information Security Policy establishes the framework for managing information security risks (Section 1.1)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-5.3.1", title:"Organizational Roles", clause:"5.3", status:"pass", confidence:"medium", gap:null, evidence:"The CISO is responsible for the overall ISMS. Department heads implement controls in their areas (Section 3.1)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-7.1.1", title:"Resources", clause:"7.1", status:"pass", confidence:"high", gap:null, evidence:"The organization shall provide resources needed for the ISMS including budget allocation reviewed annually (Section 5.1)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-7.3.1", title:"Awareness", clause:"7.3", status:"pass", confidence:"high", gap:null, evidence:"All employees shall be made aware of the information security policy (Section 5.5)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-7.4.1", title:"Communication", clause:"7.4", status:"pass", confidence:"medium", gap:null, evidence:"Internal and external communications shall follow the defined communication plan (Section 5.6)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-9.2.1", title:"Internal Audit", clause:"9.2", status:"pass", confidence:"high", gap:null, evidence:"Internal audits shall be conducted at planned intervals, at least annually (Section 8.3)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-7.5.1", title:"Documented Information", clause:"7.5", status:"pass", confidence:"high", gap:null, evidence:"All ISMS documentation shall be controlled, versioned, and maintained (Section 5.7)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-8.2.1", title:"Risk Assessment (Separate)", clause:"8.2", status:"na", confidence:"high", gap:null, evidence:null, recommendation:null, reason:"Assessed under REQ-6.1.2", review:"pending" }
+];
+
+const CLAUSE_META = {
+  "5": "Leadership",
+  "6": "Planning",
+  "7": "Support",
+  "8": "Operation",
+  "9": "Performance"
+};
+
+const CONF_TEXT = {
+  high: "High confidence: Strong, explicit evidence found in the document directly addressing this requirement.",
+  medium: "Medium confidence: Partial or indirect evidence found. The document references the topic but may lack specificity.",
+  low: "Low confidence: Weak or ambiguous evidence. Interpretation required; manual review strongly recommended."
+};
+
+// Group data by major clause number
+function groupByClauses(data) {
+  const groups = {};
+  data.forEach(req => {
+    const major = req.clause.split('.')[0];
+    if (!groups[major]) groups[major] = [];
+    groups[major].push(req);
+  });
+  // Sort groups by clause number, sort items within each group by id
+  const sorted = {};
+  Object.keys(groups).sort((a, b) => +a - +b).forEach(k => {
+    sorted[k] = groups[k].sort((a, b) => a.id.localeCompare(b.id));
+  });
+  return sorted;
+}
+
+function clauseBorderClass(reqs) {
+  if (reqs.some(r => r.status === 'fail')) return 'border-fail';
+  if (reqs.some(r => r.status === 'flagged')) return 'border-flagged';
+  return 'border-pass';
+}
+
+function passRatio(reqs) {
+  const passed = reqs.filter(r => r.status === 'pass').length;
+  return `${passed}/${reqs.length} passed`;
+}
+
+function statusLabel(s) {
+  const map = { pass: 'Pass', fail: 'Fail', flagged: 'Flagged', na: 'N/A' };
+  return map[s] || s;
+}
+
+function pillClass(s) {
+  const map = { pass: 'pill-pass', fail: 'pill-fail', flagged: 'pill-flagged', na: 'pill-na' };
+  return map[s] || '';
+}
+
+function confClass(c) {
+  const map = { high: 'conf-high', medium: 'conf-medium', low: 'conf-low' };
+  return map[c] || '';
+}
+
+function dotClass(s) {
+  const map = { pass: 'dot-pass', fail: 'dot-fail', flagged: 'dot-flagged', na: 'dot-na' };
+  return map[s] || '';
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const el = document.createElement('span');
+  el.textContent = text;
+  return el.innerHTML;
+}
+
+function renderAccordion() {
+  const groups = groupByClauses(DATA);
+  const root = document.getElementById('accordion-root');
+  root.innerHTML = '';
+
+  Object.keys(groups).forEach((clauseNum, idx) => {
+    const reqs = groups[clauseNum];
+    const label = CLAUSE_META[clauseNum] || '';
+    const border = clauseBorderClass(reqs);
+    const isFirstOpen = idx < 2; // open first two clauses by default
+
+    const card = document.createElement('div');
+    card.className = `clause-card ${border}${isFirstOpen ? ' open' : ''}`;
+    card.dataset.clause = clauseNum;
+
+    // Dots HTML
+    const dotsHtml = reqs.map(r => `<span class="dot ${dotClass(r.status)}"></span>`).join('');
+
+    // Header
+    card.innerHTML = `
+      <div class="clause-header" onclick="toggleClause(this)">
+        <span class="clause-chevron">&#9656;</span>
+        <span class="clause-name">Clause ${clauseNum} &mdash; ${escapeHtml(label)}</span>
+        <span class="clause-ratio">${passRatio(reqs)}</span>
+        <span class="clause-dots">${dotsHtml}</span>
+      </div>
+      <div class="clause-body">${reqs.map(r => renderReqRow(r)).join('')}</div>
+    `;
+
+    root.appendChild(card);
+  });
+}
+
+function renderReqRow(req) {
+  return `
+    <div class="req-row" data-id="${req.id}" onclick="toggleReq(event, this)">
+      <div class="req-row-header">
+        <span class="pill ${pillClass(req.status)}"><span class="dot"></span>${statusLabel(req.status)}</span>
+        <span class="req-id">${escapeHtml(req.id)}</span>
+        <span class="req-title">${escapeHtml(req.title)}</span>
+        <span class="pill ${confClass(req.confidence)}">${req.confidence.charAt(0).toUpperCase() + req.confidence.slice(1)}</span>
+        <span class="req-chevron">&#9656;</span>
+      </div>
+      <div class="req-detail">
+        ${renderReqDetail(req)}
+      </div>
+    </div>
+  `;
+}
+
+function renderReqDetail(req) {
+  let html = '';
+
+  // Evidence
+  if (req.evidence) {
+    html += `
+      <div class="req-detail-section">
+        <div class="req-detail-label">Evidence</div>
+        <div class="req-evidence">${escapeHtml(req.evidence)}</div>
+      </div>`;
+  }
+
+  // N/A Reason
+  if (req.status === 'na' && req.reason) {
+    html += `
+      <div class="req-detail-section">
+        <div class="req-detail-label">Reason</div>
+        <div class="req-na-reason">${escapeHtml(req.reason)}</div>
+      </div>`;
+  }
+
+  // Gap
+  if (req.gap) {
+    html += `
+      <div class="req-detail-section">
+        <div class="req-detail-label">Gap</div>
+        <div class="req-gap">${escapeHtml(req.gap)}</div>
+      </div>`;
+  }
+
+  // Recommendation
+  if (req.recommendation) {
+    html += `
+      <div class="req-detail-section">
+        <div class="req-detail-label">Recommendation</div>
+        <div class="req-recommendation">${escapeHtml(req.recommendation)}</div>
+      </div>`;
+  }
+
+  // Confidence explanation
+  html += `
+    <div class="req-detail-section">
+      <div class="req-detail-label">Confidence</div>
+      <div class="req-confidence-text">${escapeHtml(CONF_TEXT[req.confidence])}</div>
+    </div>`;
+
+  // Actions
+  html += `
+    <div class="req-detail-section req-actions" data-req-id="${req.id}">
+      ${renderActionButtons(req)}
+    </div>`;
+
+  return html;
+}
+
+function renderActionButtons(req) {
+  if (req.review === 'approved') {
+    return `<span class="review-badge review-approved">Approved</span>
+            <button class="btn btn-secondary" onclick="resetReview(event, '${req.id}')">Undo</button>`;
+  }
+  if (req.review === 'rejected') {
+    return `<span class="review-badge review-rejected">Rejected</span>
+            <button class="btn btn-secondary" onclick="resetReview(event, '${req.id}')">Undo</button>`;
+  }
+  return `<button class="btn btn-approve" onclick="approveReq(event, '${req.id}')">Approve</button>
+          <button class="btn btn-reject" onclick="rejectReq(event, '${req.id}')">Reject</button>`;
+}
+
+// ── Interactions ──
+
+function toggleClause(headerEl) {
+  const card = headerEl.closest('.clause-card');
+  card.classList.toggle('open');
+}
+
+function toggleReq(event, rowEl) {
+  // Ignore clicks on buttons
+  if (event.target.closest('.btn') || event.target.closest('.review-badge')) return;
+
+  const clauseBody = rowEl.closest('.clause-body');
+  const wasOpen = rowEl.classList.contains('open');
+
+  // Close all sibling req-rows in this clause
+  clauseBody.querySelectorAll('.req-row.open').forEach(r => {
+    if (r !== rowEl) r.classList.remove('open');
+  });
+
+  // Toggle the clicked one
+  if (wasOpen) {
+    rowEl.classList.remove('open');
+  } else {
+    rowEl.classList.add('open');
+  }
+}
+
+function findReqById(id) {
+  return DATA.find(r => r.id === id);
+}
+
+function approveReq(event, id) {
+  event.stopPropagation();
+  const req = findReqById(id);
+  if (req) req.review = 'approved';
+  refreshActions(id);
+  updateReviewCount();
+}
+
+function rejectReq(event, id) {
+  event.stopPropagation();
+  const req = findReqById(id);
+  if (req) req.review = 'rejected';
+  refreshActions(id);
+  updateReviewCount();
+}
+
+function resetReview(event, id) {
+  event.stopPropagation();
+  const req = findReqById(id);
+  if (req) req.review = 'pending';
+  refreshActions(id);
+  updateReviewCount();
+}
+
+function refreshActions(id) {
+  const req = findReqById(id);
+  const container = document.querySelector(`.req-actions[data-req-id="${id}"]`);
+  if (container && req) {
+    container.innerHTML = renderActionButtons(req);
+  }
+}
+
+function updateReviewCount() {
+  const reviewed = DATA.filter(r => r.review === 'approved' || r.review === 'rejected').length;
+  document.getElementById('review-count').innerHTML = `<strong>${reviewed}</strong> of 15 reviewed`;
+}
+
+function handleExport() {
+  const lines = ['Compliance Report Export', '=======================', ''];
+  const groups = groupByClauses(DATA);
+  Object.keys(groups).forEach(clauseNum => {
+    const label = CLAUSE_META[clauseNum] || '';
+    lines.push(`Clause ${clauseNum} - ${label}`);
+    lines.push('-'.repeat(40));
+    groups[clauseNum].forEach(req => {
+      lines.push(`  ${req.id}  ${req.title}`);
+      lines.push(`    Status: ${req.status.toUpperCase()}  |  Confidence: ${req.confidence}  |  Review: ${req.review}`);
+      if (req.gap) lines.push(`    Gap: ${req.gap}`);
+      if (req.recommendation) lines.push(`    Recommendation: ${req.recommendation}`);
+      lines.push('');
+    });
+    lines.push('');
+  });
+
+  const reviewed = DATA.filter(r => r.review === 'approved' || r.review === 'rejected').length;
+  lines.push(`Reviewed: ${reviewed} of 15`);
+  lines.push('Generated: ' + new Date().toISOString());
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'compliance-report.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Init
+renderAccordion();
+updateReviewCount();
+</script>
+</body>
+</html>

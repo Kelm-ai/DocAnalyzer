@@ -71,21 +71,21 @@ const columnsFactory = ({ onEdit, onDuplicate, onDelete }: Omit<RequirementTable
     accessorKey: "title",
     header: "Title",
     cell: ({ row }) => (
-      <div className="font-medium text-gray-900">{row.original.title}</div>
+      <div className="font-medium text-foreground">{row.original.title}</div>
     ),
   },
   {
     accessorKey: "clause",
     header: "Clause Number",
     cell: ({ row }) => (
-      <span className="font-medium text-gray-900">{row.original.clause}</span>
+      <span className="font-medium text-foreground">{row.original.clause}</span>
     ),
   },
   {
     accessorKey: "display_order",
     header: "Order",
     cell: ({ row }) => (
-      <span className="text-sm text-gray-700">
+      <span className="text-sm text-foreground">
         {Number.isFinite(row.original.display_order)
           ? row.original.display_order
           : "—"}
@@ -96,7 +96,7 @@ const columnsFactory = ({ onEdit, onDuplicate, onDelete }: Omit<RequirementTable
     accessorKey: "evaluation_type",
     header: "Evaluation Type",
     cell: ({ row }) => (
-      <span className="text-sm text-gray-700">
+      <span className="text-sm text-foreground">
         {row.original.evaluation_type || "—"}
       </span>
     ),
@@ -164,7 +164,7 @@ function RequirementRowActions({ requirement, onEdit, onDuplicate, onDelete }: R
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+        className="rounded-full p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
         aria-haspopup="menu"
         aria-expanded={open}
       >
@@ -174,12 +174,12 @@ function RequirementRowActions({ requirement, onEdit, onDuplicate, onDelete }: R
       {open ? (
         <div
           ref={menuRef}
-          className="absolute right-0 z-20 mt-2 w-40 rounded-md border border-gray-100 bg-white py-1 text-sm shadow-lg"
+          className="absolute right-0 z-20 mt-2 w-40 rounded-md border border-border bg-white py-1 text-sm shadow-lg"
           role="menu"
         >
           <button
             type="button"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-gray-700 transition hover:bg-gray-100"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-foreground transition hover:bg-accent"
             onClick={() => {
               setOpen(false)
               onEdit(requirement)
@@ -190,7 +190,7 @@ function RequirementRowActions({ requirement, onEdit, onDuplicate, onDelete }: R
           </button>
           <button
             type="button"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-gray-700 transition hover:bg-gray-100"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-foreground transition hover:bg-accent"
             onClick={() => {
               setOpen(false)
               onDuplicate(requirement)
@@ -201,7 +201,7 @@ function RequirementRowActions({ requirement, onEdit, onDuplicate, onDelete }: R
           </button>
           <button
             type="button"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-red-600 transition hover:bg-red-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-destructive transition hover:bg-status-fail-bg"
             onClick={() => {
               setOpen(false)
               onDelete(requirement)
@@ -254,9 +254,9 @@ function ConfirmationDialog({
         </>
       }
     >
-      <p className="text-sm text-gray-700">{description}</p>
+      <p className="text-sm text-foreground">{description}</p>
       {errorMessage ? (
-        <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="mt-4 rounded-md border border-destructive/20 bg-status-fail-bg p-3 text-sm text-destructive">
           {errorMessage}
         </div>
       ) : null}
@@ -524,13 +524,13 @@ export function Requirements() {
       </div>
 
       {error ? (
-        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-700">
+        <div className="rounded-md border border-destructive/20 bg-status-fail-bg p-4 text-destructive">
           {error}
         </div>
       ) : null}
 
       {successMessage ? (
-        <div className="rounded-md border border-green-200 bg-green-50 p-4 text-green-700">
+        <div className="rounded-md border border-sc/20 bg-sc-light p-4 text-sc-dark">
           {successMessage}
         </div>
       ) : null}
@@ -578,7 +578,7 @@ export function Requirements() {
         <form id="requirement-form" onSubmit={handleModalSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-900" htmlFor="clause">
+              <label className="text-sm font-medium text-foreground" htmlFor="clause">
                 Clause
               </label>
               <Input
@@ -589,7 +589,7 @@ export function Requirements() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-900" htmlFor="display_order">
+              <label className="text-sm font-medium text-foreground" htmlFor="display_order">
                 Order
               </label>
               <Input
@@ -603,7 +603,7 @@ export function Requirements() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-900" htmlFor="evaluation_type">
+              <label className="text-sm font-medium text-foreground" htmlFor="evaluation_type">
                 Evaluation Type
               </label>
              <Input
@@ -616,7 +616,7 @@ export function Requirements() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-900" htmlFor="title">
+            <label className="text-sm font-medium text-foreground" htmlFor="title">
               Title
             </label>
             <Input
@@ -628,7 +628,7 @@ export function Requirements() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-900" htmlFor="requirement_text">
+            <label className="text-sm font-medium text-foreground" htmlFor="requirement_text">
               Requirement Text
             </label>
             <textarea
@@ -636,12 +636,12 @@ export function Requirements() {
               value={formState.requirement_text}
               onChange={(event) => handleFieldChange("requirement_text", event.target.value)}
               placeholder="Detailed description of the requirement"
-              className="min-h-[120px] rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="min-h-[120px] rounded-md border border-border bg-white px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
           {formError ? (
-            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <div className="rounded-md border border-destructive/20 bg-status-fail-bg p-3 text-sm text-destructive">
               {formError}
             </div>
           ) : null}
@@ -679,25 +679,25 @@ export function Requirements() {
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <div className="text-sm font-medium text-gray-500">Clause</div>
-                <div className="mt-1 text-sm text-gray-900">{viewingRequirement.clause}</div>
+                <div className="text-sm font-medium text-muted-foreground">Clause</div>
+                <div className="mt-1 text-sm text-foreground">{viewingRequirement.clause}</div>
               </div>
               <div>
-                <div className="text-sm font-medium text-gray-500">Order</div>
-                <div className="mt-1 text-sm text-gray-900">
+                <div className="text-sm font-medium text-muted-foreground">Order</div>
+                <div className="mt-1 text-sm text-foreground">
                   {Number.isFinite(viewingRequirement.display_order) ? viewingRequirement.display_order : "—"}
                 </div>
               </div>
             </div>
             {viewingRequirement.evaluation_type && (
               <div>
-                <div className="text-sm font-medium text-gray-500">Evaluation Type</div>
-                <div className="mt-1 text-sm text-gray-900">{viewingRequirement.evaluation_type}</div>
+                <div className="text-sm font-medium text-muted-foreground">Evaluation Type</div>
+                <div className="mt-1 text-sm text-foreground">{viewingRequirement.evaluation_type}</div>
               </div>
             )}
             <div>
-              <div className="text-sm font-medium text-gray-500">Requirement Text</div>
-              <div className="mt-1 whitespace-pre-wrap rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900">
+              <div className="text-sm font-medium text-muted-foreground">Requirement Text</div>
+              <div className="mt-1 whitespace-pre-wrap rounded-md border border-border bg-muted p-3 text-sm text-foreground">
                 {viewingRequirement.requirement_text || "No requirement text provided."}
               </div>
             </div>

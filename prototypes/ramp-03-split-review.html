@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Split Review Panel — Ramp Compliance Report</title>
+<style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    height: 100vh;
+    overflow: hidden;
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1a1a2e;
+    background: #ffffff;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .app {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+  }
+
+  /* ── Left Panel ── */
+  .left-panel {
+    width: 320px;
+    min-width: 320px;
+    max-width: 320px;
+    background: #f9fafb;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .left-header {
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+  }
+
+  .left-header-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .score-display {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: -0.5px;
+  }
+
+  .review-count {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  .review-count span {
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .filter-btn {
+    padding: 4px 10px;
+    border-radius: 9999px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    line-height: 1.4;
+  }
+
+  .filter-btn:hover {
+    border-color: #d1d5db;
+    color: #374151;
+  }
+
+  .filter-btn.active {
+    background: #1a1a2e;
+    color: #ffffff;
+    border-color: #1a1a2e;
+  }
+
+  .filter-btn .count {
+    margin-left: 3px;
+    opacity: 0.7;
+  }
+
+  /* ── Requirement List ── */
+  .req-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .req-list::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .req-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .req-list::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 2px;
+  }
+
+  .group-label {
+    padding: 8px 16px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
+    position: sticky;
+    top: 0;
+    background: #f9fafb;
+    z-index: 1;
+  }
+
+  .group-separator {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 4px 16px;
+  }
+
+  .req-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.1s ease;
+    border-left: 3px solid transparent;
+    position: relative;
+  }
+
+  .req-item:hover {
+    background: #f3f4f6;
+  }
+
+  .req-item.selected {
+    background: #ffffff;
+    border-left-color: #1a1a2e;
+  }
+
+  .req-item.hidden {
+    display: none;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-dot.fail { background: #dc2626; }
+  .status-dot.flagged { background: #f59e0b; }
+  .status-dot.pass { background: #16a34a; }
+  .status-dot.na { background: #9ca3af; }
+
+  .req-item-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .req-item-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .req-id {
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1a1a2e;
+    flex-shrink: 0;
+  }
+
+  .clause-badge {
+    font-size: 10px;
+    color: #9ca3af;
+    background: #f3f4f6;
+    padding: 1px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 1px solid #e5e7eb;
+  }
+
+  .selected .clause-badge {
+    background: #f0f0f5;
+  }
+
+  .req-title {
+    font-size: 13px;
+    color: #4b5563;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+
+  .reviewed-check {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #16a34a;
+    font-size: 14px;
+  }
+
+  .reviewed-check.rejected {
+    color: #dc2626;
+  }
+
+  .reviewed-check.discussion {
+    color: #f59e0b;
+  }
+
+  /* ── Right Panel ── */
+  .right-panel {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #ffffff;
+    height: 100vh;
+  }
+
+  .right-panel::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .right-panel::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .right-panel::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #9ca3af;
+    font-size: 15px;
+  }
+
+  .detail-view {
+    padding: 32px 40px 48px;
+    max-width: 780px;
+    display: none;
+  }
+
+  .detail-view.active {
+    display: block;
+  }
+
+  .detail-header {
+    margin-bottom: 28px;
+  }
+
+  .detail-req-id {
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .detail-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+    line-height: 1.3;
+    margin-bottom: 12px;
+  }
+
+  .detail-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .status-badge.fail {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+
+  .status-badge.flagged {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fde68a;
+  }
+
+  .status-badge.pass {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+
+  .status-badge.na {
+    background: #f9fafb;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+  }
+
+  .confidence-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    background: #ffffff;
+  }
+
+  .confidence-badge .conf-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .confidence-badge .conf-dot.high { background: #16a34a; }
+  .confidence-badge .conf-dot.medium { background: #f59e0b; }
+  .confidence-badge .conf-dot.low { background: #dc2626; }
+
+  .clause-ref {
+    font-size: 13px;
+    color: #9ca3af;
+    margin-top: 8px;
+  }
+
+  /* ── Detail Sections ── */
+  .detail-section {
+    margin-bottom: 24px;
+  }
+
+  .detail-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
+    margin-bottom: 8px;
+  }
+
+  .detail-section-content {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.7;
+  }
+
+  .evidence-block {
+    border-left: 3px solid #e5e7eb;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+    color: #4b5563;
+    line-height: 1.7;
+  }
+
+  .evidence-block .evidence-ref {
+    display: block;
+    margin-top: 8px;
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  .gap-content, .recommendation-content {
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .gap-content {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+  }
+
+  .recommendation-content {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+  }
+
+  /* ── Review Section ── */
+  .review-section {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .review-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .review-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    color: #374151;
+  }
+
+  .review-btn:hover {
+    border-color: #d1d5db;
+    background: #f9fafb;
+  }
+
+  .review-btn.approve {
+    border-color: #16a34a;
+    color: #16a34a;
+  }
+
+  .review-btn.approve:hover {
+    background: #f0fdf4;
+  }
+
+  .review-btn.approve.active {
+    background: #16a34a;
+    color: #ffffff;
+    border-color: #16a34a;
+  }
+
+  .review-btn.reject {
+    border-color: #dc2626;
+    color: #dc2626;
+  }
+
+  .review-btn.reject:hover {
+    background: #fef2f2;
+  }
+
+  .review-btn.reject.active {
+    background: #dc2626;
+    color: #ffffff;
+    border-color: #dc2626;
+  }
+
+  .review-btn.discuss {
+    border-color: #f59e0b;
+    color: #d97706;
+  }
+
+  .review-btn.discuss:hover {
+    background: #fffbeb;
+  }
+
+  .review-btn.discuss.active {
+    background: #f59e0b;
+    color: #ffffff;
+    border-color: #f59e0b;
+  }
+
+  .comment-area {
+    margin-top: 12px;
+    display: none;
+  }
+
+  .comment-area.visible {
+    display: block;
+  }
+
+  .comment-area textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 72px;
+    color: #1a1a2e;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .comment-area textarea:focus {
+    border-color: #1a1a2e;
+  }
+
+  .comment-area textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  .review-timestamp {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #9ca3af;
+    display: none;
+  }
+
+  .review-timestamp.visible {
+    display: block;
+  }
+
+  /* ── AI Notice ── */
+  .ai-notice {
+    margin-top: 32px;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #9ca3af;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Left Panel -->
+  <div class="left-panel">
+    <div class="left-header">
+      <div class="left-header-top">
+        <span class="score-display">73%</span>
+        <span class="review-count"><span>6</span> need review</span>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn active" data-filter="all">All<span class="count">15</span></button>
+        <button class="filter-btn" data-filter="fail">Fail<span class="count">3</span></button>
+        <button class="filter-btn" data-filter="flagged">Flag<span class="count">3</span></button>
+        <button class="filter-btn" data-filter="pass">Pass<span class="count">8</span></button>
+      </div>
+    </div>
+    <div class="req-list" id="reqList">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-panel">
+    <div class="empty-state" id="emptyState">Select a requirement from the left panel to review</div>
+    <div class="detail-view" id="detailView">
+      <div class="detail-header">
+        <div class="detail-req-id" id="detailReqId"></div>
+        <h1 class="detail-title" id="detailTitle"></h1>
+        <div class="detail-badges" id="detailBadges"></div>
+        <div class="clause-ref" id="detailClause"></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-label">AI Rationale</div>
+        <div class="detail-section-content" id="detailRationale"></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-label">Evidence Found</div>
+        <div class="detail-section-content" id="detailEvidence"></div>
+      </div>
+
+      <div class="detail-section" id="gapSection" style="display:none">
+        <div class="detail-section-label">Gap Identified</div>
+        <div class="detail-section-content" id="detailGap"></div>
+      </div>
+
+      <div class="detail-section" id="recSection" style="display:none">
+        <div class="detail-section-label">Recommendation</div>
+        <div class="detail-section-content" id="detailRec"></div>
+      </div>
+
+      <div class="review-section">
+        <div class="detail-section-label">Review Decision</div>
+        <div class="review-actions" id="reviewActions">
+          <button class="review-btn approve" data-action="approved">Approve Assessment</button>
+          <button class="review-btn reject" data-action="rejected">Reject Assessment</button>
+          <button class="review-btn discuss" data-action="discussion">Needs Discussion</button>
+        </div>
+        <div class="comment-area" id="commentArea">
+          <textarea id="commentText" placeholder="Add an optional comment about this review decision..."></textarea>
+        </div>
+        <div class="review-timestamp" id="reviewTimestamp"></div>
+      </div>
+
+      <div class="ai-notice">AI Assessment — Human verification required</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  // ── Mock Data ──
+  var requirements = [
+    {
+      id: 'REQ-6.1.2',
+      title: 'Risk Assessment Process',
+      clause: '6.1',
+      status: 'fail',
+      confidence: 'medium',
+      rationale: 'The document references risk identification in a general context but does not describe a formal, repeatable risk assessment process as required by Clause 6.1. The organization mentions risk awareness in its policy statement, but there is no documented methodology for identifying, analyzing, and evaluating information security risks. The process must define criteria for risk acceptance and ensure assessments produce consistent, valid, and comparable results.',
+      evidence: 'Section 3.2 of the ISMS Policy states: "The organization recognizes the importance of managing information security risks and will take appropriate measures to identify and address potential threats to information assets." Additionally, Appendix B includes a risk register template, but no completed assessments were found in the submitted documentation.',
+      evidenceRef: 'ISMS Policy, Section 3.2; Appendix B',
+      gap: 'No documented risk assessment methodology exists. The risk register template is present but has not been populated with actual risk assessments. There is no evidence of defined risk criteria, risk acceptance thresholds, or a systematic approach to risk analysis and evaluation.',
+      recommendation: 'Develop and document a formal risk assessment methodology that includes: (1) defined criteria for risk evaluation and acceptance, (2) a process for identifying risks to confidentiality, integrity, and availability, (3) risk analysis procedures assigning likelihood and impact, and (4) a completed risk register with current organizational risks assessed.'
+    },
+    {
+      id: 'REQ-8.1.1',
+      title: 'Operational Planning',
+      clause: '8.1',
+      status: 'fail',
+      confidence: 'high',
+      rationale: 'Clause 8.1 requires the organization to plan, implement, and control the processes needed to meet information security requirements. While the document references operational procedures at a high level, there is no evidence of documented operational planning that addresses the implementation of actions determined in Clause 6, nor processes for managing planned changes or reviewing consequences of unintended changes.',
+      evidence: 'The Operations Manual (Section 5) references general IT operational procedures: "IT operations will follow standard practices for system administration, change management, and incident response." However, no specific operational plans linking security requirements to implementation activities were identified.',
+      evidenceRef: 'Operations Manual, Section 5',
+      gap: 'Missing documented operational plans that connect identified risks and security objectives to specific implementation activities. No evidence of criteria for process control, no documented procedures for evaluating the consequences of unintended changes, and outsourced processes are not addressed.',
+      recommendation: 'Create an operational planning framework that maps security objectives and risk treatment plans to specific operational activities. Document process criteria, controls for planned changes, and procedures for evaluating unintended changes. Ensure all outsourced processes are identified and controlled.'
+    },
+    {
+      id: 'REQ-6.2.1',
+      title: 'Security Objectives',
+      clause: '6.2',
+      status: 'fail',
+      confidence: 'high',
+      rationale: 'The organization has not established measurable information security objectives at relevant functions and levels as required by Clause 6.2. While the security policy contains high-level goals, these do not meet the standard\'s requirements for objectives that are measurable, monitored, communicated, updated, and documented. The objectives must also be consistent with the information security policy and take into account applicable requirements and risk assessment results.',
+      evidence: 'The Information Security Policy (Section 1.2) states: "Our objectives are to protect the confidentiality, integrity, and availability of all information assets and ensure compliance with legal and regulatory requirements." No further breakdown of these high-level goals into measurable, function-specific objectives was found.',
+      evidenceRef: 'Information Security Policy, Section 1.2',
+      gap: 'High-level policy statements exist but no measurable, function-specific security objectives have been established. There is no evidence of monitoring, communication plans, or resource allocation for achieving these objectives. Objectives are not linked to risk assessment outcomes.',
+      recommendation: 'Develop measurable information security objectives for each relevant function and level. Each objective should specify: what will be done, what resources are required, who is responsible, when it will be completed, and how results will be evaluated. Ensure objectives are monitored and reviewed regularly.'
+    },
+    {
+      id: 'REQ-7.2.1',
+      title: 'Competence Requirements',
+      clause: '7.2',
+      status: 'flagged',
+      confidence: 'low',
+      rationale: 'Some evidence of competence management was found, but the documentation is incomplete and does not clearly demonstrate compliance with all aspects of Clause 7.2. Training records exist but do not cover all personnel whose work affects information security performance. The link between required competencies and actual demonstrated competence is unclear, and the low confidence reflects limited documentation to assess against.',
+      evidence: 'The HR Training Log (Q3 2024) shows: "Information Security Awareness Training completed by 47 of 62 employees (76%). Advanced security training provided to IT department (8 staff) covering network security and incident response procedures." A competency matrix was referenced in the HR Procedures Manual but was not included in the submitted documentation.',
+      evidenceRef: 'HR Training Log Q3 2024; HR Procedures Manual (referenced)',
+      gap: 'Training coverage is incomplete at 76%. The competency matrix referenced in HR procedures was not provided. No evidence of competence evaluation for contractors or temporary staff. The connection between determined competencies and actual personnel qualifications is not clearly documented.',
+      recommendation: 'Complete the competency matrix mapping required security competencies to each role. Ensure 100% training coverage for all personnel affecting security performance, including contractors. Retain documented evidence of competence evaluations and take action to address any gaps identified.'
+    },
+    {
+      id: 'REQ-9.1.1',
+      title: 'Monitoring',
+      clause: '9.1',
+      status: 'flagged',
+      confidence: 'medium',
+      rationale: 'The organization has established some monitoring activities, but the documentation does not fully address all requirements of Clause 9.1. While security event monitoring is in place, there is no clear evidence that the organization has determined what needs to be monitored and measured across the full scope of the ISMS, nor defined methods for analysis and evaluation to ensure valid results.',
+      evidence: 'The Security Monitoring Procedures (Section 7.1) describe: "Automated monitoring of security events using SIEM platform. Daily review of critical alerts by SOC team. Monthly security metrics report generated covering incident counts, vulnerability scan results, and patch compliance rates." A sample monthly report from November 2024 was included showing KPI dashboards.',
+      evidenceRef: 'Security Monitoring Procedures, Section 7.1; Monthly Security Report, November 2024',
+      gap: 'Monitoring focuses primarily on technical security events. No evidence of monitoring effectiveness of the broader ISMS processes, security objectives achievement, or management system performance indicators. Methods for ensuring valid and comparable results are not documented.',
+      recommendation: 'Expand the monitoring program to cover all ISMS processes and security objectives, not just technical security events. Define what needs to be monitored, the methods used, when monitoring is performed, and who analyzes and evaluates the results. Ensure methods produce comparable and reproducible results.'
+    },
+    {
+      id: 'REQ-9.3.1',
+      title: 'Management Review',
+      clause: '9.3',
+      status: 'flagged',
+      confidence: 'medium',
+      rationale: 'Evidence of management engagement with information security exists, but the documentation does not clearly demonstrate a structured management review process that addresses all required inputs specified in Clause 9.3. Meeting minutes from a security steering committee were found, but the agenda does not cover all mandatory review inputs and the frequency of reviews is unclear.',
+      evidence: 'Security Steering Committee Meeting Minutes (September 2024) include agenda items: "1. Review of open security incidents, 2. Status of risk treatment plan, 3. Budget review for security initiatives, 4. Upcoming audit preparation." Attendees included CTO, CISO, Head of IT Operations, and Legal Counsel.',
+      evidenceRef: 'Security Steering Committee Minutes, September 2024',
+      gap: 'Management review does not cover all required inputs: status of actions from previous reviews, changes in external/internal issues, feedback on security performance (nonconformities, monitoring results, audit results), and stakeholder feedback. Only one review meeting was evidenced, and the required review frequency is not defined.',
+      recommendation: 'Establish a formal management review schedule (at least annually, preferably semi-annually). Develop a standardized agenda template covering all Clause 9.3 required inputs. Ensure outputs include decisions on improvement opportunities, resource needs, and any changes to the ISMS. Retain documented minutes as evidence.'
+    },
+    {
+      id: 'REQ-5.1.1',
+      title: 'Leadership',
+      clause: '5.1',
+      status: 'pass',
+      confidence: 'high',
+      rationale: 'Top management demonstrates clear commitment to the ISMS through documented leadership activities. The CEO has signed the information security policy, a dedicated CISO role reports directly to the executive team, and security is a standing agenda item at board meetings. Resource allocation for information security is visible in the approved budget.',
+      evidence: 'The CEO Statement on Information Security (dated January 2024) states: "Information security is integral to our business strategy. I am personally committed to ensuring our ISMS is effective and continuously improving. All employees share responsibility for protecting our information assets." Board meeting minutes from Q1-Q4 2024 show security as a recurring agenda item with executive discussion.',
+      evidenceRef: 'CEO Statement, January 2024; Board Meeting Minutes Q1-Q4 2024',
+      gap: '',
+      recommendation: ''
+    },
+    {
+      id: 'REQ-5.2.1',
+      title: 'Policy',
+      clause: '5.2',
+      status: 'pass',
+      confidence: 'high',
+      rationale: 'A comprehensive information security policy is in place that is appropriate to the purpose of the organization, includes a commitment to satisfying applicable requirements, and includes a commitment to continual improvement. The policy is documented, communicated within the organization, and available to interested parties as appropriate.',
+      evidence: 'The Information Security Policy (Version 3.1, approved March 2024) is a 12-page document covering scope, objectives, principles, roles and responsibilities, and compliance requirements. Section 1.1 states the policy\'s alignment with business objectives. Section 8 describes the communication and distribution plan. The policy is published on the company intranet and acknowledged by all employees during onboarding.',
+      evidenceRef: 'Information Security Policy v3.1, March 2024',
+      gap: '',
+      recommendation: ''
+    },
+    {
+      id: 'REQ-5.3.1',
+      title: 'Roles',
+      clause: '5.3',
+      status: 'pass',
+      confidence: 'medium',
+      rationale: 'Information security roles and responsibilities are assigned and communicated. The RACI matrix identifies key stakeholders for security processes, and role descriptions for security-relevant positions include security responsibilities. However, some operational-level assignments could be more granular, hence medium confidence.',
+      evidence: 'The ISMS Roles and Responsibilities document (Section 4) defines the RACI matrix for 23 security processes. Job descriptions for CISO, Security Analysts, IT Administrators, and Department Heads include specific information security duties. The organizational chart shows the security team structure and reporting lines.',
+      evidenceRef: 'ISMS Roles and Responsibilities, Section 4; Organizational Chart 2024',
+      gap: '',
+      recommendation: ''
+    },
+    {
+      id: 'REQ-7.1.1',
+      title: 'Resources',
+      clause: '7.1',
+      status: 'pass',
+      confidence: 'high',
+      rationale: 'The organization has determined and provided the resources needed for the establishment, implementation, maintenance, and continual improvement of the ISMS. A dedicated security budget is allocated, staffing is adequate for the scope, and technology investments are documented.',
+      evidence: 'The 2024 Security Budget Allocation shows a dedicated budget of $2.4M for information security, including personnel ($1.6M), technology ($520K), training ($180K), and consulting ($100K). The security team comprises 12 FTEs across security operations, governance, and engineering. Capital expenditure approvals for SIEM and endpoint protection upgrades were documented.',
+      evidenceRef: '2024 Security Budget Allocation; Staffing Plan; CapEx Approvals',
+      gap: '',
+      recommendation: ''
+    },
+    {
+      id: 'REQ-7.3.1',
+      title: 'Awareness',
+      clause: '7.3',
+      status: 'pass',
+      confidence: 'high',
+      rationale: 'The organization has implemented a comprehensive security awareness program ensuring personnel are aware of the information security policy, their contribution to ISMS effectiveness, and the implications of not conforming to requirements. Awareness activities are regular and well-documented.',
+      evidence: 'The Security Awareness Program includes: quarterly phishing simulations (average click rate reduced from 23% to 4% over 12 months), monthly security newsletters, annual Security Awareness Week with workshops and presentations, and onboarding security training for all new hires. Completion tracking shows 94% participation rate across all awareness activities in 2024.',
+      evidenceRef: 'Security Awareness Program Report 2024; Phishing Simulation Results',
+      gap: '',
+      recommendation: ''
+    },
+    {
+      id: 'REQ-7.4.1',
+      title: 'Communication',
+      clause: '7.4',
+      status: 'pass',
+      confidence: 'medium',
+      rationale: 'The organization has determined the need for internal and external communications relevant to the ISMS. A communication plan exists covering what to communicate, when, with whom, and by whom. Medium confidence is assigned because while internal communications are well-documented, external communication procedures for security matters could be more detailed.',
+      evidence: 'The ISMS Communication Plan (Appendix C) outlines: internal communication channels (intranet, email, Slack #security channel), escalation procedures for security incidents, stakeholder notification requirements, and regulatory reporting obligations. Monthly security updates are distributed to department heads. External communication procedures reference PR and legal team involvement.',
+      evidenceRef: 'ISMS Communication Plan, Appendix C',
+      gap: '',
+      recommendation: ''
+    },
+    {
+      id: 'REQ-9.2.1',
+      title: 'Internal Audit',
+      clause: '9.2',
+      status: 'pass',
+      confidence: 'high',
+      rationale: 'The organization conducts internal audits at planned intervals to verify the ISMS conforms to its own requirements and the requirements of ISO 27001. An audit program is established considering the importance of processes and results of previous audits. Audit criteria, scope, frequency, and methods are defined.',
+      evidence: 'The Internal Audit Program 2024 documents a schedule of 6 audits covering all ISMS processes over a 12-month cycle. Audit reports from Q1 and Q2 2024 are available, showing defined scope, criteria, findings (4 minor nonconformities, 7 observations), and corrective action tracking. Auditors are qualified and independent from the activities being audited.',
+      evidenceRef: 'Internal Audit Program 2024; Audit Reports Q1-Q2 2024',
+      gap: '',
+      recommendation: ''
+    },
+    {
+      id: 'REQ-7.5.1',
+      title: 'Documented Info',
+      clause: '7.5',
+      status: 'pass',
+      confidence: 'high',
+      rationale: 'The ISMS includes all documented information required by ISO 27001, and the organization has determined additional documentation necessary for ISMS effectiveness. Document control procedures are in place covering creation, updating, version control, storage, and disposition.',
+      evidence: 'The Document Control Procedure (DCP-001, Version 2.3) defines the document management lifecycle including: document numbering convention, review and approval workflows, version control using SharePoint, access control based on classification, retention periods, and secure disposal. A master document register lists 156 controlled documents within the ISMS scope. All documents include metadata: owner, approval date, review date, version, and classification.',
+      evidenceRef: 'Document Control Procedure DCP-001 v2.3; Master Document Register',
+      gap: '',
+      recommendation: ''
+    },
+    {
+      id: 'REQ-8.2.1',
+      title: 'Risk Assessment Separate',
+      clause: '8.2',
+      status: 'na',
+      confidence: 'high',
+      rationale: 'This requirement pertains to performing information security risk assessments at planned intervals or when significant changes occur. The assessment has determined this requirement is not separately applicable as it is addressed through the combined risk assessment process under Clause 6.1. The organization\'s integrated approach to risk assessment encompasses both planning and operational execution.',
+      evidence: 'The Risk Management Framework (Section 2) indicates an integrated approach: "Risk assessments are conducted as part of the unified risk management process described in Section 6, covering both planning and operational requirements." This integration is consistent with the organization\'s scope and structure.',
+      evidenceRef: 'Risk Management Framework, Section 2',
+      gap: '',
+      recommendation: ''
+    }
+  ];
+
+  // ── Review state ──
+  var reviewState = {};
+
+  // ── Currently selected requirement ──
+  var selectedId = null;
+
+  // ── Active filter ──
+  var activeFilter = 'all';
+
+  // ── Status group order ──
+  var statusOrder = { fail: 0, flagged: 1, pass: 2, na: 3 };
+  var statusLabels = { fail: 'Failures', flagged: 'Flagged for Review', pass: 'Passed', na: 'Not Applicable' };
+
+  // ── Sort requirements by status ──
+  var sorted = requirements.slice().sort(function(a, b) {
+    return statusOrder[a.status] - statusOrder[b.status];
+  });
+
+  // ── Build left panel ──
+  function buildList() {
+    var list = document.getElementById('reqList');
+    list.innerHTML = '';
+    var currentGroup = null;
+
+    sorted.forEach(function(req, i) {
+      // Group label
+      if (req.status !== currentGroup) {
+        if (currentGroup !== null) {
+          var sep = document.createElement('div');
+          sep.className = 'group-separator';
+          sep.setAttribute('data-group-sep', req.status);
+          list.appendChild(sep);
+        }
+        currentGroup = req.status;
+        var label = document.createElement('div');
+        label.className = 'group-label';
+        label.textContent = statusLabels[req.status];
+        label.setAttribute('data-group', req.status);
+        list.appendChild(label);
+      }
+
+      var item = document.createElement('div');
+      item.className = 'req-item';
+      item.setAttribute('data-id', req.id);
+      item.setAttribute('data-status', req.status);
+
+      var dot = document.createElement('div');
+      dot.className = 'status-dot ' + req.status;
+
+      var content = document.createElement('div');
+      content.className = 'req-item-content';
+
+      var top = document.createElement('div');
+      top.className = 'req-item-top';
+
+      var idSpan = document.createElement('span');
+      idSpan.className = 'req-id';
+      idSpan.textContent = req.id;
+
+      var clauseBadge = document.createElement('span');
+      clauseBadge.className = 'clause-badge';
+      clauseBadge.textContent = req.clause;
+
+      top.appendChild(idSpan);
+      top.appendChild(clauseBadge);
+
+      var titleDiv = document.createElement('div');
+      titleDiv.className = 'req-title';
+      titleDiv.textContent = req.title;
+
+      content.appendChild(top);
+      content.appendChild(titleDiv);
+
+      item.appendChild(dot);
+      item.appendChild(content);
+
+      // Reviewed check
+      var check = document.createElement('div');
+      check.className = 'reviewed-check';
+      check.id = 'check-' + req.id;
+      check.style.display = 'none';
+      item.appendChild(check);
+
+      item.addEventListener('click', function() {
+        selectRequirement(req.id);
+      });
+
+      list.appendChild(item);
+    });
+  }
+
+  // ── Apply filter ──
+  function applyFilter(filter) {
+    activeFilter = filter;
+    var items = document.querySelectorAll('.req-item');
+    var groups = document.querySelectorAll('.group-label');
+    var seps = document.querySelectorAll('.group-separator');
+
+    // Track which groups have visible items
+    var visibleGroups = {};
+
+    items.forEach(function(item) {
+      var status = item.getAttribute('data-status');
+      if (filter === 'all' || status === filter) {
+        item.classList.remove('hidden');
+        visibleGroups[status] = true;
+      } else {
+        item.classList.add('hidden');
+      }
+    });
+
+    groups.forEach(function(g) {
+      var group = g.getAttribute('data-group');
+      g.style.display = visibleGroups[group] ? '' : 'none';
+    });
+
+    seps.forEach(function(s) {
+      var group = s.getAttribute('data-group-sep');
+      s.style.display = visibleGroups[group] ? '' : 'none';
+    });
+
+    // Update filter button states
+    document.querySelectorAll('.filter-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-filter') === filter);
+    });
+  }
+
+  // ── Select requirement ──
+  function selectRequirement(id) {
+    selectedId = id;
+    var req = requirements.find(function(r) { return r.id === id; });
+    if (!req) return;
+
+    // Update left panel selection
+    document.querySelectorAll('.req-item').forEach(function(item) {
+      item.classList.toggle('selected', item.getAttribute('data-id') === id);
+    });
+
+    // Show detail view
+    document.getElementById('emptyState').style.display = 'none';
+    var detail = document.getElementById('detailView');
+    detail.classList.add('active');
+
+    // Populate header
+    document.getElementById('detailReqId').textContent = req.id;
+    document.getElementById('detailTitle').textContent = req.title;
+
+    // Status label map
+    var statusLabelMap = { fail: 'Fail', flagged: 'Flagged', pass: 'Pass', na: 'N/A' };
+
+    // Badges
+    var badgesHtml = '<span class="status-badge ' + req.status + '">' + statusLabelMap[req.status] + '</span>';
+    badgesHtml += '<span class="confidence-badge"><span class="conf-dot ' + req.confidence + '"></span>' +
+      req.confidence.charAt(0).toUpperCase() + req.confidence.slice(1) + ' confidence</span>';
+    document.getElementById('detailBadges').innerHTML = badgesHtml;
+
+    document.getElementById('detailClause').textContent = 'ISO 27001 Clause ' + req.clause;
+
+    // Rationale
+    document.getElementById('detailRationale').textContent = req.rationale;
+
+    // Evidence
+    document.getElementById('detailEvidence').innerHTML =
+      '<div class="evidence-block">' + escapeHtml(req.evidence) +
+      '<span class="evidence-ref">Source: ' + escapeHtml(req.evidenceRef) + '</span></div>';
+
+    // Gap
+    var gapSection = document.getElementById('gapSection');
+    if (req.gap) {
+      gapSection.style.display = '';
+      document.getElementById('detailGap').innerHTML = '<div class="gap-content">' + escapeHtml(req.gap) + '</div>';
+    } else {
+      gapSection.style.display = 'none';
+    }
+
+    // Recommendation
+    var recSection = document.getElementById('recSection');
+    if (req.recommendation) {
+      recSection.style.display = '';
+      document.getElementById('detailRec').innerHTML = '<div class="recommendation-content">' + escapeHtml(req.recommendation) + '</div>';
+    } else {
+      recSection.style.display = 'none';
+    }
+
+    // Review state
+    renderReviewState(id);
+
+    // Scroll right panel to top
+    document.querySelector('.right-panel').scrollTop = 0;
+  }
+
+  // ── Render review state ──
+  function renderReviewState(id) {
+    var state = reviewState[id];
+    var btns = document.querySelectorAll('#reviewActions .review-btn');
+    var commentArea = document.getElementById('commentArea');
+    var commentText = document.getElementById('commentText');
+    var timestamp = document.getElementById('reviewTimestamp');
+
+    btns.forEach(function(btn) {
+      btn.classList.remove('active');
+    });
+
+    if (state) {
+      btns.forEach(function(btn) {
+        if (btn.getAttribute('data-action') === state.action) {
+          btn.classList.add('active');
+        }
+      });
+      commentArea.classList.add('visible');
+      commentText.value = state.comment || '';
+      timestamp.classList.add('visible');
+      timestamp.textContent = 'Reviewed ' + state.timestamp;
+    } else {
+      commentArea.classList.remove('visible');
+      commentText.value = '';
+      timestamp.classList.remove('visible');
+    }
+  }
+
+  // ── Handle review actions ──
+  function handleReviewAction(action) {
+    if (!selectedId) return;
+
+    var now = new Date();
+    var timeStr = now.toLocaleString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true
+    });
+
+    // If clicking the same action again, toggle it off
+    if (reviewState[selectedId] && reviewState[selectedId].action === action) {
+      delete reviewState[selectedId];
+      renderReviewState(selectedId);
+      updateCheckmark(selectedId);
+      return;
+    }
+
+    reviewState[selectedId] = {
+      action: action,
+      timestamp: timeStr,
+      comment: ''
+    };
+
+    renderReviewState(selectedId);
+    updateCheckmark(selectedId);
+  }
+
+  // ── Update checkmark in list ──
+  function updateCheckmark(id) {
+    var check = document.getElementById('check-' + id);
+    if (!check) return;
+    var state = reviewState[id];
+    if (state) {
+      check.style.display = 'flex';
+      check.className = 'reviewed-check';
+      if (state.action === 'approved') {
+        check.innerHTML = '&#10003;';
+        check.classList.add('');
+      } else if (state.action === 'rejected') {
+        check.innerHTML = '&#10007;';
+        check.classList.add('rejected');
+      } else {
+        check.innerHTML = '&#8230;';
+        check.classList.add('discussion');
+      }
+    } else {
+      check.style.display = 'none';
+    }
+  }
+
+  // ── Escape HTML ──
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+  // ── Save comment on input ──
+  document.getElementById('commentText').addEventListener('input', function() {
+    if (selectedId && reviewState[selectedId]) {
+      reviewState[selectedId].comment = this.value;
+    }
+  });
+
+  // ── Filter button clicks ──
+  document.querySelectorAll('.filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      applyFilter(this.getAttribute('data-filter'));
+    });
+  });
+
+  // ── Review button clicks ──
+  document.querySelectorAll('#reviewActions .review-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      handleReviewAction(this.getAttribute('data-action'));
+    });
+  });
+
+  // ── Initialize ──
+  buildList();
+  applyFilter('all');
+
+})();
+</script>
+
+</body>
+</html>

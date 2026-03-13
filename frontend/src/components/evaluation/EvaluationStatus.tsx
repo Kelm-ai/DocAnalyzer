@@ -118,6 +118,16 @@ export function EvaluationStatus() {
     ).length
   }
 
+  const formatEta = (seconds: number) => {
+    if (seconds < 60) {
+      return `${Math.max(1, Math.round(seconds))}s`
+    }
+
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = Math.round(seconds % 60)
+    return `${minutes}m ${remainingSeconds}s`
+  }
+
   const formatDateTime = (timestamp?: string | null) => {
     if (!timestamp) {
       return "-"
@@ -139,7 +149,7 @@ export function EvaluationStatus() {
         accessorFn: (row) => row.document_name,
         cell: ({ row }) => (
           <div className="space-y-1">
-            <p className="font-medium text-gray-900">{row.original.document_name}</p>
+            <p className="font-medium text-foreground">{row.original.document_name}</p>
             <p className="text-xs text-muted-foreground">
               Started {formatDateTime(row.original.created_at)}
             </p>
@@ -210,6 +220,16 @@ export function EvaluationStatus() {
                 <p className="text-xs text-muted-foreground">
                   {completed}/{total} requirements
                 </p>
+                {evaluation.metadata?.status_message && (
+                  <p className="text-xs text-muted-foreground">
+                    {evaluation.metadata.status_message}
+                  </p>
+                )}
+                {evaluation.metadata?.estimated_seconds_remaining != null && (
+                  <p className="text-xs text-muted-foreground">
+                    ~{formatEta(evaluation.metadata.estimated_seconds_remaining)} remaining
+                  </p>
+                )}
               </div>
             )
           }
@@ -269,19 +289,19 @@ export function EvaluationStatus() {
           const flagged = row.original.requirements_flagged ?? row.original.requirements_partial ?? 0
           return (
             <div className="flex flex-wrap gap-2">
-              <div className="flex items-center gap-1 rounded-full border border-green-100 bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+              <div className="flex items-center gap-1 rounded-full border border-border bg-status-pass-bg px-3 py-1 text-xs font-medium text-status-pass">
                 <span>Passed</span>
                 <span className="font-semibold">{requirements_passed ?? 0}</span>
               </div>
-              <div className="flex items-center gap-1 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-xs font-medium text-red-700">
+              <div className="flex items-center gap-1 rounded-full border border-border bg-status-fail-bg px-3 py-1 text-xs font-medium text-status-fail">
                 <span>Failed</span>
                 <span className="font-semibold">{requirements_failed ?? 0}</span>
               </div>
-              <div className="flex items-center gap-1 rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+              <div className="flex items-center gap-1 rounded-full border border-border bg-status-flagged-bg px-3 py-1 text-xs font-medium text-status-flagged">
                 <span>Flagged</span>
                 <span className="font-semibold">{flagged}</span>
               </div>
-              <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700">
+              <div className="flex items-center gap-1 rounded-full border border-border bg-status-na-bg px-3 py-1 text-xs font-medium text-status-na">
                 <span>N/A</span>
                 <span className="font-semibold">{requirements_na ?? 0}</span>
               </div>

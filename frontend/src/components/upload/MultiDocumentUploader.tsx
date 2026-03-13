@@ -30,6 +30,7 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
     completed: number
     total: number
     message: string
+    etaSeconds?: number
     batchNumber?: number
     batchTotal?: number
   } | null>(null)
@@ -65,6 +66,13 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
   }, [])
 
   const selectedFramework = frameworks.find(f => f.id === selectedFrameworkId)
+
+  const formatEta = (seconds: number) => {
+    if (seconds < 60) return `${Math.max(1, Math.round(seconds))}s`
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = Math.round(seconds % 60)
+    return `${minutes}m ${remainingSeconds}s`
+  }
 
   const canUpload =
     primaryFiles.length === 1 &&
@@ -140,6 +148,7 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
               completed: meta.completed_requirements ?? 0,
               total: meta.total_requirements ?? 0,
               message: meta.status_message || "Processing...",
+              etaSeconds: meta.estimated_seconds_remaining,
               batchNumber: meta.batch_number,
               batchTotal: meta.batch_total,
             })
@@ -182,15 +191,15 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
   const getPhaseDisplay = () => {
     switch (uploadPhase) {
       case "uploading":
-        return { label: "Uploading documents...", color: "bg-blue-500" }
+        return { label: "Uploading documents...", color: "bg-sc" }
       case "summarizing":
-        return { label: "Generating summaries for supporting documents...", color: "bg-amber-500" }
+        return { label: "Generating summaries for supporting documents...", color: "bg-sc-gold" }
       case "processing":
-        return { label: "Evaluating document against requirements...", color: "bg-blue-500" }
+        return { label: "Evaluating document against requirements...", color: "bg-sc" }
       case "complete":
-        return { label: "Evaluation complete!", color: "bg-green-500" }
+        return { label: "Evaluation complete!", color: "bg-status-pass" }
       case "error":
-        return { label: "Error occurred", color: "bg-red-500" }
+        return { label: "Error occurred", color: "bg-status-fail" }
       default:
         return null
     }
@@ -327,7 +336,15 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
                   )}
                 </div>
                 {uploadPhase === "processing" && evaluationProgress && (
-                  <Progress value={evaluationProgress.percent} className="h-2" />
+                  <div className="space-y-2">
+                    <Progress value={evaluationProgress.percent} className="h-2" />
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{evaluationProgress.message}</span>
+                      {evaluationProgress.etaSeconds != null && (
+                        <span>~{formatEta(evaluationProgress.etaSeconds)} remaining</span>
+                      )}
+                    </div>
+                  </div>
                 )}
                 {(uploadPhase === "uploading" || uploadPhase === "summarizing") && (
                   <Progress value={undefined} className="h-2" />

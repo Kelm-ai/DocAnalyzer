@@ -22,16 +22,16 @@ import {
 } from "lucide-react"
 
 const STATUS_STYLES: Record<string, string> = {
-  PASS: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  FAIL: "bg-red-50 text-red-700 border border-red-200",
-  FLAGGED: "bg-amber-50 text-amber-700 border border-amber-200",
-  PARTIAL: "bg-amber-50 text-amber-700 border border-amber-200",
-  NOT_APPLICABLE: "bg-slate-50 text-slate-600 border border-slate-200",
-  ERROR: "bg-red-50 text-red-700 border border-red-200",
-  FAILED: "bg-red-50 text-red-700 border border-red-200",
+  PASS: "bg-status-pass-bg text-status-pass border border-status-pass/20",
+  FAIL: "bg-status-fail-bg text-status-fail border border-status-fail/20",
+  FLAGGED: "bg-status-flagged-bg text-status-flagged border border-status-flagged/20",
+  PARTIAL: "bg-status-flagged-bg text-status-flagged border border-status-flagged/20",
+  NOT_APPLICABLE: "bg-status-na-bg text-status-na border border-border",
+  ERROR: "bg-status-fail-bg text-status-fail border border-status-fail/20",
+  FAILED: "bg-status-fail-bg text-status-fail border border-status-fail/20",
 }
 
-const DEFAULT_STATUS_STYLE = "bg-slate-100 text-slate-700 border border-slate-200"
+const DEFAULT_STATUS_STYLE = "bg-status-na-bg text-muted-foreground border border-border"
 
 type ConfidenceLevel = RequirementResult["confidence_level"]
 type AgreementStatus = RequirementResult["agreement_status"]
@@ -39,43 +39,43 @@ type AgreementStatus = RequirementResult["agreement_status"]
 const CONFIDENCE_LEVEL_META: Record<ConfidenceLevel, { label: string; className: string; sort: number }> = {
   low: {
     label: "Low",
-    className: "bg-slate-100 text-slate-600 border border-slate-200",
+    className: "bg-status-na-bg text-status-na border border-border",
     sort: 0,
   },
   medium: {
     label: "Medium",
-    className: "bg-amber-50 text-amber-700 border border-amber-200",
+    className: "bg-status-flagged-bg text-status-flagged border border-status-flagged/20",
     sort: 1,
   },
   high: {
     label: "High",
-    className: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    className: "bg-status-pass-bg text-status-pass border border-status-pass/20",
     sort: 2,
   },
 }
 
 const DEFAULT_CONFIDENCE_META = {
   label: "Unknown",
-  className: "bg-slate-100 text-slate-600 border border-slate-200",
+  className: "bg-status-na-bg text-status-na border border-border",
   sort: -1,
 }
 
 const AGREEMENT_META: Record<AgreementStatus | "unknown", { label: string; className: string }> = {
   agreement: {
     label: "Agreement",
-    className: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    className: "bg-status-pass-bg text-status-pass border border-status-pass/20",
   },
   conflict: {
     label: "Conflict",
-    className: "bg-amber-50 text-amber-700 border border-amber-200",
+    className: "bg-status-flagged-bg text-status-flagged border border-status-flagged/20",
   },
   single_provider: {
     label: "Single Provider",
-    className: "bg-blue-50 text-blue-700 border border-blue-200",
+    className: "bg-sc-light text-sc-dark border border-sc/20",
   },
   unknown: {
     label: "Unknown",
-    className: "bg-slate-100 text-slate-600 border border-slate-200",
+    className: "bg-status-na-bg text-status-na border border-border",
   },
 }
 
@@ -152,9 +152,9 @@ function SummaryView({ executiveSummary }: { executiveSummary?: ExecutiveSummary
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <AlertCircle className="mb-4 h-12 w-12 text-slate-300" />
-            <h3 className="text-lg font-medium text-slate-900">No Summary Available</h3>
-            <p className="mt-2 max-w-md text-sm text-slate-500">
+            <AlertCircle className="mb-4 h-12 w-12 text-muted-foreground/40" />
+            <h3 className="text-lg font-medium text-foreground">No Summary Available</h3>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">
               Executive summary is not available for this evaluation. This may be because the evaluation was run before this feature was added.
             </p>
           </div>
@@ -170,18 +170,18 @@ function SummaryView({ executiveSummary }: { executiveSummary?: ExecutiveSummary
       {/* Executive Overview */}
       <Card>
         <CardContent className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">Executive Overview</h2>
-          <p className="text-slate-700 leading-relaxed">{overview}</p>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Executive Overview</h2>
+          <p className="text-foreground leading-relaxed">{overview}</p>
         </CardContent>
       </Card>
 
       {/* Critical Gaps */}
       {critical_gaps && critical_gaps.length > 0 && (
-        <Card className="border-red-200">
+        <Card className="border-status-fail/20">
           <CardContent className="p-6">
             <div className="mb-4 flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-red-500" />
-              <h2 className="text-lg font-semibold text-slate-900">
+              <div className="h-3 w-3 rounded-full bg-status-fail" />
+              <h2 className="text-lg font-semibold text-foreground">
                 Critical Gaps ({critical_gaps.length})
               </h2>
             </div>
@@ -189,22 +189,22 @@ function SummaryView({ executiveSummary }: { executiveSummary?: ExecutiveSummary
               {critical_gaps.map((item, index) => (
                 <div
                   key={`gap-${index}`}
-                  className="rounded-lg border border-red-100 bg-red-50/50 p-4"
+                  className="rounded-lg border border-status-fail/10 bg-status-fail-bg/50 p-4"
                 >
                   <div className="mb-2 flex items-center gap-2">
-                    <Badge className="bg-red-100 text-red-700 border border-red-200">
+                    <Badge className="bg-status-fail-bg text-status-fail border border-status-fail/20">
                       Clause {item.clause}
                     </Badge>
-                    <span className="font-medium text-slate-900">{item.title}</span>
+                    <span className="font-medium text-foreground">{item.title}</span>
                   </div>
                   <div className="space-y-2 text-sm">
                     <div>
-                      <span className="font-medium text-slate-700">Finding: </span>
-                      <span className="text-slate-600">{item.finding}</span>
+                      <span className="font-medium text-foreground">Finding: </span>
+                      <span className="text-muted-foreground">{item.finding}</span>
                     </div>
                     <div>
-                      <span className="font-medium text-slate-700">Recommendation: </span>
-                      <span className="text-slate-600">{item.recommendation}</span>
+                      <span className="font-medium text-foreground">Recommendation: </span>
+                      <span className="text-muted-foreground">{item.recommendation}</span>
                     </div>
                   </div>
                 </div>
@@ -216,24 +216,24 @@ function SummaryView({ executiveSummary }: { executiveSummary?: ExecutiveSummary
 
       {/* No Critical Gaps Message */}
       {(!critical_gaps || critical_gaps.length === 0) && (
-        <Card className="border-emerald-200">
+        <Card className="border-sc/20">
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-emerald-500" />
-              <h2 className="text-lg font-semibold text-slate-900">Critical Gaps</h2>
+              <div className="h-3 w-3 rounded-full bg-status-pass" />
+              <h2 className="text-lg font-semibold text-foreground">Critical Gaps</h2>
             </div>
-            <p className="mt-2 text-sm text-slate-600">No critical gaps identified.</p>
+            <p className="mt-2 text-sm text-muted-foreground">No critical gaps identified.</p>
           </CardContent>
         </Card>
       )}
 
       {/* Opportunities for Improvement */}
       {opportunities_for_improvement && opportunities_for_improvement.length > 0 && (
-        <Card className="border-amber-200">
+        <Card className="border-status-flagged/20">
           <CardContent className="p-6">
             <div className="mb-4 flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-amber-500" />
-              <h2 className="text-lg font-semibold text-slate-900">
+              <div className="h-3 w-3 rounded-full bg-status-flagged" />
+              <h2 className="text-lg font-semibold text-foreground">
                 Opportunities for Improvement ({opportunities_for_improvement.length})
               </h2>
             </div>
@@ -241,22 +241,22 @@ function SummaryView({ executiveSummary }: { executiveSummary?: ExecutiveSummary
               {opportunities_for_improvement.map((item, index) => (
                 <div
                   key={`ofi-${index}`}
-                  className="rounded-lg border border-amber-100 bg-amber-50/50 p-4"
+                  className="rounded-lg border border-status-flagged/10 bg-status-flagged-bg/50 p-4"
                 >
                   <div className="mb-2 flex items-center gap-2">
-                    <Badge className="bg-amber-100 text-amber-700 border border-amber-200">
+                    <Badge className="bg-status-flagged-bg text-status-flagged border border-status-flagged/20">
                       Clause {item.clause}
                     </Badge>
-                    <span className="font-medium text-slate-900">{item.title}</span>
+                    <span className="font-medium text-foreground">{item.title}</span>
                   </div>
                   <div className="space-y-2 text-sm">
                     <div>
-                      <span className="font-medium text-slate-700">Finding: </span>
-                      <span className="text-slate-600">{item.finding}</span>
+                      <span className="font-medium text-foreground">Finding: </span>
+                      <span className="text-muted-foreground">{item.finding}</span>
                     </div>
                     <div>
-                      <span className="font-medium text-slate-700">Recommendation: </span>
-                      <span className="text-slate-600">{item.recommendation}</span>
+                      <span className="font-medium text-foreground">Recommendation: </span>
+                      <span className="text-muted-foreground">{item.recommendation}</span>
                     </div>
                   </div>
                 </div>
@@ -553,12 +553,12 @@ export function Results() {
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               {row.original.requirement_clause ? (
-                <Badge variant="outline" className="px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                <Badge variant="outline" className="px-2 py-0.5 text-[11px] font-semibold text-foreground">
                   Clause {row.original.requirement_clause}
                 </Badge>
               ) : null}
             </div>
-            <div className="text-sm font-medium text-slate-900">
+            <div className="text-sm font-medium text-foreground">
               {row.original.title || "Untitled requirement"}
             </div>
           </div>
@@ -681,13 +681,13 @@ export function Results() {
             ? (row.original.gaps_identified?.filter(Boolean) ?? [])
             : (row.original.gaps_identified?.filter(Boolean) ?? []) // OFI comes from gaps for PASS
           if (!items.length) {
-            return <span className="text-sm text-slate-500">-</span>
+            return <span className="text-sm text-muted-foreground">-</span>
           }
           return (
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               {truncateText(items[0], 120)}
               {items.length > 1 ? (
-                <span className="text-xs text-slate-500"> (+{items.length - 1} more)</span>
+                <span className="text-xs text-muted-foreground"> (+{items.length - 1} more)</span>
               ) : null}
             </p>
           )
@@ -763,7 +763,7 @@ export function Results() {
                 <ThumbsDown className="h-4 w-4" />
               </Button>
               {entry.isSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               ) : null}
             </div>
           )
@@ -790,7 +790,7 @@ export function Results() {
                 onMouseDown={(event) => event.stopPropagation()}
               >
                 <textarea
-                  className="h-32 w-full resize-y rounded-md border border-slate-300 p-2 text-sm text-slate-700 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="h-32 w-full resize-y rounded-md border border-border p-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   placeholder="Add context for this rating..."
                   defaultValue={entry.comment}
                   autoFocus
@@ -808,9 +808,9 @@ export function Results() {
                   onMouseDown={(event) => event.stopPropagation()}
                 />
                 {entry.error ? (
-                  <span className="text-xs text-red-600">{entry.error}</span>
+                  <span className="text-xs text-destructive">{entry.error}</span>
                 ) : entry.isSaving ? (
-                  <span className="text-xs text-slate-500">Saving...</span>
+                  <span className="text-xs text-muted-foreground">Saving...</span>
                 ) : null}
               </div>
             )
@@ -827,13 +827,13 @@ export function Results() {
               }}
               onMouseDown={(event) => event.stopPropagation()}
             >
-              <div className="min-h-[60px] rounded-md border border-slate-200 p-2 text-sm text-slate-700 group-hover:border-slate-300 group-hover:bg-slate-50">
+              <div className="min-h-[60px] rounded-md border border-border p-2 text-sm text-foreground group-hover:border-border group-hover:bg-accent">
                 {entry.comment || (
-                  <span className="text-slate-400">Click to add comment...</span>
+                  <span className="text-muted-foreground">Click to add comment...</span>
                 )}
               </div>
               {entry.error ? (
-                <span className="text-xs text-red-600">{entry.error}</span>
+                <span className="text-xs text-destructive">{entry.error}</span>
               ) : null}
             </div>
           )
@@ -846,8 +846,8 @@ export function Results() {
   if (loading) {
     return (
       <div className="flex h-48 items-center justify-center space-x-3">
-        <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
-        <span className="text-sm text-slate-600">Loading evaluation results...</span>
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Loading evaluation results...</span>
       </div>
     )
   }
@@ -894,49 +894,49 @@ export function Results() {
         <CardContent className="space-y-6 p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-1">
-              <h1 className="text-2xl font-semibold text-slate-900">Evaluation Results</h1>
-              <p className="text-sm text-slate-600">{report.document_name}</p>
+              <h1 className="text-2xl font-semibold text-foreground">Evaluation Results</h1>
+              <p className="text-sm text-muted-foreground">{report.document_name}</p>
               {framework && (
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="outline" className="text-xs">
                     {framework.name}
                   </Badge>
                   {framework.standard_reference && (
-                    <span className="text-xs text-slate-500">{framework.standard_reference}</span>
+                    <span className="text-xs text-muted-foreground">{framework.standard_reference}</span>
                   )}
                 </div>
               )}
-              <p className="text-xs text-slate-500">Evaluation ID: {report.evaluation_id}</p>
-              <p className="text-xs text-slate-500">Generated on {new Date().toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Evaluation ID: {report.evaluation_id}</p>
+              <p className="text-xs text-muted-foreground">Generated on {new Date().toLocaleString()}</p>
             </div>
             <div className="text-right">
-              <span className="block text-3xl font-semibold text-slate-900">
+              <span className="block text-3xl font-semibold text-foreground">
                 {overallScore.toFixed(1)}%
               </span>
-              <span className="text-sm text-slate-500">Overall score</span>
+              <span className="text-sm text-muted-foreground">Overall score</span>
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <div className="rounded-md border bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Total requirements</p>
-              <p className="text-xl font-semibold text-slate-900">{totalEvaluated}</p>
+            <div className="rounded-md border bg-muted p-4">
+              <p className="text-xs text-muted-foreground">Total requirements</p>
+              <p className="text-xl font-semibold text-foreground">{totalEvaluated}</p>
             </div>
-            <div className="rounded-md border bg-emerald-50 p-4">
-              <p className="text-xs text-emerald-600">Passed</p>
-              <p className="text-xl font-semibold text-emerald-700">{passed}</p>
+            <div className="rounded-md border bg-status-pass-bg p-4">
+              <p className="text-xs text-status-pass">Passed</p>
+              <p className="text-xl font-semibold text-status-pass">{passed}</p>
             </div>
-            <div className="rounded-md border bg-red-50 p-4">
-              <p className="text-xs text-red-600">Failed</p>
-              <p className="text-xl font-semibold text-red-700">{failed}</p>
+            <div className="rounded-md border bg-status-fail-bg p-4">
+              <p className="text-xs text-status-fail">Failed</p>
+              <p className="text-xl font-semibold text-status-fail">{failed}</p>
             </div>
-            <div className="rounded-md border bg-amber-50 p-4">
-              <p className="text-xs text-amber-600">Flagged</p>
-              <p className="text-xl font-semibold text-amber-700">{flagged}</p>
+            <div className="rounded-md border bg-status-flagged-bg p-4">
+              <p className="text-xs text-status-flagged">Flagged</p>
+              <p className="text-xl font-semibold text-status-flagged">{flagged}</p>
             </div>
-            <div className="rounded-md border bg-slate-100 p-4">
-              <p className="text-xs text-slate-600">Not applicable</p>
-              <p className="text-xl font-semibold text-slate-700">{notApplicable}</p>
+            <div className="rounded-md border bg-status-na-bg p-4">
+              <p className="text-xs text-status-na">Not applicable</p>
+              <p className="text-xl font-semibold text-status-na">{notApplicable}</p>
             </div>
           </div>
         </CardContent>
@@ -953,19 +953,19 @@ export function Results() {
             <CardContent className="p-6">
               <div className="mb-4 space-y-2">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Requirement breakdown</h2>
-                  <p className="text-sm text-slate-600">
+                  <h2 className="text-lg font-semibold text-foreground">Requirement breakdown</h2>
+                  <p className="text-sm text-muted-foreground">
                     Each row represents the evaluation outcome for a single {framework?.name || "framework"} requirement.
                   </p>
                 </div>
                 {feedbackLoading ? (
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" />
                     <span>Loading human feedback...</span>
                   </div>
                 ) : null}
                 {feedbackError ? (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">
+                  <div className="rounded-md border border-sc-gold/30 bg-sc-gold-light p-2 text-xs text-sc-gold-dark">
                     {feedbackError}
                   </div>
                 ) : null}
@@ -996,7 +996,7 @@ export function Results() {
                   }
                 }}
                 isRowClickable={() => true}
-                rowClassName={() => "hover:bg-slate-50"}
+                rowClassName={() => "hover:bg-accent"}
               />
             </CardContent>
           </Card>
@@ -1010,21 +1010,21 @@ export function Results() {
       {activeRequirement ? (
         <div className="fixed inset-0 z-50 flex">
           <div
-            className="flex-1 bg-slate-900/40"
+            className="flex-1 bg-sc-purple-dark/40"
             aria-hidden="true"
             onClick={closeDrawer}
           />
           <aside className="relative ml-auto flex h-full w-full max-w-xl flex-col bg-white shadow-xl">
-            <header className="flex items-start justify-between border-b border-slate-200 p-6">
+            <header className="flex items-start justify-between border-b border-border p-6">
               <div className="space-y-1">
-                <p className="text-xs font-mono uppercase tracking-wide text-slate-500">
+                <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground">
                   {activeRequirement.requirement_id || "Requirement"}
                 </p>
-                <h2 className="text-lg font-semibold text-slate-900">
+                <h2 className="text-lg font-semibold text-foreground">
                   {activeRequirement.title || "Untitled requirement"}
                 </h2>
                 {activeRequirement.requirement_clause ? (
-                  <span className="text-xs font-semibold text-slate-600">
+                  <span className="text-xs font-semibold text-muted-foreground">
                     Clause {activeRequirement.requirement_clause}
                   </span>
                 ) : null}
@@ -1052,7 +1052,7 @@ export function Results() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-muted-foreground">
                   {(selectedRequirementIndex ?? 0) + 1} of {totalRequirements}
                 </div>
                 <div className="flex items-center gap-2">
@@ -1092,9 +1092,9 @@ export function Results() {
             <div className="flex-1 space-y-6 overflow-y-auto p-6">
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-900">Human feedback</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Human feedback</h3>
                   {activeFeedbackEntry.isSaving ? (
-                    <span className="flex items-center gap-1 text-xs text-slate-500">
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Loader2 className="h-3 w-3 animate-spin" />
                       Saving...
                     </span>
@@ -1137,7 +1137,7 @@ export function Results() {
                 {editingCommentId === activeRequirement?.requirement_id ? (
                   <div className="space-y-1">
                     <textarea
-                      className="h-32 w-full resize-y rounded-md border border-slate-300 p-2 text-sm text-slate-700 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      className="h-32 w-full resize-y rounded-md border border-border p-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                       placeholder="Add context for this rating..."
                       defaultValue={activeFeedbackEntry.comment}
                       autoFocus
@@ -1153,7 +1153,7 @@ export function Results() {
                       }}
                     />
                     {activeFeedbackEntry.error ? (
-                      <span className="text-xs text-red-600">{activeFeedbackEntry.error}</span>
+                      <span className="text-xs text-destructive">{activeFeedbackEntry.error}</span>
                     ) : null}
                   </div>
                 ) : (
@@ -1165,21 +1165,21 @@ export function Results() {
                       }
                     }}
                   >
-                    <div className="min-h-[80px] rounded-md border border-slate-200 p-2 text-sm text-slate-700 group-hover:border-slate-300 group-hover:bg-slate-50">
+                    <div className="min-h-[80px] rounded-md border border-border p-2 text-sm text-foreground group-hover:border-border group-hover:bg-accent">
                       {activeFeedbackEntry.comment || (
-                        <span className="text-slate-400">Click to add comment...</span>
+                        <span className="text-muted-foreground">Click to add comment...</span>
                       )}
                     </div>
                     {activeFeedbackEntry.error ? (
-                      <span className="text-xs text-red-600">{activeFeedbackEntry.error}</span>
+                      <span className="text-xs text-destructive">{activeFeedbackEntry.error}</span>
                     ) : null}
                   </div>
                 )}
               </section>
 
               <section className="space-y-2">
-                <h3 className="text-sm font-semibold text-slate-900">Evaluation rationale</h3>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                <h3 className="text-sm font-semibold text-foreground">Evaluation rationale</h3>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                   {activeRequirement.evaluation_rationale || "No rationale provided."}
                 </p>
               </section>
@@ -1187,22 +1187,22 @@ export function Results() {
               {/* Show Gaps section only for FAIL/FLAGGED status */}
               {(activeRequirement.status === "FAIL" || activeRequirement.status === "FLAGGED") && (
                 <section className="space-y-2">
-                  <h3 className="text-sm font-semibold text-red-700">Gaps</h3>
+                  <h3 className="text-sm font-semibold text-status-fail">Gaps</h3>
                   {activeRequirement.gaps_identified?.filter(Boolean).length ? (
-                    <ul className="space-y-2 text-sm text-slate-700">
+                    <ul className="space-y-2 text-sm text-foreground">
                       {activeRequirement.gaps_identified
                         .filter(Boolean)
                         .map((item: string, index: number) => (
                           <li
                             key={index}
-                            className="rounded-md border border-red-200 bg-red-50 p-3"
+                            className="rounded-md border border-status-fail/20 bg-status-fail-bg p-3"
                           >
                             {item}
                           </li>
                         ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-slate-500">No gaps documented.</p>
+                    <p className="text-sm text-muted-foreground">No gaps documented.</p>
                   )}
                 </section>
               )}
@@ -1210,65 +1210,65 @@ export function Results() {
               {/* Show OFI section only for PASS status - uses gaps_identified field */}
               {activeRequirement.status === "PASS" && (
                 <section className="space-y-2">
-                  <h3 className="text-sm font-semibold text-amber-700">Opportunities for Improvement</h3>
+                  <h3 className="text-sm font-semibold text-status-flagged">Opportunities for Improvement</h3>
                   {activeRequirement.gaps_identified?.filter(Boolean).length ? (
-                    <ul className="space-y-2 text-sm text-slate-700">
+                    <ul className="space-y-2 text-sm text-foreground">
                       {activeRequirement.gaps_identified
                         .filter(Boolean)
                         .map((item: string, index: number) => (
                           <li
                             key={index}
-                            className="rounded-md border border-amber-200 bg-amber-50 p-3"
+                            className="rounded-md border border-status-flagged/20 bg-status-flagged-bg p-3"
                           >
                             {item}
                           </li>
                         ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-slate-500">No improvements suggested - requirement is fully satisfied.</p>
+                    <p className="text-sm text-muted-foreground">No improvements suggested - requirement is fully satisfied.</p>
                   )}
                 </section>
               )}
 
               {/* Recommendations section - always shown */}
               <section className="space-y-2">
-                <h3 className="text-sm font-semibold text-blue-700">Recommendations</h3>
+                <h3 className="text-sm font-semibold text-sc">Recommendations</h3>
                 {activeRequirement.recommendations?.filter(Boolean).length ? (
-                  <ul className="space-y-2 text-sm text-slate-700">
+                  <ul className="space-y-2 text-sm text-foreground">
                     {activeRequirement.recommendations
                       .filter(Boolean)
                       .map((item: string, index: number) => (
                         <li
                           key={index}
-                          className="rounded-md border border-blue-200 bg-blue-50 p-3"
+                          className="rounded-md border border-sc/20 bg-sc-light p-3"
                         >
                           {item}
                         </li>
                       ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-slate-500">No recommendations provided.</p>
+                  <p className="text-sm text-muted-foreground">No recommendations provided.</p>
                 )}
               </section>
 
               {/* Evidence section moved to the bottom */}
               <section className="space-y-2">
-                <h3 className="text-sm font-semibold text-slate-900">Evidence</h3>
+                <h3 className="text-sm font-semibold text-foreground">Evidence</h3>
                 {activeRequirement.evidence_snippets?.filter(Boolean).length ? (
-                  <ul className="space-y-2 text-sm text-slate-700">
+                  <ul className="space-y-2 text-sm text-foreground">
                     {activeRequirement.evidence_snippets
                       .filter(Boolean)
                       .map((item: string, index: number) => (
                         <li
                           key={index}
-                          className="rounded-md border border-slate-200 bg-slate-50 p-3"
+                          className="rounded-md border border-border bg-muted p-3"
                         >
                           {item}
                         </li>
                       ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-slate-500">No evidence captured.</p>
+                  <p className="text-sm text-muted-foreground">No evidence captured.</p>
                 )}
               </section>
             </div>

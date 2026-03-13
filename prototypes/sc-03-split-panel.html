@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SC-03 Split Review Panel — Suttons Creek Compliance</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
+    background: #F7F9F9;
+    color: #2D1A33;
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  .header-bar {
+    border-top: 2px solid #FFC000;
+    background: #FFFFFF;
+    height: 56px;
+    border-bottom: 1px solid #E2E5E8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    flex-shrink: 0;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-logo {
+    width: 32px; height: 32px;
+    background: #00978F;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 13px;
+  }
+
+  .header-title {
+    font-weight: 300; font-size: 18px;
+    letter-spacing: 0.025em; color: #00978F;
+  }
+
+  .header-nav { display: flex; gap: 24px; }
+
+  .header-nav a {
+    text-decoration: none; font-size: 14px; font-weight: 500;
+    color: #6B7280; padding: 16px 0; border-bottom: 2px solid transparent;
+    transition: color .15s;
+  }
+  .header-nav a:hover { color: #00978F; }
+  .header-nav a.active { color: #00978F; border-bottom-color: #00978F; }
+
+  .nav-sep { color: #E2E5E8; font-size: 14px; user-select: none; display: flex; align-items: center; }
+
+  /* ── Page Title ─────────────────────────────────────────── */
+  .page-title-bar {
+    padding: 20px 24px 16px;
+    background: #F7F9F9;
+    flex-shrink: 0;
+  }
+
+  .page-title-bar h1 {
+    font-weight: 300; font-size: 24px; text-transform: uppercase;
+    color: #52315B; letter-spacing: 0.04em;
+  }
+
+  .page-title-bar .meta {
+    font-size: 14px; color: #6B7280; margin-top: 4px;
+  }
+
+  /* ── App Shell ──────────────────────────────────────────── */
+  .app-shell {
+    display: flex; flex-direction: column; height: 100vh;
+  }
+
+  .split-container {
+    display: flex; flex: 1; overflow: hidden;
+  }
+
+  /* ── Left Panel ─────────────────────────────────────────── */
+  .left-panel {
+    width: 320px; min-width: 320px;
+    background: #FFFFFF;
+    border-right: 1px solid #E2E5E8;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  .summary-bar {
+    padding: 12px 16px;
+    font-size: 12px; color: #6B7280;
+    border-bottom: 1px solid #E2E5E8;
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  .summary-item { display: flex; align-items: center; gap: 4px; }
+  .summary-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  .list-scroll {
+    flex: 1; overflow-y: auto;
+  }
+
+  .list-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(226,229,232,0.3);
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background .12s, border-color .12s;
+    position: relative;
+  }
+
+  .list-item:hover { background: #FAFBFB; }
+
+  .list-item.active {
+    border-left-color: #00978F;
+    background: #E8F5F4;
+  }
+
+  .list-item-header {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  .dot-pass { background: #0D9488; }
+  .dot-fail { background: #DC2626; }
+  .dot-flagged { background: #D4A017; }
+  .dot-na { background: #9CA3AF; }
+
+  .list-id {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px; color: #6B7280;
+  }
+
+  .list-title {
+    font-size: 14px; font-weight: 600; color: #2D1A33;
+    margin-top: 4px; padding-left: 16px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .list-meta {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 6px; padding-left: 16px;
+  }
+
+  .clause-tag {
+    font-size: 11px; color: #6B7280; background: #F3F4F6;
+    padding: 1px 6px; border-radius: 4px; font-weight: 500;
+  }
+
+  .conf-pill-sm {
+    font-size: 11px; font-weight: 600; padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  .conf-high-sm { color: #0D7A6F; background: #E6F5F3; }
+  .conf-medium-sm { color: #946000; background: #FFF8E1; }
+  .conf-low-sm { color: #6B7280; background: #F3F4F6; }
+
+  /* ── Right Panel ────────────────────────────────────────── */
+  .right-panel {
+    flex: 1; background: #F7F9F9;
+    overflow-y: auto;
+    display: flex; justify-content: center;
+    padding: 32px 24px;
+  }
+
+  .detail-content {
+    max-width: 640px; width: 100%;
+  }
+
+  .detail-top-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  /* Status pills (large) */
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 9999px;
+    font-size: 12px; font-weight: 600;
+  }
+  .pill-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  .pill-pass { background: #E6F5F3; color: #0D7A6F; }
+  .pill-pass .pill-dot { background: #0D9488; }
+  .pill-fail { background: #FEF2F2; color: #DC2626; }
+  .pill-fail .pill-dot { background: #DC2626; }
+  .pill-flagged { background: #FFF8E1; color: #946000; }
+  .pill-flagged .pill-dot { background: #D4A017; }
+  .pill-na { background: #F3F4F6; color: #6B7280; }
+  .pill-na .pill-dot { background: #9CA3AF; }
+
+  .conf-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 9999px;
+    font-size: 12px; font-weight: 600;
+  }
+  .conf-high { color: #0D7A6F; background: #E6F5F3; }
+  .conf-medium { color: #946000; background: #FFF8E1; }
+  .conf-low { color: #6B7280; background: #F3F4F6; }
+
+  .detail-title {
+    font-weight: 600; font-size: 20px; color: #2D1A33;
+    margin-bottom: 6px;
+  }
+
+  .detail-tags {
+    display: flex; gap: 8px; align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .detail-id {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px; color: #6B7280;
+  }
+
+  .section-heading {
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    color: #6B7280; letter-spacing: 0.04em;
+    margin-bottom: 8px; margin-top: 24px;
+  }
+
+  .evidence-block {
+    background: #FFFFFF;
+    border-left: 3px solid #00978F;
+    padding: 14px 16px;
+    border-radius: 4px;
+    font-style: italic; color: #4B5563;
+    font-size: 14px; line-height: 1.6;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  .gap-block {
+    background: #FEF2F2;
+    border-left: 3px solid #DC2626;
+    padding: 12px 16px;
+    border-radius: 4px;
+    color: #DC2626; font-size: 14px; line-height: 1.6;
+  }
+
+  .recommendation-block {
+    background: #FFFFFF;
+    padding: 12px 16px;
+    border-radius: 4px;
+    color: #2D1A33; font-size: 14px; line-height: 1.6;
+    border: 1px solid #E2E5E8;
+  }
+
+  .confidence-block {
+    color: #6B7280; font-size: 14px; line-height: 1.6;
+  }
+
+  .na-reason-block {
+    background: #F3F4F6;
+    border-left: 3px solid #9CA3AF;
+    padding: 12px 16px;
+    border-radius: 4px;
+    color: #6B7280; font-size: 14px; line-height: 1.6;
+  }
+
+  /* Action buttons */
+  .action-row {
+    display: flex; gap: 8px;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid #E2E5E8;
+  }
+
+  .btn {
+    padding: 8px 20px; border: none; border-radius: 6px;
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: background .15s, opacity .15s;
+  }
+
+  .btn-primary { background: #00978F; color: #fff; }
+  .btn-primary:hover { background: #005C57; }
+
+  .btn-destructive { background: #DC2626; color: #fff; }
+  .btn-destructive:hover { background: #B91C1C; }
+
+  .btn-secondary {
+    background: #fff; color: #6B7280;
+    border: 1px solid #E2E5E8;
+  }
+  .btn-secondary:hover { background: #F7F9F9; }
+
+  .btn:disabled {
+    opacity: 0.5; cursor: default;
+  }
+
+  .review-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 14px; border-radius: 6px;
+    font-size: 13px; font-weight: 600;
+  }
+
+  .badge-approved { background: #E6F5F3; color: #0D7A6F; }
+  .badge-rejected { background: #FEF2F2; color: #DC2626; }
+
+  /* ── Footer ─────────────────────────────────────────────── */
+  .footer-bar {
+    padding: 12px 24px;
+    background: #FFFFFF;
+    border-top: 1px solid #E2E5E8;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+    font-size: 13px; color: #6B7280;
+  }
+
+  .ai-notice {
+    font-size: 11px; color: #9CA3AF;
+    font-style: italic;
+  }
+
+  /* ── Scrollbar styling ──────────────────────────────────── */
+  .list-scroll::-webkit-scrollbar,
+  .right-panel::-webkit-scrollbar { width: 6px; }
+  .list-scroll::-webkit-scrollbar-track,
+  .right-panel::-webkit-scrollbar-track { background: transparent; }
+  .list-scroll::-webkit-scrollbar-thumb,
+  .right-panel::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+  .list-scroll::-webkit-scrollbar-thumb:hover,
+  .right-panel::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+  /* ── Focus outline for keyboard ─────────────────────────── */
+  .list-item:focus-visible {
+    outline: 2px solid #00978F;
+    outline-offset: -2px;
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Header -->
+  <header class="header-bar">
+    <div class="header-left">
+      <div class="header-logo">SC</div>
+      <span class="header-title">Suttons Creek Compliance</span>
+    </div>
+    <nav class="header-nav">
+      <a href="#">Upload</a>
+      <span class="nav-sep">&middot;</span>
+      <a href="#">Frameworks</a>
+      <span class="nav-sep">&middot;</span>
+      <a href="#" class="active">Evaluation</a>
+    </nav>
+  </header>
+
+  <!-- Page Title -->
+  <div class="page-title-bar">
+    <h1>Compliance Report</h1>
+    <div class="meta">Information Security Management Policy v3.2 / ISO 27001:2022 / 73%</div>
+  </div>
+
+  <!-- Split Container -->
+  <div class="split-container">
+
+    <!-- Left Panel -->
+    <aside class="left-panel">
+      <div class="summary-bar" id="summaryBar"></div>
+      <div class="list-scroll" id="listScroll" tabindex="0"></div>
+    </aside>
+
+    <!-- Right Panel -->
+    <main class="right-panel">
+      <div class="detail-content" id="detailContent"></div>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer-bar">
+    <div>
+      <span id="reviewedCount">0 of 15 reviewed</span>
+      <span class="ai-notice" style="margin-left:16px;">AI assessment — human verification required</span>
+    </div>
+    <button class="btn btn-secondary" onclick="handleExport()">Export</button>
+  </footer>
+</div>
+
+<script>
+const DATA = [
+  { id:"REQ-6.1.2", title:"Risk Assessment Process", clause:"6.1", status:"fail", confidence:"medium", gap:"No documented risk assessment methodology found. The policy references risk management in general terms but lacks a specific, repeatable process.", evidence:"The organization shall ensure information security risks are managed appropriately (Section 4.2)", recommendation:"Develop and document a formal risk assessment methodology.", reason:null, review:"pending" },
+  { id:"REQ-8.1.1", title:"Operational Planning and Control", clause:"8.1", status:"fail", confidence:"high", gap:"Missing documented operational procedures for security controls.", evidence:"Security controls shall be implemented as deemed necessary by management (Section 7.1)", recommendation:"Create detailed operational procedures for each security control.", reason:null, review:"pending" },
+  { id:"REQ-6.2.1", title:"Information Security Objectives", clause:"6.2", status:"fail", confidence:"high", gap:"No measurable information security objectives defined.", evidence:"The organization is committed to maintaining a high level of information security (Section 1.3)", recommendation:"Define SMART information security objectives.", reason:null, review:"pending" },
+  { id:"REQ-7.2.1", title:"Competence Requirements", clause:"7.2", status:"flagged", confidence:"low", gap:"Partial competence framework found but missing evidence of implementation.", evidence:"Staff shall receive appropriate information security training upon joining and annually thereafter (Section 5.4)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-9.1.1", title:"Monitoring and Measurement", clause:"9.1", status:"flagged", confidence:"medium", gap:"Monitoring requirements mentioned but no specific metrics or KPIs defined.", evidence:"Information security performance shall be monitored and reported to management (Section 8.2)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-9.3.1", title:"Management Review Inputs", clause:"9.3", status:"flagged", confidence:"medium", gap:"Management review process exists but input requirements are incomplete.", evidence:"Management shall review the ISMS at planned intervals (Section 9.1)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-5.1.1", title:"Leadership Commitment", clause:"5.1", status:"pass", confidence:"high", gap:null, evidence:"The Board of Directors and Senior Management are committed to supporting information security (Section 2.1)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-5.2.1", title:"Information Security Policy", clause:"5.2", status:"pass", confidence:"high", gap:null, evidence:"This Information Security Policy establishes the framework for managing information security risks (Section 1.1)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-5.3.1", title:"Organizational Roles", clause:"5.3", status:"pass", confidence:"medium", gap:null, evidence:"The CISO is responsible for the overall ISMS. Department heads implement controls in their areas (Section 3.1)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-7.1.1", title:"Resources", clause:"7.1", status:"pass", confidence:"high", gap:null, evidence:"The organization shall provide resources needed for the ISMS including budget allocation reviewed annually (Section 5.1)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-7.3.1", title:"Awareness", clause:"7.3", status:"pass", confidence:"high", gap:null, evidence:"All employees shall be made aware of the information security policy (Section 5.5)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-7.4.1", title:"Communication", clause:"7.4", status:"pass", confidence:"medium", gap:null, evidence:"Internal and external communications shall follow the defined communication plan (Section 5.6)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-9.2.1", title:"Internal Audit", clause:"9.2", status:"pass", confidence:"high", gap:null, evidence:"Internal audits shall be conducted at planned intervals, at least annually (Section 8.3)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-7.5.1", title:"Documented Information", clause:"7.5", status:"pass", confidence:"high", gap:null, evidence:"All ISMS documentation shall be controlled, versioned, and maintained (Section 5.7)", recommendation:null, reason:null, review:"pending" },
+  { id:"REQ-8.2.1", title:"Risk Assessment (Separate)", clause:"8.2", status:"na", confidence:"high", gap:null, evidence:null, recommendation:null, reason:"Assessed under REQ-6.1.2", review:"pending" }
+];
+
+const CONFIDENCE_TEXT = {
+  high: "High confidence: Strong, explicit evidence found in the document directly addressing this requirement.",
+  medium: "Medium confidence: Partial or indirect evidence found. The document references the topic but may lack specificity.",
+  low: "Low confidence: Weak or ambiguous evidence. Interpretation required; manual review strongly recommended."
+};
+
+const STATUS_ORDER = { fail: 0, flagged: 1, pass: 2, na: 3 };
+const STATUS_LABELS = { fail: "Fail", flagged: "Flagged", pass: "Pass", na: "N/A" };
+
+// Sort data: fail -> flagged -> pass -> na
+const sortedData = [...DATA].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
+
+let selectedIndex = 0;
+
+// ── Render Summary Bar ───────────────────────────────────
+function renderSummary() {
+  const counts = { fail: 0, flagged: 0, pass: 0, na: 0 };
+  sortedData.forEach(d => counts[d.status]++);
+
+  const summaryBar = document.getElementById('summaryBar');
+  summaryBar.innerHTML = [
+    { status: 'fail', label: 'failed', count: counts.fail },
+    { status: 'flagged', label: 'flagged', count: counts.flagged },
+    { status: 'pass', label: 'passed', count: counts.pass },
+    { status: 'na', label: 'n/a', count: counts.na }
+  ].map(s =>
+    `<span class="summary-item"><span class="summary-dot dot-${s.status}"></span>${s.count} ${s.label}</span>`
+  ).join('<span style="color:#D1D5DB;">&middot;</span>');
+}
+
+// ── Render List ──────────────────────────────────────────
+function renderList() {
+  const listScroll = document.getElementById('listScroll');
+  listScroll.innerHTML = sortedData.map((item, i) => {
+    const isActive = i === selectedIndex;
+    const reviewMark = item.review !== 'pending'
+      ? `<span style="width:6px;height:6px;border-radius:50%;background:${item.review === 'approved' ? '#0D9488' : '#DC2626'};margin-left:auto;flex-shrink:0;"></span>`
+      : '';
+    return `
+      <div class="list-item${isActive ? ' active' : ''}" data-index="${i}" onclick="selectItem(${i})">
+        <div class="list-item-header">
+          <span class="status-dot dot-${item.status}"></span>
+          <span class="list-id">${item.id}</span>
+          ${reviewMark}
+        </div>
+        <div class="list-title">${item.title}</div>
+        <div class="list-meta">
+          <span class="clause-tag">Clause ${item.clause}</span>
+          <span class="conf-pill-sm conf-${item.confidence}-sm">${capitalize(item.confidence)}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Render Detail ────────────────────────────────────────
+function renderDetail() {
+  const item = sortedData[selectedIndex];
+  const dc = document.getElementById('detailContent');
+
+  let html = '';
+
+  // Top row: status pill + confidence pill
+  html += `<div class="detail-top-row">
+    <span class="status-pill pill-${item.status}"><span class="pill-dot"></span>${STATUS_LABELS[item.status]}</span>
+    <span class="conf-pill conf-${item.confidence}">${capitalize(item.confidence)} Confidence</span>
+  </div>`;
+
+  // Title
+  html += `<div class="detail-title">${item.title}</div>`;
+
+  // ID and clause tags
+  html += `<div class="detail-tags">
+    <span class="detail-id">${item.id}</span>
+    <span class="clause-tag">Clause ${item.clause}</span>
+  </div>`;
+
+  // Evidence
+  if (item.evidence) {
+    html += `<div class="section-heading">Evidence</div>`;
+    html += `<div class="evidence-block">"${item.evidence}"</div>`;
+  }
+
+  // Gap
+  if (item.gap) {
+    html += `<div class="section-heading">Gap Identified</div>`;
+    html += `<div class="gap-block">${item.gap}</div>`;
+  }
+
+  // Recommendation
+  if (item.recommendation) {
+    html += `<div class="section-heading">Recommendation</div>`;
+    html += `<div class="recommendation-block">${item.recommendation}</div>`;
+  }
+
+  // N/A reason
+  if (item.status === 'na' && item.reason) {
+    html += `<div class="section-heading">N/A Reason</div>`;
+    html += `<div class="na-reason-block">${item.reason}</div>`;
+  }
+
+  // AI Confidence explanation
+  html += `<div class="section-heading">AI Confidence</div>`;
+  html += `<div class="confidence-block">${CONFIDENCE_TEXT[item.confidence]}</div>`;
+
+  // Action buttons / review state
+  html += `<div class="action-row">`;
+  if (item.review === 'approved') {
+    html += `<span class="review-badge badge-approved">&#10003; Approved</span>`;
+  } else if (item.review === 'rejected') {
+    html += `<span class="review-badge badge-rejected">&#10007; Rejected</span>`;
+  } else {
+    html += `<button class="btn btn-primary" onclick="reviewItem('approved')">Approve</button>`;
+    html += `<button class="btn btn-destructive" onclick="reviewItem('rejected')">Reject</button>`;
+  }
+  html += `</div>`;
+
+  dc.innerHTML = html;
+}
+
+// ── Update footer count ──────────────────────────────────
+function updateFooter() {
+  const reviewed = sortedData.filter(d => d.review !== 'pending').length;
+  document.getElementById('reviewedCount').textContent = `${reviewed} of ${sortedData.length} reviewed`;
+}
+
+// ── Interactions ─────────────────────────────────────────
+function selectItem(index) {
+  selectedIndex = index;
+  renderList();
+  renderDetail();
+  scrollActiveIntoView();
+}
+
+function reviewItem(decision) {
+  sortedData[selectedIndex].review = decision;
+  renderDetail();
+  renderList();
+  updateFooter();
+}
+
+function scrollActiveIntoView() {
+  const active = document.querySelector('.list-item.active');
+  if (active) {
+    active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// ── Keyboard Navigation ─────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (e.key === 'ArrowDown' && selectedIndex < sortedData.length - 1) {
+      selectedIndex++;
+    } else if (e.key === 'ArrowUp' && selectedIndex > 0) {
+      selectedIndex--;
+    }
+    renderList();
+    renderDetail();
+    scrollActiveIntoView();
+  }
+});
+
+// ── Export ────────────────────────────────────────────────
+function handleExport() {
+  const lines = ['Compliance Report Export', '=======================', ''];
+  sortedData.forEach(item => {
+    lines.push(`${item.id} — ${item.title}`);
+    lines.push(`  Status: ${STATUS_LABELS[item.status]} | Confidence: ${capitalize(item.confidence)} | Review: ${capitalize(item.review)}`);
+    if (item.evidence) lines.push(`  Evidence: ${item.evidence}`);
+    if (item.gap) lines.push(`  Gap: ${item.gap}`);
+    if (item.recommendation) lines.push(`  Recommendation: ${item.recommendation}`);
+    if (item.status === 'na' && item.reason) lines.push(`  N/A Reason: ${item.reason}`);
+    lines.push('');
+  });
+
+  const reviewed = sortedData.filter(d => d.review !== 'pending').length;
+  lines.push(`${reviewed} of ${sortedData.length} reviewed`);
+  lines.push('', 'AI assessment — human verification required');
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'compliance-report-export.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── Init ─────────────────────────────────────────────────
+renderSummary();
+renderList();
+renderDetail();
+updateFooter();
+</script>
+</body>
+</html>

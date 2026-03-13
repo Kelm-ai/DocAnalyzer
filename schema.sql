@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS document_evaluations (
     evaluation_method TEXT,
     model_used TEXT,
     error_message TEXT,
+    metadata JSONB DEFAULT NULL,
     -- Multi-document support
     supporting_docs_count INTEGER DEFAULT 0,
     summaries_status TEXT CHECK (summaries_status IN ('pending', 'generating', 'completed', 'failed', 'not_required')),
@@ -71,6 +72,8 @@ CREATE TABLE IF NOT EXISTS compliance_reports (
     by_clause JSONB,
     high_risk_findings TEXT[],
     key_gaps TEXT[],
+    executive_summary JSONB,
+    requirement_presentations JSONB,
     report_format TEXT DEFAULT 'json',
     generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -103,6 +106,8 @@ CREATE TABLE IF NOT EXISTS evaluation_documents (
     claude_uploaded_at TIMESTAMPTZ,
     -- Ordering for supporting docs
     display_order INTEGER DEFAULT 0,
+    -- Storage cleanup tracking (NULL = file still in storage)
+    storage_deleted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -128,6 +133,7 @@ CREATE INDEX IF NOT EXISTS idx_processed_documents_filename ON processed_documen
 CREATE INDEX IF NOT EXISTS idx_eval_docs_evaluation_id ON evaluation_documents(evaluation_id);
 CREATE INDEX IF NOT EXISTS idx_eval_docs_role ON evaluation_documents(document_role);
 CREATE INDEX IF NOT EXISTS idx_eval_docs_file_hash ON evaluation_documents(file_hash);
+CREATE INDEX IF NOT EXISTS idx_eval_docs_pending_cleanup ON evaluation_documents(created_at) WHERE storage_deleted_at IS NULL;
 
 -- Repeatability testing results
 CREATE TABLE IF NOT EXISTS eval_results (

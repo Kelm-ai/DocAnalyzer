@@ -69,24 +69,24 @@ export function Modal({
           sizeClasses[size]
         )}
       >
-        <div className="flex justify-between border-b border-gray-100 px-6 py-4">
+        <div className="flex justify-between border-b border-border px-6 py-4">
           <div>
-            {title ? <h2 className="text-lg font-semibold text-gray-900">{title}</h2> : null}
+            {title ? <h2 className="text-lg font-semibold text-foreground">{title}</h2> : null}
             {description ? (
-              <p className="mt-1 text-sm text-gray-600">{description}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{description}</p>
             ) : null}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+            className="rounded p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
             aria-label="Close"
           >
             <span aria-hidden>&times;</span>
           </button>
         </div>
         <div className="px-6 py-4">{children}</div>
-        {footer ? <div className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">{footer}</div> : null}
+        {footer ? <div className="flex justify-end gap-3 border-t border-border px-6 py-4">{footer}</div> : null}
       </div>
     </div>,
     document.body

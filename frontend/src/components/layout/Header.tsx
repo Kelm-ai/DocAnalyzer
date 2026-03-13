@@ -1,4 +1,4 @@
-import { FileText, Shield, Menu } from "lucide-react"
+import { FileText, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface HeaderProps {
@@ -7,7 +7,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="container flex h-14 items-center">
         <Button
           variant="ghost"
@@ -18,11 +18,11 @@ export function Header({ onMenuClick }: HeaderProps) {
           <Menu className="h-5 w-5" />
         </Button>
         <div className="flex items-center space-x-2">
-          <Shield className="h-6 w-6 text-blue-600" />
-          <h1 className="text-xl font-bold">Document Compliance Evaluator</h1>
+          <img src="/sc-logo.png" alt="Suttons Creek" className="h-6 w-6 rounded" />
+          <h1 className="text-lg font-light tracking-wide text-sc">Suttons Creek Compliance</h1>
         </div>
         <div className="ml-auto flex items-center space-x-4">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <FileText className="h-4 w-4" />
             <span>Regulatory Document Assessment</span>
           </div>

@@ -3,11 +3,12 @@
 Executive Summary Generator
 
 Generates an LLM-powered executive summary from evaluation results.
-Uses OpenAI's gpt-4o-mini for fast, cost-effective summarization.
+Uses OpenAI for fast, cost-effective summarization (model configurable via OPENAI_SUMMARY_MODEL).
 """
 
 import json
 import logging
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -116,7 +117,7 @@ async def generate_executive_summary(
         logger.info(f"Generating executive summary for {document_name}")
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=os.getenv("OPENAI_SUMMARY_MODEL", "gpt-5-mini"),
             messages=[
                 {"role": "system", "content": SUMMARY_SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt}

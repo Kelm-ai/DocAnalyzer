@@ -165,6 +165,16 @@ class TestDualVisionComparator:
         comparator = DualVisionComparator()
         assert comparator.secondary.provider == "openai"
 
+    def test_dual_comparator_progress_tracker_only_attaches_to_primary(self):
+        """Dual mode should avoid double-counting by tracking only the primary evaluator."""
+        from vision_responses_evaluator import DualVisionComparator
+
+        tracker = object()
+        comparator = DualVisionComparator(progress_tracker=tracker)
+
+        assert comparator.primary._progress_tracker is tracker
+        assert comparator.secondary._progress_tracker is None
+
 
 class TestDualModeDetection:
     """Test the dual mode detection logic used in app.py."""

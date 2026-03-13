@@ -24,6 +24,7 @@ interface UploadedFile {
     completed: number
     total: number
     message: string
+    etaSeconds?: number
     batchNumber?: number
     batchTotal?: number
     batchSize?: number
@@ -69,6 +70,13 @@ export function DocumentUploader() {
   }, [])
 
   const selectedFramework = frameworks.find(f => f.id === selectedFrameworkId)
+
+  const formatEta = (seconds: number) => {
+    if (seconds < 60) return `${Math.max(1, Math.round(seconds))}s`
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = Math.round(seconds % 60)
+    return `${minutes}m ${remainingSeconds}s`
+  }
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -152,15 +160,16 @@ export function DocumentUploader() {
               ...f,
               status: computedStatus,
               error: status.error_message,
-              evaluationProgress: nextMetadata ? {
-                percent: nextMetadata.progress_percent ?? previousProgress?.percent ?? 0,
-                completed: nextMetadata.completed_requirements ?? previousProgress?.completed ?? 0,
-                total: nextMetadata.total_requirements ?? previousProgress?.total ?? 38,
-                message: nextMetadata.status_message || previousProgress?.message || "Processing...",
-                batchNumber: nextMetadata.batch_number ?? previousProgress?.batchNumber,
-                batchTotal: nextMetadata.batch_total ?? previousProgress?.batchTotal,
-                batchSize: nextMetadata.batch_size ?? previousProgress?.batchSize,
-              } : undefined
+                evaluationProgress: nextMetadata ? {
+                  percent: nextMetadata.progress_percent ?? previousProgress?.percent ?? 0,
+                  completed: nextMetadata.completed_requirements ?? previousProgress?.completed ?? 0,
+                  total: nextMetadata.total_requirements ?? previousProgress?.total ?? 38,
+                  message: nextMetadata.status_message || previousProgress?.message || "Processing...",
+                  etaSeconds: nextMetadata.estimated_seconds_remaining ?? previousProgress?.etaSeconds,
+                  batchNumber: nextMetadata.batch_number ?? previousProgress?.batchNumber,
+                  batchTotal: nextMetadata.batch_total ?? previousProgress?.batchTotal,
+                  batchSize: nextMetadata.batch_size ?? previousProgress?.batchSize,
+                } : undefined
             }
           }))
         },
@@ -358,11 +367,16 @@ export function DocumentUploader() {
                         className="h-2" 
                       />
                       <div className="flex items-center justify-between text-xs">
-                        <p className="text-muted-foreground">
-                          {file.status === "uploading"
-                            ? "Uploading to Azure Storage..."
-                            : file.evaluationProgress?.message || `Evaluating against ${selectedFramework?.name || "framework"} requirements...`}
-                        </p>
+                        <div className="text-muted-foreground">
+                          <p>
+                            {file.status === "uploading"
+                              ? "Uploading to Azure Storage..."
+                              : file.evaluationProgress?.message || `Evaluating against ${selectedFramework?.name || "framework"} requirements...`}
+                          </p>
+                          {file.status === "processing" && file.evaluationProgress?.etaSeconds != null && (
+                            <p>~{formatEta(file.evaluationProgress.etaSeconds)} remaining</p>
+                          )}
+                        </div>
                         {file.status === "processing" && file.evaluationProgress && (
                           <p className="text-muted-foreground font-mono">
                             {file.evaluationProgress.completed}/{file.evaluationProgress.total} ({file.evaluationProgress.percent}%)

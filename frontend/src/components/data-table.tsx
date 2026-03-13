@@ -120,7 +120,7 @@ export function DataTable<TData, TValue>({
                               : undefined
                           }
                         >
-                          <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             {flexRender(header.column.columnDef.header, header.getContext())}
                             {header.column.getCanSort() ? (
                               header.column.getIsSorted() === "asc" ? (
@@ -128,7 +128,7 @@ export function DataTable<TData, TValue>({
                               ) : header.column.getIsSorted() === "desc" ? (
                                 <ArrowDown className="h-3 w-3" />
                               ) : (
-                                <ArrowUpDown className="h-3 w-3 text-slate-400" />
+                                <ArrowUpDown className="h-3 w-3 text-muted-foreground/60" />
                               )
                             ) : null}
                           </span>

@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SC-02 Dashboard Cards — Suttons Creek Compliance</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== Reset & Base ===== */
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
+    background: #F7F9F9;
+    color: #2D1A33;
+    min-height: 100vh;
+    padding-bottom: 72px;
+  }
+
+  /* ===== Header Bar ===== */
+  .header-bar {
+    border-top: 2px solid #FFC000;
+    background: #FFFFFF;
+    height: 56px;
+    border-bottom: 1px solid #E2E5E8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-box {
+    width: 32px;
+    height: 32px;
+    background: #00978F;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+
+  .header-title {
+    font-weight: 300;
+    font-size: 18px;
+    letter-spacing: 0.025em;
+    color: #00978F;
+  }
+
+  .header-nav {
+    display: flex;
+    gap: 24px;
+  }
+
+  .header-nav a {
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6B7280;
+    padding: 16px 0;
+    border-bottom: 2px solid transparent;
+    display: inline-block;
+    line-height: calc(56px - 32px);
+  }
+
+  .header-nav a.active {
+    color: #00978F;
+    border-bottom-color: #00978F;
+  }
+
+  .header-nav .sep {
+    color: #E2E5E8;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+  }
+
+  /* ===== Page Title ===== */
+  .page-header {
+    padding: 28px 32px 0 32px;
+  }
+
+  .page-title {
+    font-weight: 300;
+    text-transform: uppercase;
+    color: #52315B;
+    font-size: 24px;
+    letter-spacing: 0.025em;
+  }
+
+  .page-meta {
+    font-size: 14px;
+    color: #6B7280;
+    margin-top: 4px;
+  }
+
+  .ai-notice {
+    font-size: 12px;
+    color: #9CA3AF;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: #F3F4F6;
+    border-radius: 4px;
+    display: inline-block;
+  }
+
+  /* ===== Summary Stats Bar ===== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 20px 32px 0 32px;
+  }
+
+  .stat-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E5E8;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+  }
+
+  .stat-card.total::before { background: #00978F; }
+  .stat-card.compliance::before { background: #0D9488; }
+  .stat-card.failures::before { background: #DC2626; }
+  .stat-card.flagged::before { background: #D4A017; }
+
+  .stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2D1A33;
+  }
+
+  .stat-value.compliance-val { color: #0D7A6F; }
+  .stat-value.failures-val { color: #DC2626; }
+  .stat-value.flagged-val { color: #946000; }
+
+  .stat-label {
+    font-size: 12px;
+    color: #6B7280;
+    margin-top: 2px;
+  }
+
+  /* ===== Filter Tabs ===== */
+  .filter-tabs-wrapper {
+    padding: 0 32px;
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 0;
+    padding-top: 20px;
+    border-bottom: 1px solid #E2E5E8;
+  }
+
+  .filter-tab {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6B7280;
+    cursor: pointer;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    font-family: inherit;
+    transition: color 0.15s;
+  }
+
+  .filter-tab:hover {
+    color: #00978F;
+  }
+
+  .filter-tab.active {
+    color: #00978F;
+    border-bottom-color: #00978F;
+  }
+
+  /* ===== Card Grid ===== */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px 32px;
+  }
+
+  @media (max-width: 900px) {
+    .card-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .card-grid {
+      grid-template-columns: 1fr;
+    }
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* ===== Requirement Card ===== */
+  .req-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E5E8;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+
+  .req-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-color: #d0d5da;
+  }
+
+  .req-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+  }
+
+  .req-card.status-fail::before { background: #DC2626; }
+  .req-card.status-flagged::before { background: #D4A017; }
+  .req-card.status-pass::before { background: #0D9488; }
+  .req-card.status-na::before { background: #9CA3AF; }
+
+  .req-card.expanded {
+    border-color: #00978F;
+  }
+
+  /* ===== Card Inner Layout ===== */
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2D1A33;
+    margin-bottom: 6px;
+  }
+
+  .card-tags {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .tag-id {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 12px;
+    color: #6B7280;
+    background: #F3F4F6;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .tag-clause {
+    font-size: 12px;
+    color: #9CA3AF;
+  }
+
+  .card-evidence {
+    font-size: 14px;
+    color: #6B7280;
+    font-style: italic;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.5;
+  }
+
+  .card-na-reason {
+    font-size: 13px;
+    color: #9CA3AF;
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  /* ===== Status Pills ===== */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 9999px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .pill .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .pill-pass { background: #E6F5F3; color: #0D7A6F; }
+  .pill-pass .dot { background: #0D9488; }
+
+  .pill-fail { background: #FEF2F2; color: #DC2626; }
+  .pill-fail .dot { background: #DC2626; }
+
+  .pill-flagged { background: #FFF8E1; color: #946000; }
+  .pill-flagged .dot { background: #D4A017; }
+
+  .pill-na { background: #F3F4F6; color: #6B7280; }
+  .pill-na .dot { background: #9CA3AF; }
+
+  /* ===== Confidence Pills ===== */
+  .conf-pill {
+    border-radius: 9999px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .conf-high { background: #E6F5F3; color: #0D7A6F; }
+  .conf-medium { background: #FFF8E1; color: #946000; }
+  .conf-low { background: #F3F4F6; color: #6B7280; }
+
+  /* ===== Review Badge ===== */
+  .review-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    padding: 2px 6px;
+  }
+
+  .review-badge.approved { background: #E6F5F3; color: #0D7A6F; }
+  .review-badge.rejected { background: #FEF2F2; color: #DC2626; }
+
+  /* ===== Expanded Card Area ===== */
+  .card-expanded {
+    display: none;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #E2E5E8;
+  }
+
+  .req-card.expanded .card-expanded {
+    display: block;
+  }
+
+  .expanded-evidence {
+    border-left: 3px solid #00978F;
+    padding: 10px 14px;
+    font-style: italic;
+    color: #6B7280;
+    font-size: 14px;
+    margin-bottom: 14px;
+    line-height: 1.6;
+    background: #F7F9F9;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .expanded-gap {
+    background: #FEF2F2;
+    color: #DC2626;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+
+  .expanded-gap strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .expanded-rec {
+    font-size: 13px;
+    color: #2D1A33;
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+
+  .expanded-rec strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .expanded-conf {
+    font-size: 12px;
+    color: #9CA3AF;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .expanded-na {
+    font-size: 13px;
+    color: #9CA3AF;
+    font-style: italic;
+    margin-bottom: 14px;
+  }
+
+  .expanded-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  /* ===== Buttons ===== */
+  .btn {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+  }
+
+  .btn-primary {
+    background: #00978F;
+    color: #FFFFFF;
+  }
+
+  .btn-primary:hover {
+    background: #005C57;
+  }
+
+  .btn-destructive {
+    background: #DC2626;
+    color: #FFFFFF;
+  }
+
+  .btn-destructive:hover {
+    background: #b91c1c;
+  }
+
+  .btn-secondary {
+    background: #FFFFFF;
+    color: #6B7280;
+    border: 1px solid #E2E5E8;
+  }
+
+  .btn-secondary:hover {
+    background: #F7F9F9;
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  /* ===== Footer Bar ===== */
+  .footer-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    border-top: 1px solid #E2E5E8;
+    padding: 14px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .footer-progress {
+    font-size: 14px;
+    color: #6B7280;
+  }
+
+  .footer-progress strong {
+    color: #2D1A33;
+    font-weight: 600;
+  }
+
+  /* ===== Empty State ===== */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 48px 20px;
+    color: #9CA3AF;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header-bar">
+  <div class="header-left">
+    <div class="logo-box">SC</div>
+    <span class="header-title">Suttons Creek Compliance</span>
+  </div>
+  <nav class="header-nav">
+    <a href="#">Upload</a>
+    <span class="sep">&middot;</span>
+    <a href="#">Frameworks</a>
+    <span class="sep">&middot;</span>
+    <a href="#" class="active">Evaluation</a>
+  </nav>
+</header>
+
+<!-- Page Title -->
+<div class="page-header">
+  <h1 class="page-title">Compliance Report</h1>
+  <p class="page-meta">Information Security Management Policy v3.2 / ISO 27001:2022 / 73%</p>
+  <div class="ai-notice">AI assessment — human verification required</div>
+</div>
+
+<!-- Summary Stats -->
+<div class="stats-grid">
+  <div class="stat-card total">
+    <div class="stat-value">15</div>
+    <div class="stat-label">Total Requirements</div>
+  </div>
+  <div class="stat-card compliance">
+    <div class="stat-value compliance-val">53%</div>
+    <div class="stat-label">Compliance Rate</div>
+  </div>
+  <div class="stat-card failures">
+    <div class="stat-value failures-val">3</div>
+    <div class="stat-label">Failures</div>
+  </div>
+  <div class="stat-card flagged">
+    <div class="stat-value flagged-val">3</div>
+    <div class="stat-label">Flagged</div>
+  </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="filter-tabs-wrapper">
+  <div class="filter-tabs" id="filterTabs">
+    <button class="filter-tab active" data-filter="all">All (15)</button>
+    <button class="filter-tab" data-filter="fail">Failed (3)</button>
+    <button class="filter-tab" data-filter="flagged">Flagged (3)</button>
+    <button class="filter-tab" data-filter="pass">Passed (8)</button>
+    <button class="filter-tab" data-filter="na">N/A (1)</button>
+  </div>
+</div>
+
+<!-- Card Grid -->
+<div class="card-grid" id="cardGrid"></div>
+
+<!-- Footer -->
+<div class="footer-bar">
+  <div class="footer-progress"><strong id="reviewedCount">0</strong> of 15 reviewed</div>
+  <button class="btn btn-secondary" id="exportBtn">Export</button>
+</div>
+
+<script>
+/* ===== Data ===== */
+const DATA = [
+  {
+    id: "REQ-6.1.2", title: "Risk Assessment Process", clause: "6.1",
+    status: "fail", confidence: "medium",
+    gap: "No documented risk assessment methodology found. The policy references risk management in general terms but lacks a specific, repeatable process.",
+    evidence: "The organization shall ensure information security risks are managed appropriately (Section 4.2)",
+    recommendation: "Develop and document a formal risk assessment methodology.",
+    reason: null, review: "pending"
+  },
+  {
+    id: "REQ-8.1.1", title: "Operational Planning and Control", clause: "8.1",
+    status: "fail", confidence: "high",
+    gap: "Missing documented operational procedures for security controls.",
+    evidence: "Security controls shall be implemented as deemed necessary by management (Section 7.1)",
+    recommendation: "Create detailed operational procedures for each security control.",
+    reason: null, review: "pending"
+  },
+  {
+    id: "REQ-6.2.1", title: "Information Security Objectives", clause: "6.2",
+    status: "fail", confidence: "high",
+    gap: "No measurable information security objectives defined.",
+    evidence: "The organization is committed to maintaining a high level of information security (Section 1.3)",
+    recommendation: "Define SMART information security objectives.",
+    reason: null, review: "pending"
+  },
+  {
+    id: "REQ-7.2.1", title: "Competence Requirements", clause: "7.2",
+    status: "flagged", confidence: "low",
+    gap: "Partial competence framework found but missing evidence of implementation.",
+    evidence: "Staff shall receive appropriate information security training upon joining and annually thereafter (Section 5.4)",
+    recommendation: null, reason: null, review: "pending"
+  },
+  {
+    id: "REQ-9.1.1", title: "Monitoring and Measurement", clause: "9.1",
+    status: "flagged", confidence: "medium",
+    gap: "Monitoring requirements mentioned but no specific metrics or KPIs defined.",
+    evidence: "Information security performance shall be monitored and reported to management (Section 8.2)",
+    recommendation: null, reason: null, review: "pending"
+  },
+  {
+    id: "REQ-9.3.1", title: "Management Review Inputs", clause: "9.3",
+    status: "flagged", confidence: "medium",
+    gap: "Management review process exists but input requirements are incomplete.",
+    evidence: "Management shall review the ISMS at planned intervals (Section 9.1)",
+    recommendation: null, reason: null, review: "pending"
+  },
+  {
+    id: "REQ-5.1.1", title: "Leadership Commitment", clause: "5.1",
+    status: "pass", confidence: "high",
+    gap: null,
+    evidence: "The Board of Directors and Senior Management are committed to supporting information security (Section 2.1)",
+    recommendation: null, reason: null, review: "pending"
+  },
+  {
+    id: "REQ-5.2.1", title: "Information Security Policy", clause: "5.2",
+    status: "pass", confidence: "high",
+    gap: null,
+    evidence: "This Information Security Policy establishes the framework for managing information security risks (Section 1.1)",
+    recommendation: null, reason: null, review: "pending"
+  },
+  {
+    id: "REQ-5.3.1", title: "Organizational Roles", clause: "5.3",
+    status: "pass", confidence: "medium",
+    gap: null,
+    evidence: "The CISO is responsible for the overall ISMS. Department heads implement controls in their areas (Section 3.1)",
+    recommendation: null, reason: null, review: "pending"
+  },
+  {
+    id: "REQ-7.1.1", title: "Resources", clause: "7.1",
+    status: "pass", confidence: "high",
+    gap: null,
+    evidence: "The organization shall provide resources needed for the ISMS including budget allocation reviewed annually (Section 5.1)",
+    recommendation: null, reason: null, review: "pending"
+  },
+  {
+    id: "REQ-7.3.1", title: "Awareness", clause: "7.3",
+    status: "pass", confidence: "high",
+    gap: null,
+    evidence: "All employees shall be made aware of the information security policy (Section 5.5)",
+    recommendation: null, reason: null, review: "pending"
+  },
+  {
+    id: "REQ-7.4.1", title: "Communication", clause: "7.4",
+    status: "pass", confidence: "medium",
+    gap: null,
+    evidence: "Internal and external communications shall follow the defined communication plan (Section 5.6)",
+    recommendation: null, reason: null, review: "pending"
+  },
+  {
+    id: "REQ-9.2.1", title: "Internal Audit", clause: "9.2",
+    status: "pass", confidence: "high",
+    gap: null,
+    evidence: "Internal audits shall be conducted at planned intervals, at least annually (Section 8.3)",
+    recommendation: null, reason: null, review: "pending"
+  },
+  {
+    id: "REQ-7.5.1", title: "Documented Information", clause: "7.5",
+    status: "pass", confidence: "high",
+    gap: null,
+    evidence: "All ISMS documentation shall be controlled, versioned, and maintained (Section 5.7)",
+    recommendation: null, reason: null, review: "pending"
+  },
+  {
+    id: "REQ-8.2.1", title: "Risk Assessment (Separate)", clause: "8.2",
+    status: "na", confidence: "high",
+    gap: null, evidence: null, recommendation: null,
+    reason: "Assessed under REQ-6.1.2", review: "pending"
+  }
+];
+
+/* ===== Confidence Explanation Text ===== */
+const CONFIDENCE_TEXT = {
+  high: "High confidence: Strong, explicit evidence found in the document directly addressing this requirement.",
+  medium: "Medium confidence: Partial or indirect evidence found. The document references the topic but may lack specificity.",
+  low: "Low confidence: Weak or ambiguous evidence. Interpretation required; manual review strongly recommended."
+};
+
+/* ===== Sort Order: fail -> flagged -> pass -> na ===== */
+const STATUS_ORDER = { fail: 0, flagged: 1, pass: 2, na: 3 };
+
+/* ===== State ===== */
+let activeFilter = 'all';
+let expandedId = null;
+
+/* ===== Helpers ===== */
+function sortedData() {
+  return [...DATA].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
+}
+
+function filteredData() {
+  const sorted = sortedData();
+  if (activeFilter === 'all') return sorted;
+  return sorted.filter(d => d.status === activeFilter);
+}
+
+function statusLabel(s) {
+  const labels = { fail: 'Fail', flagged: 'Flagged', pass: 'Pass', na: 'N/A' };
+  return labels[s] || s;
+}
+
+function pillClass(s) {
+  const classes = { fail: 'pill-fail', flagged: 'pill-flagged', pass: 'pill-pass', na: 'pill-na' };
+  return classes[s];
+}
+
+function confClass(c) {
+  const classes = { high: 'conf-high', medium: 'conf-medium', low: 'conf-low' };
+  return classes[c];
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/* ===== Render Cards ===== */
+function renderCards() {
+  const grid = document.getElementById('cardGrid');
+  const items = filteredData();
+
+  if (items.length === 0) {
+    grid.innerHTML = '<div class="empty-state">No requirements match this filter.</div>';
+    return;
+  }
+
+  grid.innerHTML = items.map(function(item) {
+    const isExpanded = expandedId === item.id;
+
+    /* Review badge */
+    var reviewBadge = '';
+    if (item.review === 'approved') {
+      reviewBadge = '<span class="review-badge approved">Approved</span>';
+    } else if (item.review === 'rejected') {
+      reviewBadge = '<span class="review-badge rejected">Rejected</span>';
+    }
+
+    /* Expanded detail area */
+    var expandedHtml = '';
+    if (isExpanded) {
+      expandedHtml += '<div class="card-expanded">';
+
+      /* Full evidence quote */
+      if (item.evidence) {
+        expandedHtml += '<div class="expanded-evidence">'
+          + escapeHtml(item.evidence)
+          + '</div>';
+      }
+
+      /* N/A reason */
+      if (item.status === 'na' && item.reason) {
+        expandedHtml += '<div class="expanded-na">'
+          + escapeHtml(item.reason)
+          + '</div>';
+      }
+
+      /* Gap section */
+      if (item.gap) {
+        expandedHtml += '<div class="expanded-gap">'
+          + '<strong>Gap</strong>'
+          + escapeHtml(item.gap)
+          + '</div>';
+      }
+
+      /* Recommendation */
+      if (item.recommendation) {
+        expandedHtml += '<div class="expanded-rec">'
+          + '<strong>Recommendation</strong>'
+          + escapeHtml(item.recommendation)
+          + '</div>';
+      }
+
+      /* Confidence explanation */
+      expandedHtml += '<div class="expanded-conf">'
+        + escapeHtml(CONFIDENCE_TEXT[item.confidence])
+        + '</div>';
+
+      /* Approve / Reject buttons */
+      var approveDisabled = item.review === 'approved' ? ' disabled' : '';
+      var rejectDisabled = item.review === 'rejected' ? ' disabled' : '';
+
+      expandedHtml += '<div class="expanded-actions">'
+        + '<button class="btn btn-primary"'
+        + ' onclick="event.stopPropagation(); setReview(\'' + item.id + '\', \'approved\')"'
+        + approveDisabled + '>Approve</button>'
+        + '<button class="btn btn-destructive"'
+        + ' onclick="event.stopPropagation(); setReview(\'' + item.id + '\', \'rejected\')"'
+        + rejectDisabled + '>Reject</button>'
+        + '</div>';
+
+      expandedHtml += '</div>';
+    }
+
+    /* Evidence snippet (collapsed view) */
+    var evidenceSnippet = item.evidence
+      ? '<div class="card-evidence">' + escapeHtml(item.evidence) + '</div>'
+      : '';
+
+    /* N/A reason shown in collapsed view */
+    var naReason = (item.status === 'na' && item.reason && !isExpanded)
+      ? '<div class="card-na-reason">' + escapeHtml(item.reason) + '</div>'
+      : '';
+
+    /* Assemble card */
+    return '<div class="req-card status-' + item.status
+      + (isExpanded ? ' expanded' : '')
+      + '" data-id="' + item.id + '"'
+      + ' onclick="toggleCard(\'' + item.id + '\')">'
+      + reviewBadge
+      + '<div class="card-top">'
+        + '<span class="pill ' + pillClass(item.status) + '">'
+          + '<span class="dot"></span>'
+          + statusLabel(item.status)
+        + '</span>'
+        + '<span class="conf-pill ' + confClass(item.confidence) + '">'
+          + capitalize(item.confidence)
+        + '</span>'
+      + '</div>'
+      + '<div class="card-title">' + escapeHtml(item.title) + '</div>'
+      + '<div class="card-tags">'
+        + '<span class="tag-id">' + escapeHtml(item.id) + '</span>'
+        + '<span class="tag-clause">Clause ' + escapeHtml(item.clause) + '</span>'
+      + '</div>'
+      + evidenceSnippet
+      + naReason
+      + expandedHtml
+      + '</div>';
+  }).join('');
+}
+
+/* ===== Toggle Card Expansion ===== */
+function toggleCard(id) {
+  expandedId = (expandedId === id) ? null : id;
+  renderCards();
+}
+
+/* ===== Set Review Decision ===== */
+function setReview(id, decision) {
+  var item = DATA.find(function(d) { return d.id === id; });
+  if (item) {
+    item.review = decision;
+    updateReviewedCount();
+    renderCards();
+  }
+}
+
+/* ===== Update Reviewed Counter ===== */
+function updateReviewedCount() {
+  var count = DATA.filter(function(d) { return d.review !== 'pending'; }).length;
+  document.getElementById('reviewedCount').textContent = count;
+}
+
+/* ===== Initialize Filter Tabs ===== */
+function initFilterTabs() {
+  var tabs = document.querySelectorAll('.filter-tab');
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      tabs.forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      activeFilter = tab.getAttribute('data-filter');
+      expandedId = null;
+      renderCards();
+    });
+  });
+}
+
+/* ===== Export Report ===== */
+function exportReport() {
+  var sorted = sortedData();
+  var lines = [];
+
+  lines.push('COMPLIANCE REPORT EXPORT');
+  lines.push('========================');
+  lines.push('Information Security Management Policy v3.2 / ISO 27001:2022');
+  lines.push('Generated: ' + new Date().toISOString().slice(0, 10));
+  lines.push('');
+
+  lines.push('SUMMARY');
+  lines.push('-------');
+  lines.push('Total Requirements: 15');
+  lines.push('Compliance Rate:    53%');
+  lines.push('Failures:           3');
+  lines.push('Flagged:            3');
+
+  var reviewed = DATA.filter(function(d) { return d.review !== 'pending'; }).length;
+  lines.push('Reviewed:           ' + reviewed + ' of 15');
+  lines.push('');
+
+  lines.push('REQUIREMENTS');
+  lines.push('------------');
+
+  sorted.forEach(function(item) {
+    lines.push('');
+    lines.push(item.id + '  ' + item.title);
+    lines.push('  Status:     ' + statusLabel(item.status));
+    lines.push('  Confidence: ' + item.confidence);
+    lines.push('  Clause:     ' + item.clause);
+    lines.push('  Review:     ' + item.review);
+    if (item.evidence) {
+      lines.push('  Evidence:   ' + item.evidence);
+    }
+    if (item.gap) {
+      lines.push('  Gap:        ' + item.gap);
+    }
+    if (item.recommendation) {
+      lines.push('  Rec:        ' + item.recommendation);
+    }
+    if (item.reason) {
+      lines.push('  Reason:     ' + item.reason);
+    }
+  });
+
+  lines.push('');
+  lines.push('--- End of Report ---');
+
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'compliance-report-export.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ===== Bind Events & Initial Render ===== */
+document.getElementById('exportBtn').addEventListener('click', exportReport);
+initFilterTabs();
+renderCards();
+updateReviewedCount();
+</script>
+</body>
+</html>

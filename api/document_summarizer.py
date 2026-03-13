@@ -3,7 +3,7 @@
 Document Summarizer Service
 
 Generates summaries of supporting documents for multi-document evaluations.
-Uses OpenAI's gpt-4o-mini for fast, cost-effective summarization.
+Uses OpenAI for fast, cost-effective summarization (model configurable via OPENAI_SUMMARY_MODEL).
 These summaries are injected into the evaluation context so the agent
 is aware of available supporting documentation.
 """
@@ -70,7 +70,7 @@ Keep the entire summary under 800 words. Focus on factual content that would hel
 async def summarize_document(
     file_path: Path,
     file_name: str,
-    model: str = "gpt-4o-mini"
+    model: str = None
 ) -> Dict[str, Any]:
     """
     Generate a summary for a single supporting document.
@@ -86,31 +86,20 @@ async def summarize_document(
     try:
         client = get_openai_client()
 
-        logger.info(f"Summarizing document: {file_name}")
+        resolved_model = model or os.getenv("OPENAI_SUMMARY_MODEL", "gpt-5-mini")
+        logger.info(f"Summarizing document: {file_name} with model {resolved_model}")
 
         # Upload the file to OpenAI for processing
         with open(file_path, "rb") as f:
             file_obj = client.files.create(file=f, purpose="assistants")
 
         try:
-            # Use the assistants API with file search to process the PDF
-            # For simpler approach, we'll use the chat completions with the file
-            # OpenAI's newer models can process PDFs directly via the API
-
-            # Read the file and create a message with the PDF
-            # Note: gpt-4o-mini doesn't support vision, so we need a different approach
-            # We'll use the file as context via the assistants API
-
-            # For PDF summarization, we'll use a simpler approach:
-            # Extract text using a temporary assistant or use vision model
-
-            # Use gpt-5-nano which supports PDFs natively
             with open(file_path, "rb") as f:
                 import base64
                 file_content = base64.standard_b64encode(f.read()).decode("utf-8")
 
             response = client.chat.completions.create(
-                model="gpt-5-nano-2025-08-07",  # Use gpt-5-nano for PDF vision capability
+                model=resolved_model,
                 messages=[
                     {"role": "system", "content": DOCUMENT_SUMMARY_SYSTEM_PROMPT},
                     {
@@ -142,7 +131,7 @@ async def summarize_document(
             return {
                 "summary_text": summary_text,
                 "tokens_used": tokens_used,
-                "model": "gpt-5-nano-2025-08-07",
+                "model": resolved_model,
                 "generated_at": datetime.utcnow().isoformat()
             }
 
@@ -161,7 +150,7 @@ async def summarize_document(
 async def summarize_document_from_bytes(
     file_bytes: bytes,
     file_name: str,
-    model: str = "gpt-5-nano-2025-08-07"
+    model: str = None
 ) -> Dict[str, Any]:
     """
     Generate a summary for a document from bytes.
@@ -178,12 +167,13 @@ async def summarize_document_from_bytes(
         import base64
 
         client = get_openai_client()
-        logger.info(f"Summarizing document from bytes: {file_name}")
+        resolved_model = model or os.getenv("OPENAI_SUMMARY_MODEL", "gpt-5-mini")
+        logger.info(f"Summarizing document from bytes: {file_name} with model {resolved_model}")
 
         file_content = base64.standard_b64encode(file_bytes).decode("utf-8")
 
         response = client.chat.completions.create(
-            model=model,
+            model=resolved_model,
             messages=[
                 {"role": "system", "content": DOCUMENT_SUMMARY_SYSTEM_PROMPT},
                 {
@@ -215,7 +205,7 @@ async def summarize_document_from_bytes(
         return {
             "summary_text": summary_text,
             "tokens_used": tokens_used,
-            "model": model,
+            "model": resolved_model,
             "generated_at": datetime.utcnow().isoformat()
         }
 

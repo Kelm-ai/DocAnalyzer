@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grid Overview — ISO 27001 Compliance Report</title>
+<style>
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, system-ui, 'Segoe UI', sans-serif;
+    background: #fff;
+    color: #000;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  .header {
+    padding: 48px 48px 0;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    color: #000;
+  }
+
+  .header-meta {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #888;
+    letter-spacing: 0;
+  }
+
+  .header-ai-notice {
+    margin-top: 6px;
+    font-size: 11px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Filter Bar ── */
+  .filter-bar {
+    padding: 24px 48px;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #000;
+    border-radius: 999px;
+    background: #fff;
+    color: #000;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .filter-pill:hover {
+    background: #f5f5f5;
+  }
+
+  .filter-pill.active {
+    background: #000;
+    color: #fff;
+  }
+
+  .filter-pill.active:hover {
+    background: #222;
+  }
+
+  /* ── Grid ── */
+  .grid-container {
+    padding: 0 48px 64px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+
+  @media (max-width: 1200px) {
+    .grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  @media (max-width: 960px) {
+    .grid { grid-template-columns: repeat(3, 1fr); }
+    .header, .filter-bar, .grid-container { padding-left: 24px; padding-right: 24px; }
+  }
+  @media (max-width: 680px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .header { padding-top: 32px; }
+    .header h1 { font-size: 22px; }
+  }
+  @media (max-width: 420px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Cell / Card ── */
+  .cell {
+    position: relative;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 20px 18px 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    min-height: 140px;
+  }
+
+  .cell:hover {
+    border-color: #000;
+  }
+
+  .cell:active {
+    background: #fafafa;
+  }
+
+  /* Status indicator — top right */
+  .cell-status {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cell-status svg {
+    display: block;
+  }
+
+  .cell-req-id {
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  .cell-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #000;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+  }
+
+  .cell-footer {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .cell-clause {
+    font-size: 11px;
+    color: #888;
+  }
+
+  .cell-confidence {
+    font-size: 11px;
+    color: #aaa;
+    text-transform: lowercase;
+  }
+
+  /* ── Overlay / Modal ── */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(255,255,255,0.97);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .overlay-inner {
+    width: 100%;
+    max-width: 640px;
+    padding: 64px 24px 80px;
+    transform: translateY(12px);
+    transition: transform 0.25s ease;
+  }
+
+  .overlay.open .overlay-inner {
+    transform: translateY(0);
+  }
+
+  .overlay-close {
+    position: fixed;
+    top: 24px;
+    right: 32px;
+    z-index: 1001;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #000;
+    background: none;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .overlay-close:hover {
+    border-color: #000;
+  }
+
+  .overlay-title {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  .overlay-status-badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 4px 12px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+  }
+
+  .badge-fail {
+    background: #000;
+    color: #fff;
+  }
+
+  .badge-flagged {
+    background: #f5f5f5;
+    color: #000;
+    border: 1px solid #ccc;
+  }
+
+  .badge-pass {
+    background: #f5f5f5;
+    color: #555;
+  }
+
+  .badge-na {
+    background: #fafafa;
+    color: #aaa;
+    border: 1px solid #eee;
+  }
+
+  .overlay-meta {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 32px;
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  .overlay-section {
+    margin-bottom: 28px;
+  }
+
+  .overlay-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+    margin-bottom: 8px;
+  }
+
+  .overlay-evidence {
+    border-left: 2px solid #eee;
+    padding-left: 16px;
+    font-size: 14px;
+    color: #333;
+    line-height: 1.7;
+  }
+
+  .overlay-text {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.7;
+  }
+
+  /* Review section */
+  .review-section {
+    margin-top: 36px;
+    padding-top: 28px;
+    border-top: 1px solid #eee;
+  }
+
+  .review-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .review-btn {
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #000;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #fff;
+    color: #000;
+  }
+
+  .review-btn:hover {
+    background: #000;
+    color: #fff;
+  }
+
+  .review-btn.selected-approve {
+    background: #000;
+    color: #fff;
+  }
+
+  .review-btn.selected-reject {
+    background: #000;
+    color: #fff;
+  }
+
+  .review-comment {
+    width: 100%;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 60px;
+    outline: none;
+    transition: border-color 0.15s;
+    color: #000;
+  }
+
+  .review-comment::placeholder {
+    color: #ccc;
+  }
+
+  .review-comment:focus {
+    border-color: #000;
+  }
+
+  .review-status-text {
+    font-size: 12px;
+    color: #888;
+    margin-top: 8px;
+  }
+
+  /* Navigation */
+  .overlay-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+
+  .nav-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    background: #fff;
+    color: #000;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .nav-btn:hover {
+    border-color: #000;
+  }
+
+  .nav-btn:disabled {
+    color: #ccc;
+    border-color: #eee;
+    cursor: default;
+  }
+
+  .overlay-ai-notice {
+    margin-top: 28px;
+    font-size: 11px;
+    color: #bbb;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: center;
+  }
+
+  /* Animations */
+  .cell {
+    animation: cellIn 0.3s ease both;
+  }
+
+  @keyframes cellIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scrollbar */
+  .overlay::-webkit-scrollbar {
+    width: 6px;
+  }
+  .overlay::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Information Security Management Policy v3.2</h1>
+  <div class="header-meta">ISO 27001:2022 &middot; 73% &middot; Jan 15, 2024</div>
+  <div class="header-ai-notice">ai assessment &mdash; human verification required</div>
+</div>
+
+<div class="filter-bar" id="filterBar"></div>
+
+<div class="grid-container">
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="overlay" id="overlay">
+  <button class="overlay-close" id="overlayClose" aria-label="Close">&times;</button>
+  <div class="overlay-inner" id="overlayInner"></div>
+</div>
+
+<script>
+// ── Mock Data ──
+const requirements = [
+  {
+    id: "REQ-5.1.1",
+    title: "Leadership and Commitment",
+    clause: "5.1",
+    status: "pass",
+    confidence: "high",
+    evidence: "The Board of Directors has formally endorsed the ISMS policy through board resolution BR-2023-042, dated September 14, 2023. Executive management reviews are conducted quarterly with documented attendance records showing C-suite participation. The CEO's signed commitment statement is published on the company intranet and referenced in employee onboarding materials.",
+    gap: null,
+    recommendation: null,
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-5.2.1",
+    title: "Information Security Policy",
+    clause: "5.2",
+    status: "pass",
+    confidence: "high",
+    evidence: "The information security policy document (ISP-001 Rev 3.2) is approved by the CISO and CEO. The policy is reviewed annually, with the last review completed on November 3, 2023. The policy is accessible to all employees via the document management system and is distributed to relevant external parties through controlled distribution. Policy acknowledgment rates are at 97% across all departments.",
+    gap: null,
+    recommendation: null,
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-5.3.1",
+    title: "Organizational Roles, Responsibilities and Authorities",
+    clause: "5.3",
+    status: "pass",
+    confidence: "medium",
+    evidence: "The ISMS roles and responsibilities matrix (document ISMS-RAM-001) defines responsibilities for the CISO, IT Security Manager, Department Heads, and Information Asset Owners. The RACI chart is maintained and reviewed semi-annually. Job descriptions for security-critical roles include information security responsibilities.",
+    gap: null,
+    recommendation: null,
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-6.1.2",
+    title: "Information Security Risk Assessment",
+    clause: "6.1",
+    status: "fail",
+    confidence: "medium",
+    evidence: "A risk assessment methodology document exists (RA-METH-001) referencing ISO 27005. However, the last comprehensive risk assessment was completed on March 2022, exceeding the organization's own annual review requirement. The risk register contains 47 identified risks but has not been updated in 14 months.",
+    gap: "The risk assessment is 14 months overdue according to the organization's own policy requiring annual comprehensive assessments. The risk register has not been updated to reflect changes in the threat landscape, including newly identified supply chain vulnerabilities and the organization's cloud migration completed in Q2 2023.",
+    recommendation: "Conduct an immediate comprehensive risk assessment covering all information assets, with particular focus on cloud infrastructure changes and supply chain risks. Establish automated quarterly reminders and assign a dedicated risk assessment coordinator. Consider implementing a GRC tool to streamline the continuous risk monitoring process.",
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-6.2.1",
+    title: "Information Security Objectives",
+    clause: "6.2",
+    status: "fail",
+    confidence: "high",
+    evidence: "High-level security objectives are stated in the ISMS policy document. However, these objectives are not measurable — they use vague language such as 'improve security posture' and 'enhance awareness' without specific KPIs, target values, or completion dates. No documented monitoring or measurement plan exists for tracking objective achievement.",
+    gap: "Security objectives lack SMART criteria (Specific, Measurable, Achievable, Relevant, Time-bound). There is no documented plan for how objectives will be achieved, no defined resources or responsibilities for each objective, and no mechanism for measuring progress. This is a significant non-conformity as the standard explicitly requires measurable objectives with defined plans.",
+    recommendation: "Redefine all information security objectives using SMART criteria. For each objective, document: specific KPIs and target values, responsible personnel, required resources, completion timelines, and measurement methods. Example: Replace 'improve security awareness' with 'achieve 95% completion rate on quarterly security awareness training by Q2 2024, measured via LMS completion reports.'",
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-7.1.1",
+    title: "Resources",
+    clause: "7.1",
+    status: "pass",
+    confidence: "high",
+    evidence: "The organization has allocated a dedicated information security budget of $2.4M for FY2024, approved in the annual budget cycle. The security team consists of 12 FTEs including the CISO, security architects, analysts, and engineers. Budget allocation documents and headcount approvals are maintained in the finance system with clear traceability to ISMS requirements.",
+    gap: null,
+    recommendation: null,
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-7.2.1",
+    title: "Competence",
+    clause: "7.2",
+    status: "flagged",
+    confidence: "low",
+    evidence: "Training records exist for 80% of security team members showing relevant certifications (CISSP, CISM, ISO 27001 Lead Auditor). However, competence evaluations for non-security staff in security-critical roles (system administrators, database administrators, DevOps engineers) are incomplete. Only 3 of 8 department heads have completed the required ISMS awareness assessment.",
+    gap: "Competence records are incomplete for personnel in security-adjacent roles. Department heads, who serve as information asset owners, have not all demonstrated required competence. The gap between security team competence documentation and broader organizational competence tracking suggests the competence framework may need expansion.",
+    recommendation: "Extend the competence assessment framework to cover all personnel with security-relevant responsibilities, not just the core security team. Implement role-based competence profiles and track completion rates by department. Prioritize ISMS awareness assessments for the remaining 5 department heads and establish quarterly competence review checkpoints.",
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-7.3.1",
+    title: "Awareness",
+    clause: "7.3",
+    status: "pass",
+    confidence: "high",
+    evidence: "A comprehensive security awareness program is in place with quarterly training modules delivered through the LMS. Completion rates for the last four quarters average 94%. Phishing simulation exercises are conducted monthly with results tracked and reported. New employee onboarding includes a mandatory 2-hour security awareness session, and annual refresher training covers policy updates and emerging threats.",
+    gap: null,
+    recommendation: null,
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-7.4.1",
+    title: "Communication",
+    clause: "7.4",
+    status: "pass",
+    confidence: "medium",
+    evidence: "A communication plan for the ISMS is documented (ISMS-COMM-001) specifying internal and external communication requirements. Internal communications include monthly security newsletters, incident notification procedures, and a dedicated security channel on the corporate messaging platform. External communication procedures cover regulatory notifications, customer communications regarding security matters, and third-party breach notification requirements.",
+    gap: null,
+    recommendation: null,
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-7.5.1",
+    title: "Documented Information",
+    clause: "7.5",
+    status: "pass",
+    confidence: "high",
+    evidence: "The document management system (DMS) maintains all ISMS documentation with version control, approval workflows, and access controls. A document register lists 156 controlled documents with assigned owners, review dates, and classification levels. The retention policy specifies minimum 3-year retention for all ISMS records. Backup and recovery procedures for documented information are tested quarterly as part of the BCP exercises.",
+    gap: null,
+    recommendation: null,
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-8.1.1",
+    title: "Operational Planning and Control",
+    clause: "8.1",
+    status: "fail",
+    confidence: "high",
+    evidence: "Change management procedures exist (CMP-001) but audit logs show 23% of changes to production systems in Q3 2023 bypassed the formal change approval process. Emergency change procedures were invoked 47 times in six months, well above the expected threshold of 5-10 per quarter. Post-implementation reviews were completed for only 61% of changes, falling below the 100% requirement.",
+    gap: "Operational controls are systematically being bypassed. The high rate of emergency changes (47 vs expected 10-20 per half-year) suggests either the change process is too cumbersome for operational needs, or there is a cultural issue with change management compliance. The 23% bypass rate and 61% post-implementation review completion represent significant control failures that could lead to unauthorized or poorly assessed changes affecting information security.",
+    recommendation: "Conduct a root cause analysis on why 23% of changes bypass the approval process. Streamline the standard change process to reduce friction — consider implementing pre-approved standard changes for routine modifications. Implement automated gates in the CI/CD pipeline that prevent deployment without change ticket approval. Establish mandatory post-implementation review completion before the next change can be submitted by the same team.",
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-8.2.1",
+    title: "Information Security Risk Treatment",
+    clause: "8.2",
+    status: "na",
+    confidence: "high",
+    evidence: "This requirement is assessed as part of the risk management framework review under REQ-6.1.2. The risk treatment plan is evaluated in conjunction with the risk assessment process. Separate assessment not applicable at this time as the treatment plan status is directly dependent on the overdue risk assessment identified in REQ-6.1.2.",
+    gap: null,
+    recommendation: null,
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-9.1.1",
+    title: "Monitoring, Measurement, Analysis and Evaluation",
+    clause: "9.1",
+    status: "flagged",
+    confidence: "medium",
+    evidence: "A monitoring and measurement program exists with 24 defined security metrics tracked in the SIEM dashboard. Monthly security reports are generated and distributed to management. However, the metrics focus primarily on operational indicators (firewall blocks, malware detections) rather than ISMS effectiveness measures. Only 8 of the 24 metrics have defined target values, and trend analysis is performed informally without documented methodology.",
+    gap: "The monitoring program lacks clear linkage between metrics and ISMS objectives. Most metrics are operational/tactical rather than strategic. Without defined targets for 67% of metrics, it is impossible to objectively evaluate whether the ISMS is achieving its intended outcomes. The absence of formal trend analysis methodology means that patterns and deterioration in security posture may not be detected in a timely manner.",
+    recommendation: "Redesign the metrics framework to align directly with ISMS objectives. For each security objective, define at least two measurable indicators with clear target values and thresholds for escalation. Implement a formal quarterly trend analysis process with documented methodology. Add effectiveness-focused metrics such as: mean time to detect, risk treatment plan completion rates, and control assessment scores.",
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-9.2.1",
+    title: "Internal Audit",
+    clause: "9.2",
+    status: "pass",
+    confidence: "high",
+    evidence: "An internal audit program is established with a 3-year rolling audit plan covering all ISMS clauses and Annex A controls. The last full audit cycle was completed in October 2023 by qualified internal auditors (2 ISO 27001 Lead Auditor certified staff). Audit reports document findings, non-conformities, and opportunities for improvement. A total of 12 non-conformities were identified in the last cycle, with corrective action plans tracked to closure in the CAR register.",
+    gap: null,
+    recommendation: null,
+    review: null,
+    comment: ""
+  },
+  {
+    id: "REQ-9.3.1",
+    title: "Management Review",
+    clause: "9.3",
+    status: "flagged",
+    confidence: "medium",
+    evidence: "Management reviews are scheduled quarterly and have been conducted on schedule for the past year. Meeting minutes are documented and retained. However, the review input does not consistently cover all items required by the standard — specifically, the status of actions from previous reviews, changes in external/internal issues, and feedback on information security performance are only partially addressed. Review outputs lack specific documented decisions and assigned actions with target dates.",
+    gap: "Management review inputs are incomplete against the requirements of ISO 27001 clause 9.3. While reviews occur on schedule, not all mandatory input topics are systematically covered in each session. Review outputs do not consistently document specific decisions, resource allocations, or improvement actions with clear ownership and deadlines, reducing the effectiveness of the management review as a governance mechanism.",
+    recommendation: "Create a standardized management review agenda template that includes all mandatory input items from ISO 27001:2022 clause 9.3. Implement a structured output template requiring documented decisions, action items with owners and target dates, and resource allocation decisions. Assign a management review coordinator to ensure all required inputs are prepared and distributed to attendees at least one week before each review session.",
+    review: null,
+    comment: ""
+  }
+];
+
+// ── State ──
+let activeFilter = "all";
+let filteredIds = [];
+let openIndex = -1; // index into filteredIds
+
+// ── Helpers ──
+function statusLabel(s) {
+  return { pass: "Passed", fail: "Failed", flagged: "Flagged", na: "N/A" }[s] || s;
+}
+
+function badgeClass(s) {
+  return { pass: "badge-pass", fail: "badge-fail", flagged: "badge-flagged", na: "badge-na" }[s] || "";
+}
+
+function statusIcon(s) {
+  if (s === "fail") {
+    return '<svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#000"/></svg>';
+  }
+  if (s === "flagged") {
+    return '<svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5" fill="none" stroke="#000" stroke-width="1.5"/><path d="M7 1.5A5.5 5.5 0 0 1 12.5 7H7Z" fill="#000"/></svg>';
+  }
+  if (s === "pass") {
+    return '<svg width="14" height="14" viewBox="0 0 14 14"><polyline points="3,7.5 6,10.5 11,4" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+  if (s === "na") {
+    return '<svg width="14" height="14" viewBox="0 0 14 14"><line x1="4" y1="7" x2="10" y2="7" stroke="#aaa" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  }
+  return "";
+}
+
+// ── Render filters ──
+function renderFilters() {
+  const counts = { all: 0, fail: 0, flagged: 0, pass: 0, na: 0 };
+  requirements.forEach(r => { counts.all++; counts[r.status]++; });
+
+  const labels = [
+    ["all", `All ${counts.all}`],
+    ["fail", `Failed ${counts.fail}`],
+    ["flagged", `Flagged ${counts.flagged}`],
+    ["pass", `Passed ${counts.pass}`],
+    ["na", `N/A ${counts.na}`]
+  ];
+
+  const bar = document.getElementById("filterBar");
+  bar.innerHTML = "";
+  labels.forEach(([key, label]) => {
+    const pill = document.createElement("button");
+    pill.className = "filter-pill" + (activeFilter === key ? " active" : "");
+    pill.textContent = label;
+    pill.addEventListener("click", () => {
+      activeFilter = key;
+      renderFilters();
+      renderGrid();
+    });
+    bar.appendChild(pill);
+  });
+}
+
+// ── Render grid ──
+function renderGrid() {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+
+  const filtered = requirements.filter(r => activeFilter === "all" || r.status === activeFilter);
+  filteredIds = filtered.map(r => r.id);
+
+  filtered.forEach((r, i) => {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.style.animationDelay = (i * 0.03) + "s";
+    cell.innerHTML = `
+      <div class="cell-status">${statusIcon(r.status)}</div>
+      <div class="cell-req-id">${r.id}</div>
+      <div class="cell-title">${r.title}</div>
+      <div class="cell-footer">
+        <span class="cell-clause">Clause ${r.clause}</span>
+        <span class="cell-confidence">${r.confidence}</span>
+      </div>
+    `;
+    cell.addEventListener("click", () => openOverlay(r.id));
+    grid.appendChild(cell);
+  });
+}
+
+// ── Overlay ──
+function openOverlay(reqId) {
+  const idx = filteredIds.indexOf(reqId);
+  if (idx === -1) return;
+  openIndex = idx;
+  renderOverlay();
+  const overlay = document.getElementById("overlay");
+  overlay.classList.add("open");
+  document.body.style.overflow = "hidden";
+  overlay.scrollTop = 0;
+}
+
+function closeOverlay() {
+  const overlay = document.getElementById("overlay");
+  overlay.classList.remove("open");
+  document.body.style.overflow = "";
+  openIndex = -1;
+}
+
+function navigateOverlay(dir) {
+  const next = openIndex + dir;
+  if (next < 0 || next >= filteredIds.length) return;
+  openIndex = next;
+  renderOverlay();
+  document.getElementById("overlay").scrollTop = 0;
+}
+
+function renderOverlay() {
+  const reqId = filteredIds[openIndex];
+  const r = requirements.find(req => req.id === reqId);
+  if (!r) return;
+
+  const inner = document.getElementById("overlayInner");
+
+  let html = `
+    <div class="overlay-title">${r.title}</div>
+    <span class="overlay-status-badge ${badgeClass(r.status)}">${statusLabel(r.status)}</span>
+    <div class="overlay-meta">${r.id} &middot; Clause ${r.clause} &middot; ${r.confidence} confidence</div>
+
+    <div class="overlay-section">
+      <div class="overlay-section-label">Evidence</div>
+      <div class="overlay-evidence">${r.evidence}</div>
+    </div>
+  `;
+
+  if (r.gap) {
+    html += `
+    <div class="overlay-section">
+      <div class="overlay-section-label">Gap</div>
+      <div class="overlay-text">${r.gap}</div>
+    </div>`;
+  }
+
+  if (r.recommendation) {
+    html += `
+    <div class="overlay-section">
+      <div class="overlay-section-label">Recommendation</div>
+      <div class="overlay-text">${r.recommendation}</div>
+    </div>`;
+  }
+
+  // Review section
+  const reviewState = r.review; // null, 'approved', 'rejected'
+  html += `
+    <div class="review-section">
+      <div class="overlay-section-label">Review</div>
+      <div class="review-buttons">
+        <button class="review-btn ${reviewState === 'approved' ? 'selected-approve' : ''}" onclick="setReview('${r.id}', 'approved')">approve</button>
+        <button class="review-btn ${reviewState === 'rejected' ? 'selected-reject' : ''}" onclick="setReview('${r.id}', 'rejected')">reject</button>
+      </div>
+      <textarea class="review-comment" placeholder="Optional comment…" oninput="setComment('${r.id}', this.value)">${r.comment || ''}</textarea>
+      ${reviewState ? `<div class="review-status-text">${reviewState === 'approved' ? 'Approved' : 'Rejected'} by reviewer</div>` : ''}
+    </div>
+  `;
+
+  // Navigation
+  html += `
+    <div class="overlay-nav">
+      <button class="nav-btn" onclick="navigateOverlay(-1)" ${openIndex === 0 ? 'disabled' : ''}>&larr; prev</button>
+      <span style="font-size:12px;color:#aaa;">${openIndex + 1} / ${filteredIds.length}</span>
+      <button class="nav-btn" onclick="navigateOverlay(1)" ${openIndex === filteredIds.length - 1 ? 'disabled' : ''}>next &rarr;</button>
+    </div>
+    <div class="overlay-ai-notice">ai assessment &mdash; verify before use</div>
+  `;
+
+  inner.innerHTML = html;
+}
+
+function setReview(reqId, state) {
+  const r = requirements.find(req => req.id === reqId);
+  if (!r) return;
+  r.review = r.review === state ? null : state; // toggle
+  renderOverlay();
+}
+
+function setComment(reqId, value) {
+  const r = requirements.find(req => req.id === reqId);
+  if (r) r.comment = value;
+}
+
+// ── Event listeners ──
+document.getElementById("overlayClose").addEventListener("click", closeOverlay);
+document.getElementById("overlay").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("overlay")) closeOverlay();
+});
+document.addEventListener("keydown", (e) => {
+  if (openIndex === -1) return;
+  if (e.key === "Escape") closeOverlay();
+  if (e.key === "ArrowLeft") navigateOverlay(-1);
+  if (e.key === "ArrowRight") navigateOverlay(1);
+});
+
+// ── Init ──
+renderFilters();
+renderGrid();
+</script>
+</body>
+</html>

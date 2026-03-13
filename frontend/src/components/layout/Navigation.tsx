@@ -47,10 +47,10 @@ export function Navigation({ className, onClick }: NavigationProps) {
             to={item.href}
             onClick={onClick}
             className={cn(
-              "flex items-center space-x-2 text-sm font-medium transition-colors hover:text-blue-600",
+              "flex items-center space-x-2 text-sm font-medium transition-colors hover:text-sc",
               isActive
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-600"
+                ? "text-sc border-b-2 border-sc"
+                : "text-muted-foreground"
             )}
           >
             <Icon className="h-4 w-4" />

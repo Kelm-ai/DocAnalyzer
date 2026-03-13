@@ -1,40 +1,66 @@
 @import "tailwindcss";
 
-/* Base tokens for light & dark */
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(240 10% 3.9%);
-  --primary: hsl(240 5.9% 10%);
-  --primary-foreground: hsl(0 0% 98%);
-  --secondary: hsl(240 4.8% 95.9%);
-  --secondary-foreground: hsl(240 5.9% 10%);
-  --muted: hsl(240 4.8% 95.9%);
-  --muted-foreground: hsl(240 3.8% 45%);
-  --accent: hsl(240 4.8% 95.9%);
-  --accent-foreground: hsl(240 5.9% 10%);
-  --destructive: hsl(0 72% 51%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 5.9% 90%);
-  --input: hsl(240 5.9% 90%);
-  --ring: hsl(240 5.9% 10%);
-}
+  /* Surfaces */
+  --background: hsl(170 10% 94%);
+  --foreground: hsl(283 30% 15%);
 
-.dark {
-  --background: hsl(240 10% 3.9%);
-  --foreground: hsl(0 0% 98%);
-  --primary: hsl(0 0% 98%);
-  --primary-foreground: hsl(240 5.9% 10%);
-  --secondary: hsl(240 3.7% 15.9%);
-  --secondary-foreground: hsl(0 0% 98%);
-  --muted: hsl(240 3.7% 15.9%);
-  --muted-foreground: hsl(240 5% 64.9%);
-  --accent: hsl(240 3.7% 15.9%);
-  --accent-foreground: hsl(0 0% 98%);
-  --destructive: hsl(0 62.8% 30.6%);
+  /* Primary — SC Green */
+  --primary: hsl(177 100% 30%);
+  --primary-foreground: hsl(0 0% 100%);
+
+  /* Secondary — Neutral with plum warmth */
+  --secondary: hsl(270 8% 95%);
+  --secondary-foreground: hsl(283 30% 20%);
+
+  /* Muted — Warm neutral */
+  --muted: hsl(270 5% 95%);
+  --muted-foreground: hsl(220 9% 46%);
+
+  /* Accent — Teal highlight */
+  --accent: hsl(177 30% 95%);
+  --accent-foreground: hsl(177 100% 24%);
+
+  /* Destructive — Standard red */
+  --destructive: hsl(0 84% 60%);
   --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 3.7% 15.9%);
-  --input: hsl(240 3.7% 15.9%);
-  --ring: hsl(240 4.9% 83.9%);
+
+  /* Borders & Inputs */
+  --border: hsl(210 10% 90%);
+  --input: hsl(210 10% 90%);
+  --ring: hsl(177 100% 30%);
+
+  /* SC Brand tokens */
+  --sc-green: #00978F;
+  --sc-green-dark: #007A73;
+  --sc-green-deep: #005C57;
+  --sc-green-light: #E8F5F4;
+  --sc-purple: #52315B;
+  --sc-purple-dark: #2D1A33;
+  --sc-purple-light: #F4F0F5;
+  --sc-yellow: #FFC000;
+  --sc-yellow-light: #FFF8E1;
+  --sc-yellow-dark: #946000;
+
+  /* Status tokens */
+  --status-pass: #0D7A6F;
+  --status-pass-bg: #E6F5F3;
+  --status-pass-dot: #0D9488;
+  --status-fail: #DC2626;
+  --status-fail-bg: #FEF2F2;
+  --status-flagged: #946000;
+  --status-flagged-bg: #FFF8E1;
+  --status-flagged-dot: #D4A017;
+  --status-na: #6B7280;
+  --status-na-bg: #F3F4F6;
+
+  /* Confidence tokens */
+  --confidence-high: #0D7A6F;
+  --confidence-high-bg: #E6F5F3;
+  --confidence-medium: #946000;
+  --confidence-medium-bg: #FFF8E1;
+  --confidence-low: #6B7280;
+  --confidence-low-bg: #F3F4F6;
 }
 
 /* Map tokens to Tailwind color utilities */
@@ -54,4 +80,105 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* SC Brand color utilities */
+  --color-sc: var(--sc-green);
+  --color-sc-dark: var(--sc-green-dark);
+  --color-sc-deep: var(--sc-green-deep);
+  --color-sc-light: var(--sc-green-light);
+  --color-sc-purple: var(--sc-purple);
+  --color-sc-purple-dark: var(--sc-purple-dark);
+  --color-sc-purple-light: var(--sc-purple-light);
+  --color-sc-gold: var(--sc-yellow);
+  --color-sc-gold-light: var(--sc-yellow-light);
+  --color-sc-gold-dark: var(--sc-yellow-dark);
+
+  /* Status color utilities */
+  --color-status-pass: var(--status-pass);
+  --color-status-pass-bg: var(--status-pass-bg);
+  --color-status-fail: var(--status-fail);
+  --color-status-fail-bg: var(--status-fail-bg);
+  --color-status-flagged: var(--status-flagged);
+  --color-status-flagged-bg: var(--status-flagged-bg);
+  --color-status-na: var(--status-na);
+  --color-status-na-bg: var(--status-na-bg);
+
+  --font-sans: 'Lato', ui-sans-serif, system-ui, sans-serif;
 }
+
+/* Base styles */
+body {
+  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
+  color: var(--sc-purple-dark);
+}
+
+/* ── ResultsV2 scoped utilities ────────────────── */
+.results-v2 {
+  -webkit-font-smoothing: antialiased;
+
+}
+
+/* Confidence bar — 40px track with colored fill */
+.results-v2 .rv2-confidence-track {
+  width: 40px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.results-v2 .rv2-confidence-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* Status dot — 7px circle */
+.results-v2 .rv2-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Evidence serif typography */
+.results-v2 .rv2-evidence {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* Inline expansion left accent border */
+.results-v2 .rv2-expansion {
+  border-left: 3px solid var(--sc-yellow-dark);
+  border-radius: 0 8px 8px 0;
+}
+
+/* Review badge — smaller, quieter */
+.results-v2 .rv2-review-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+/* Modal overlay with brand tint */
+.results-v2 .rv2-modal-overlay {
+  background: rgba(45, 26, 51, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Modal card refined shadow */
+.results-v2 .rv2-modal-card {
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(45, 26, 51, 0.15), 0 4px 16px rgba(45, 26, 51, 0.06);
+}
+
+/* Custom scrollbar for modal */
+.results-v2 .rv2-scroll::-webkit-scrollbar { width: 6px; }
+.results-v2 .rv2-scroll::-webkit-scrollbar-track { background: transparent; }
+.results-v2 .rv2-scroll::-webkit-scrollbar-thumb { background: hsl(270 5% 82%); border-radius: 3px; }
+.results-v2 .rv2-scroll::-webkit-scrollbar-thumb:hover { background: hsl(270 5% 72%); }

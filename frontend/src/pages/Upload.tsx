@@ -20,7 +20,7 @@ export function Upload() {
           <h2 className="text-3xl font-bold tracking-tight">Document Upload</h2>
           <button
             onClick={() => setHelpOpen(true)}
-            className="text-gray-400 hover:text-blue-600 transition-colors"
+            className="text-muted-foreground hover:text-sc transition-colors"
             aria-label="Help"
           >
             <HelpCircle className="h-5 w-5" />
@@ -31,13 +31,13 @@ export function Upload() {
         </p>
       </div>
 
-      <Card className="mb-6 border-amber-200 bg-amber-50">
+      <Card className="mb-6 border-sc-gold/30 bg-sc-gold-light">
         <CardContent className="pt-4">
           <div className="flex gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-amber-900">
+            <AlertTriangle className="h-5 w-5 text-sc-gold-dark flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-foreground">
               <p className="font-medium mb-2">Human verification is REQUIRED prior to use of any outputs from this tool.</p>
-              <ul className="space-y-1 text-amber-800">
+              <ul className="space-y-1 text-sc-gold-dark">
                 <li>The tool only evaluates what is given to it and cannot infer correctness.</li>
                 <li>Final interpretation belongs to a qualified subject matter expert.</li>
                 <li>The tool cannot make regulatory, legal, or compliance determinations.</li>
@@ -86,16 +86,16 @@ export function Upload() {
       >
         <div className="space-y-4">
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Upload Modes</h4>
-            <ul className="text-sm text-gray-600 list-disc list-inside space-y-2">
+            <h4 className="font-medium text-foreground mb-2">Upload Modes</h4>
+            <ul className="text-sm text-muted-foreground list-disc list-inside space-y-2">
               <li><span className="font-medium">Single Document:</span> Upload one document for evaluation</li>
               <li><span className="font-medium">Multi-Document:</span> Upload a primary document with supporting evidence (SOPs, policies, templates)</li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Process</h4>
-            <ol className="text-sm text-gray-600 list-decimal list-inside space-y-2">
+            <h4 className="font-medium text-foreground mb-2">Process</h4>
+            <ol className="text-sm text-muted-foreground list-decimal list-inside space-y-2">
               <li>Select upload mode (Single or Multi-Document)</li>
               <li>Add your primary SOP (PDF) using drag and drop or the "Select Files" button</li>
               <li>For Multi-Document: add supporting documents as evidence context</li>
@@ -105,11 +105,11 @@ export function Upload() {
           </div>
 
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Multi-Document Benefits</h4>
-            <p className="text-sm text-gray-600 mb-2">
+            <h4 className="font-medium text-foreground mb-2">Multi-Document Benefits</h4>
+            <p className="text-sm text-muted-foreground mb-2">
               Supporting documents provide context when the primary document references external materials:
             </p>
-            <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
+            <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
               <li>Training policies referenced in your procedure</li>
               <li>Work instructions or templates mentioned</li>
               <li>Related SOPs for cross-reference verification</li>
@@ -117,21 +117,21 @@ export function Upload() {
           </div>
 
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Understanding Results</h4>
-            <p className="text-sm text-gray-600 mb-2">
+            <h4 className="font-medium text-foreground mb-2">Understanding Results</h4>
+            <p className="text-sm text-muted-foreground mb-2">
               Results show total requirements and assessment status for each:
             </p>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li><span className="font-medium text-green-700">Passed:</span> Evidence of requirement text being present</li>
-              <li><span className="font-medium text-red-700">Failed:</span> Little to no evidence of requirement text being present</li>
-              <li><span className="font-medium text-yellow-700">Flagged:</span> Requirement text may be present, but further verification required</li>
-              <li><span className="font-medium text-gray-500">Not Applicable:</span> Requirement does not apply</li>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li><span className="font-medium text-status-pass">Passed:</span> Evidence of requirement text being present</li>
+              <li><span className="font-medium text-status-fail">Failed:</span> Little to no evidence of requirement text being present</li>
+              <li><span className="font-medium text-status-flagged">Flagged:</span> Requirement text may be present, but further verification required</li>
+              <li><span className="font-medium text-muted-foreground">Not Applicable:</span> Requirement does not apply</li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Additional Features</h4>
-            <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
+            <h4 className="font-medium text-foreground mb-2">Additional Features</h4>
+            <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
               <li>Each requirement shows status, confidence, and findings</li>
               <li>Export results to Excel using the "Export to Excel" button</li>
               <li>A summary page provides a simplified readout</li>

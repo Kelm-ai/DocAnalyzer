@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conversational Review — Claude Compliance Analyzer</title>
+<style>
+  /* ========== RESET & BASE ========== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-cream: #faf7f2;
+    --bg-warm-white: #fefcf9;
+    --terracotta: #da7756;
+    --terracotta-light: #e89a7f;
+    --terracotta-dark: #c4613e;
+    --brown-dark: #5a4a3f;
+    --brown-medium: #7a6a5f;
+    --brown-light: #9a8a7f;
+    --warm-gray: #b8ada4;
+    --warm-gray-light: #d9d2cb;
+    --warm-gray-lightest: #eee8e1;
+
+    --red-bg: #fef0ed;
+    --red-border: #f4c4b8;
+    --red-text: #9c3a22;
+
+    --amber-bg: #fef7ea;
+    --amber-border: #f0ddb0;
+    --amber-text: #7a5c1f;
+
+    --green-bg: #f0f7f0;
+    --green-border: #b8d8b8;
+    --green-text: #2d6a2d;
+
+    --shadow-sm: 0 1px 3px rgba(90, 74, 63, 0.08);
+    --shadow-md: 0 4px 12px rgba(90, 74, 63, 0.1);
+    --shadow-lg: 0 8px 24px rgba(90, 74, 63, 0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg-cream);
+    color: var(--brown-dark);
+    line-height: 1.65;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ========== HEADER ========== */
+  .header {
+    background: linear-gradient(135deg, #5a4a3f 0%, #7a6a5f 100%);
+    color: #fff;
+    padding: 32px 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+  }
+
+  .header-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header-text h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+  }
+
+  .header-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 13.5px;
+    opacity: 0.85;
+    margin-top: 4px;
+  }
+
+  .header-meta span { display: flex; align-items: center; gap: 6px; }
+
+  .score-badge {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    border: 3px solid rgba(255,255,255,0.35);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .score-badge .score-num {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .score-badge .score-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    opacity: 0.8;
+    margin-top: 2px;
+  }
+
+  /* ========== MAIN CONTAINER ========== */
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ========== SUMMARY DASHBOARD ========== */
+  .summary-dashboard {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .summary-stat {
+    background: var(--bg-warm-white);
+    border: 1px solid var(--warm-gray-lightest);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .summary-stat:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  .summary-stat .stat-number {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .summary-stat .stat-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  .summary-stat.critical { border-left: 4px solid var(--red-text); }
+  .summary-stat.critical .stat-number { color: var(--red-text); }
+  .summary-stat.critical .stat-label { color: var(--red-text); }
+
+  .summary-stat.attention { border-left: 4px solid var(--amber-text); }
+  .summary-stat.attention .stat-number { color: var(--amber-text); }
+  .summary-stat.attention .stat-label { color: var(--amber-text); }
+
+  .summary-stat.passing { border-left: 4px solid var(--green-text); }
+  .summary-stat.passing .stat-number { color: var(--green-text); }
+  .summary-stat.passing .stat-label { color: var(--green-text); }
+
+  .summary-stat.na { border-left: 4px solid var(--brown-light); }
+  .summary-stat.na .stat-number { color: var(--brown-light); }
+  .summary-stat.na .stat-label { color: var(--brown-light); }
+
+  /* ========== AI MESSAGE BUBBLE ========== */
+  .ai-message {
+    display: flex;
+    gap: 14px;
+    margin: 28px 0;
+    align-items: flex-start;
+  }
+
+  .ai-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--terracotta), var(--terracotta-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .ai-bubble {
+    background: var(--bg-warm-white);
+    border: 1px solid var(--warm-gray-lightest);
+    border-radius: 4px var(--radius-lg) var(--radius-lg) var(--radius-lg);
+    padding: 18px 22px;
+    box-shadow: var(--shadow-sm);
+    max-width: 700px;
+    line-height: 1.7;
+    color: var(--brown-dark);
+  }
+
+  .ai-bubble p + p { margin-top: 12px; }
+  .ai-bubble strong { color: var(--brown-dark); font-weight: 600; }
+
+  /* ========== SECTION HEADINGS ========== */
+  .section {
+    margin-top: 40px;
+    scroll-margin-top: 20px;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    padding: 12px 16px;
+    background: var(--bg-warm-white);
+    border: 1px solid var(--warm-gray-lightest);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+  }
+
+  .section-header:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--brown-dark);
+  }
+
+  .section-title .icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  .section-count {
+    font-size: 13px;
+    color: var(--brown-light);
+    background: var(--warm-gray-lightest);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+
+  .section-chevron {
+    font-size: 12px;
+    color: var(--brown-light);
+    transition: transform 0.25s ease;
+    margin-left: 12px;
+  }
+
+  .section.collapsed .section-chevron {
+    transform: rotate(-90deg);
+  }
+
+  .section-body {
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+    max-height: 50000px;
+    opacity: 1;
+    padding-top: 16px;
+  }
+
+  .section.collapsed .section-body {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+  }
+
+  /* ========== FINDING ROW (collapsed state) ========== */
+  .finding-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid;
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+
+  .finding-row:hover { box-shadow: var(--shadow-md); }
+
+  .finding-row.critical {
+    background: var(--red-bg);
+    border-color: var(--red-border);
+  }
+
+  .finding-row.attention {
+    background: var(--amber-bg);
+    border-color: var(--amber-border);
+  }
+
+  .finding-row.passing {
+    background: var(--green-bg);
+    border-color: var(--green-border);
+  }
+
+  .finding-row .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .finding-row.critical .status-dot { background: var(--red-text); }
+  .finding-row.attention .status-dot { background: var(--amber-text); }
+  .finding-row.passing .status-dot { background: var(--green-text); }
+
+  .finding-row .finding-id {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+
+  .finding-row.critical .finding-id { color: var(--red-text); }
+  .finding-row.attention .finding-id { color: var(--amber-text); }
+  .finding-row.passing .finding-id { color: var(--green-text); }
+
+  .finding-row .finding-name {
+    font-size: 14px;
+    color: var(--brown-dark);
+    flex: 1;
+    font-weight: 500;
+  }
+
+  .finding-row .finding-clause {
+    font-size: 12px;
+    color: var(--brown-light);
+    background: rgba(90, 74, 63, 0.06);
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .finding-row .finding-confidence {
+    display: flex;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+
+  .finding-row .conf-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--warm-gray-light);
+  }
+
+  .finding-row .conf-dot.filled { background: var(--terracotta); }
+
+  .finding-row .row-chevron {
+    font-size: 10px;
+    color: var(--brown-light);
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+  }
+
+  .finding-row.expanded .row-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* ========== FINDING EXPANDED (Level 1) ========== */
+  .finding-detail-panel {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.35s ease, opacity 0.25s ease, margin 0.35s ease, padding 0.35s ease;
+    border: 1px solid transparent;
+    border-radius: 0 0 var(--radius) var(--radius);
+    margin-top: -8px;
+    margin-bottom: 8px;
+    padding: 0 20px;
+  }
+
+  .finding-detail-panel.open {
+    max-height: 800px;
+    opacity: 1;
+    padding: 20px;
+    margin-top: -2px;
+    border-top: none;
+  }
+
+  .finding-detail-panel.critical { border-color: var(--red-border); background: #fefaf8; }
+  .finding-detail-panel.attention { border-color: var(--amber-border); background: #fffcf5; }
+  .finding-detail-panel.passing { border-color: var(--green-border); background: #f6faf6; }
+
+  .detail-explanation {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .mini-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--terracotta), var(--terracotta-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  .detail-explanation .explanation-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--brown-dark);
+  }
+
+  .evidence-quote {
+    margin: 12px 0 12px 38px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--warm-gray-light);
+    background: rgba(255,255,255,0.6);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 13px;
+    color: var(--brown-medium);
+    font-style: italic;
+    line-height: 1.6;
+  }
+
+  .evidence-quote .evidence-label {
+    font-style: normal;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--brown-light);
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .detail-gap {
+    margin: 10px 0 10px 38px;
+    font-size: 13.5px;
+    line-height: 1.65;
+  }
+
+  .detail-gap .gap-label {
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--brown-light);
+    margin-bottom: 2px;
+  }
+
+  .detail-gap .gap-text {
+    color: var(--brown-dark);
+  }
+
+  .detail-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    flex-wrap: wrap;
+  }
+
+  .more-details-btn {
+    padding: 7px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--terracotta-light);
+    background: rgba(218, 119, 86, 0.06);
+    color: var(--terracotta-dark);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .more-details-btn:hover {
+    background: rgba(218, 119, 86, 0.12);
+    border-color: var(--terracotta);
+  }
+
+  .response-label {
+    font-size: 12px;
+    color: var(--brown-light);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 600;
+    margin-left: auto;
+    margin-right: 4px;
+  }
+
+  .response-btn {
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--warm-gray-light);
+    background: var(--bg-warm-white);
+    color: var(--brown-dark);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .response-btn:hover { border-color: var(--terracotta); color: var(--terracotta); }
+  .response-btn.agree:hover { border-color: var(--green-text); color: var(--green-text); }
+  .response-btn.disagree:hover { border-color: var(--red-text); color: var(--red-text); }
+  .response-btn.discuss:hover { border-color: var(--amber-text); color: var(--amber-text); }
+
+  .response-btn.selected { pointer-events: none; }
+  .response-btn.selected.agree { background: var(--green-bg); border-color: var(--green-border); color: var(--green-text); }
+  .response-btn.selected.disagree { background: var(--red-bg); border-color: var(--red-border); color: var(--red-text); }
+  .response-btn.selected.discuss { background: var(--amber-bg); border-color: var(--amber-border); color: var(--amber-text); }
+
+  .response-confirmation {
+    display: none;
+    font-size: 12px;
+    color: var(--brown-light);
+    font-style: italic;
+    width: 100%;
+    margin-top: 4px;
+    animation: fadeSlideIn 0.35s ease;
+  }
+
+  .response-confirmation.visible { display: block; }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ========== N/A SECTION ========== */
+  .na-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .na-item {
+    background: rgba(90, 74, 63, 0.04);
+    border: 1px solid var(--warm-gray-lightest);
+    border-radius: var(--radius-sm);
+    padding: 10px 16px;
+    font-size: 13.5px;
+    color: var(--brown-medium);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .na-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--warm-gray-lightest);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--brown-light);
+  }
+
+  /* ========== MODAL (Level 2) ========== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(90, 74, 63, 0.45);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .modal-overlay.open {
+    display: flex;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .modal {
+    background: var(--bg-warm-white);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 60px rgba(90, 74, 63, 0.25);
+    max-width: 720px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .modal-header {
+    padding: 24px 28px 16px;
+    border-bottom: 1px solid var(--warm-gray-lightest);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: sticky;
+    top: 0;
+    background: var(--bg-warm-white);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    z-index: 1;
+  }
+
+  .modal-header-left { flex: 1; }
+
+  .modal-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--brown-dark);
+    margin-bottom: 6px;
+  }
+
+  .modal-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+  }
+
+  .modal-meta .tag {
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+
+  .modal-meta .tag.critical { background: var(--red-bg); color: var(--red-text); border: 1px solid var(--red-border); }
+  .modal-meta .tag.attention { background: var(--amber-bg); color: var(--amber-text); border: 1px solid var(--amber-border); }
+  .modal-meta .tag.passing { background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green-border); }
+
+  .modal-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--warm-gray-lightest);
+    color: var(--brown-medium);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-left: 16px;
+  }
+
+  .modal-close:hover {
+    background: var(--warm-gray-light);
+    color: var(--brown-dark);
+  }
+
+  .modal-body {
+    padding: 24px 28px 28px;
+  }
+
+  .modal-section {
+    margin-bottom: 24px;
+  }
+
+  .modal-section:last-child { margin-bottom: 0; }
+
+  .modal-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--brown-light);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--warm-gray-lightest);
+  }
+
+  .modal-section p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--brown-dark);
+  }
+
+  .modal-section p + p { margin-top: 10px; }
+
+  .modal-section .evidence-quote {
+    margin: 10px 0;
+  }
+
+  .confidence-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--brown-medium);
+  }
+
+  .confidence-dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .confidence-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--warm-gray-light);
+  }
+
+  .confidence-dot.filled { background: var(--terracotta); }
+
+  .modal-related {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .modal-related .related-tag {
+    padding: 4px 12px;
+    border-radius: 6px;
+    background: var(--warm-gray-lightest);
+    color: var(--brown-medium);
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+
+  /* ========== FOOTER ========== */
+  .footer-section {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid var(--warm-gray-lightest);
+  }
+
+  .footer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    padding: 12px 28px;
+    border-radius: var(--radius-sm);
+    background: var(--terracotta);
+    color: #fff;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-primary:hover {
+    background: var(--terracotta-dark);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    padding: 12px 28px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-warm-white);
+    color: var(--brown-dark);
+    border: 1px solid var(--warm-gray-light);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--brown-light);
+    background: var(--warm-gray-lightest);
+  }
+
+  /* ========== PROGRESS BAR ========== */
+  .progress-strip {
+    height: 3px;
+    background: var(--warm-gray-lightest);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .progress-strip-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--terracotta), var(--terracotta-light));
+    width: 0%;
+    transition: width 0.15s ease;
+  }
+
+  /* ========== TOAST ========== */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--brown-dark);
+    color: #fff;
+    padding: 14px 22px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.35s ease;
+    z-index: 2000;
+    pointer-events: none;
+  }
+
+  .toast.visible {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 640px) {
+    .header-inner { flex-direction: column; gap: 16px; text-align: center; }
+    .header-meta { justify-content: center; }
+    .summary-dashboard { grid-template-columns: repeat(2, 1fr); }
+    .finding-row { flex-wrap: wrap; }
+    .finding-row .finding-clause { display: none; }
+    .finding-row .finding-confidence { display: none; }
+    .detail-actions { flex-direction: column; align-items: flex-start; }
+    .response-label { margin-left: 0; }
+    .modal { max-height: 92vh; }
+    .modal-header { padding: 18px 20px 14px; }
+    .modal-body { padding: 18px 20px 22px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Progress strip -->
+<div class="progress-strip" aria-hidden="true">
+  <div class="progress-strip-fill" id="progressFill"></div>
+</div>
+
+<!-- ========== HEADER ========== -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-text">
+      <h1>Compliance Review</h1>
+      <div class="header-meta">
+        <span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          CAPA Process SOP v2.1
+        </span>
+        <span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          FDA 21 CFR 820 &mdash; CAPA Requirements
+        </span>
+        <span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          March 12, 2026
+        </span>
+      </div>
+    </div>
+    <div class="score-badge">
+      <span class="score-num">62%</span>
+      <span class="score-label">Compliant</span>
+    </div>
+  </div>
+</header>
+
+<!-- ========== MAIN CONTENT ========== -->
+<main class="container">
+
+  <!-- SUMMARY DASHBOARD -->
+  <div class="summary-dashboard">
+    <div class="summary-stat critical" onclick="scrollToSection('critical')">
+      <div class="stat-number">12</div>
+      <div class="stat-label">Not Met</div>
+    </div>
+    <div class="summary-stat attention" onclick="scrollToSection('attention')">
+      <div class="stat-number">18</div>
+      <div class="stat-label">Needs Review</div>
+    </div>
+    <div class="summary-stat passing" onclick="scrollToSection('passing')">
+      <div class="stat-number">34</div>
+      <div class="stat-label">Passing</div>
+    </div>
+    <div class="summary-stat na" onclick="scrollToSection('na')">
+      <div class="stat-number">4</div>
+      <div class="stat-label">N/A</div>
+    </div>
+  </div>
+
+  <!-- AI SUMMARY MESSAGE -->
+  <div class="ai-message" style="margin-top: 28px;">
+    <div class="ai-avatar">C</div>
+    <div class="ai-bubble">
+      <p>I've reviewed your <strong>CAPA Process SOP v2.1</strong> against <strong>68 requirements</strong> from the FDA 21 CFR 820 CAPA framework.</p>
+      <p>Overall compliance is at <strong>62%</strong>. I found <strong>12 requirements not met</strong>, <strong>18 that need your review</strong>, and <strong>34 that look good</strong>. 4 requirements don't apply to your organization. The most critical gaps are in root cause analysis documentation, effectiveness verification, and trending procedures.</p>
+      <p>Click any section below to expand. Click a finding to see my assessment, then use <strong>"More Details"</strong> for the full analysis.</p>
+    </div>
+  </div>
+
+  <!-- ========== CRITICAL FINDINGS ========== -->
+  <section class="section" id="critical">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-header-left">
+        <span class="icon" style="background: var(--red-bg); color: var(--red-text); width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </span>
+        <span class="section-title">Not Met</span>
+        <span class="section-count">12 requirements</span>
+      </div>
+      <span class="section-chevron">&#9660;</span>
+    </div>
+    <div class="section-body" id="critical-body"></div>
+  </section>
+
+  <!-- ========== ATTENTION ITEMS ========== -->
+  <section class="section" id="attention">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-header-left">
+        <span class="icon" style="background: var(--amber-bg); color: var(--amber-text); width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </span>
+        <span class="section-title">Needs Review</span>
+        <span class="section-count">18 requirements</span>
+      </div>
+      <span class="section-chevron">&#9660;</span>
+    </div>
+    <div class="section-body" id="attention-body"></div>
+  </section>
+
+  <!-- ========== PASSING ITEMS ========== -->
+  <section class="section collapsed" id="passing">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-header-left">
+        <span class="icon" style="background: var(--green-bg); color: var(--green-text); width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </span>
+        <span class="section-title">Passing</span>
+        <span class="section-count">34 requirements</span>
+      </div>
+      <span class="section-chevron">&#9660;</span>
+    </div>
+    <div class="section-body" id="passing-body"></div>
+  </section>
+
+  <!-- ========== N/A SECTION ========== -->
+  <section class="section collapsed" id="na">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-header-left">
+        <span class="icon" style="background: rgba(90,74,63,0.06); color: var(--brown-light); width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        </span>
+        <span class="section-title">Not Applicable</span>
+        <span class="section-count">4 requirements</span>
+      </div>
+      <span class="section-chevron">&#9660;</span>
+    </div>
+    <div class="section-body" id="na-body"></div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <section class="footer-section" id="footer">
+    <div class="ai-message">
+      <div class="ai-avatar">C</div>
+      <div class="ai-bubble">
+        <p>That's my full assessment. <strong>34 of 68 requirements pass</strong>, <strong>12 need immediate attention</strong>, <strong>18 could use clarification</strong>, and <strong>4 are not applicable</strong>.</p>
+        <p>I'm an AI assistant, and while I've been thorough, I may have missed context not in the document. <strong>Please verify these findings with your compliance team before making any decisions.</strong></p>
+      </div>
+    </div>
+
+    <div class="footer-buttons">
+      <button class="btn-primary" onclick="showToast('Preparing report export...')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export Report
+      </button>
+      <button class="btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Start Over
+      </button>
+    </div>
+
+    <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--warm-gray-lightest); font-size: 12.5px; color: var(--brown-light); line-height: 1.7;">
+      <strong>Compliance Review</strong> &mdash; AI Compliance Agent<br>
+      Report generated March 12, 2026 &bull; Document: CAPA Process SOP v2.1 &bull; Framework: FDA 21 CFR 820<br>
+      68 requirements evaluated &bull; 34 passed &bull; 12 failed &bull; 18 flagged &bull; 4 N/A &bull; Overall compliance: 62%
+    </div>
+  </section>
+
+</main>
+
+<!-- Modal overlay -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalContent" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-meta" id="modalMeta"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== DATA ==========
+var findings = [
+  // ---- CRITICAL (12) ----
+  {id:"CAPA-001",name:"Root Cause Analysis Documentation",clause:"820.90(a)",status:"critical",confidence:3,
+   explanation:"Your SOP mentions root cause analysis in Section 4.3 but doesn't define a documented methodology. FDA requires a specific, repeatable process for identifying root causes of nonconformities.",
+   evidence:'"Appropriate root cause analysis shall be performed" \u2014 Section 4.3',
+   gap:"No documented RCA methodology (e.g., 5 Whys, Fishbone, Fault Tree). The SOP references RCA without prescribing how to conduct or document one.",
+   recommendation:"Define at least two approved RCA methodologies, include templates, and require that the chosen method and rationale be documented in each CAPA record.",
+   fullDetail:{
+     requirementText:"The organization shall establish procedures for implementing corrective action including investigating the cause of nonconformities relating to product, processes, and the quality system.",
+     regulatoryContext:"FDA 21 CFR 820.90(a) specifically requires investigation of nonconformity causes. FDA Warning Letters frequently cite lack of adequate root cause investigation as a primary deficiency.",
+     documentEvidence:['"Appropriate root cause analysis shall be performed" \u2014 Section 4.3','"Investigations shall be thorough and documented" \u2014 Section 4.1'],
+     relatedRequirements:["CAPA-003","CAPA-008","CAPA-015"],
+     riskLevel:"High \u2014 FDA has issued Warning Letters for this exact deficiency in 23% of CAPA-related observations (FY2024-2025).",
+     implementationGuidance:"1. Select 2-3 approved RCA tools (5 Whys, Fishbone, Fault Tree Analysis)\n2. Create templates for each method\n3. Define criteria for when each method should be used\n4. Require documentation of the method selected and reasoning\n5. Include training requirements for RCA facilitators"
+   }},
+  {id:"CAPA-002",name:"Effectiveness Verification Procedures",clause:"820.90(a)",status:"critical",confidence:3,
+   explanation:"I couldn't find any procedure for verifying that corrective actions are actually effective after implementation. This is one of the most commonly cited FDA deficiencies.",
+   evidence:'"Corrective actions shall be verified for effectiveness" \u2014 Section 5.2 (no details provided)',
+   gap:"No defined criteria, timeline, or method for effectiveness checks. The SOP states they should happen but not how.",
+   recommendation:"Add a formal effectiveness verification procedure with defined criteria, responsible parties, timelines (e.g., 30/60/90 day checks), and escalation if ineffective.",
+   fullDetail:{
+     requirementText:"Verify or validate the corrective action to ensure that such action is effective and does not adversely affect the finished device.",
+     regulatoryContext:"This is the #1 most cited CAPA deficiency in FDA Warning Letters. The FDA expects specific, measurable criteria defined before implementation.",
+     documentEvidence:['"Corrective actions shall be verified for effectiveness" \u2014 Section 5.2'],
+     relatedRequirements:["CAPA-001","CAPA-006","CAPA-012"],
+     riskLevel:"Critical \u2014 Most frequently cited CAPA deficiency by FDA.",
+     implementationGuidance:"1. Define effectiveness criteria at time of CAPA initiation\n2. Establish minimum verification period (e.g., 90 days)\n3. Require statistical evidence where applicable\n4. Define escalation path for ineffective CAPAs\n5. Link to management review process"
+   }},
+  {id:"CAPA-003",name:"Trending Procedures for Quality Data",clause:"820.90(a)",status:"critical",confidence:2,
+   explanation:"Your SOP doesn't describe how quality data is trended to identify potential problems before they become nonconformities. FDA expects proactive trending, not just reactive investigation.",
+   evidence:'"Quality data shall be reviewed periodically" \u2014 Section 3.1',
+   gap:"No statistical trending methodology or triggers defined. Periodic review is mentioned but without structure.",
+   recommendation:"Implement a formal trending procedure with defined data sources, statistical methods, alert thresholds, and escalation to CAPA when trends are identified.",
+   fullDetail:{
+     requirementText:"Each manufacturer shall establish procedures for quality data analysis to identify existing and potential causes of nonconforming product or other quality problems.",
+     regulatoryContext:"FDA expects trending as part of a proactive quality system. Common data sources include complaints, nonconformances, audit findings, and process metrics.",
+     documentEvidence:['"Quality data shall be reviewed periodically" \u2014 Section 3.1','"Management shall review quality metrics" \u2014 Section 8.1'],
+     relatedRequirements:["CAPA-001","CAPA-010","CAPA-042"],
+     riskLevel:"High \u2014 Proactive trending is a key indicator of quality system maturity.",
+     implementationGuidance:"1. Identify key data sources (complaints, NCs, CAPAs, audits)\n2. Define trending frequency (monthly/quarterly)\n3. Select statistical methods (Pareto, control charts)\n4. Set alert thresholds for CAPA initiation\n5. Assign trending responsibilities"
+   }},
+  {id:"CAPA-004",name:"CAPA Source Identification",clause:"820.90(a)",status:"critical",confidence:3,
+   explanation:"The SOP lists only customer complaints and audits as CAPA sources. FDA expects a comprehensive list including process data, service records, returned product analysis, and more.",
+   evidence:'"CAPAs may be initiated from customer complaints or audit findings" \u2014 Section 2.2',
+   gap:"Incomplete list of CAPA sources. Missing: process deviations, NCMR data, management review outputs, regulatory changes, and supplier issues.",
+   recommendation:"Expand Section 2.2 to include all potential CAPA sources per FDA guidance.",
+   fullDetail:{
+     requirementText:"Analyzing processes, work operations, concessions, quality audit reports, quality records, service records, complaints, returned product, and other sources of quality data.",
+     regulatoryContext:"FDA guidance documents list at least 10 categories of CAPA sources. Limiting sources can mean quality signals are missed.",
+     documentEvidence:['"CAPAs may be initiated from customer complaints or audit findings" \u2014 Section 2.2'],
+     relatedRequirements:["CAPA-003","CAPA-005"],
+     riskLevel:"Medium-High \u2014 Incomplete sources lead to missed quality signals.",
+     implementationGuidance:"1. List all potential sources per FDA guidance\n2. Define intake process for each source\n3. Assign monitoring responsibilities\n4. Create intake form/template\n5. Train staff on CAPA initiation criteria"
+   }},
+  {id:"CAPA-005",name:"Dissemination of CAPA Information",clause:"820.90(a)",status:"critical",confidence:2,
+   explanation:"I couldn't find any procedure for communicating CAPA findings and actions to relevant personnel, including management review. The standard requires that information be disseminated.",
+   evidence:'No specific evidence found for dissemination procedures.',
+   gap:"No defined communication channels or requirements for sharing CAPA outcomes with affected departments or management.",
+   recommendation:"Add a communication plan section covering who receives CAPA updates, how, and when \u2014 including management review input.",
+   fullDetail:{
+     requirementText:"Submitting relevant information on identified quality problems, as well as corrective and preventive actions, for management review.",
+     regulatoryContext:"Management review must include CAPA status. Affected departments need to know about changes.",
+     documentEvidence:['No specific evidence found for dissemination procedures.'],
+     relatedRequirements:["CAPA-006","CAPA-068"],
+     riskLevel:"High \u2014 Information silos prevent effective quality improvements.",
+     implementationGuidance:"1. Define CAPA notification matrix\n2. Include CAPA summary in management review\n3. Require affected department sign-off\n4. Establish CAPA board/committee meetings\n5. Create CAPA status dashboard"
+   }},
+  {id:"CAPA-006",name:"Preventive Action Triggers",clause:"820.90(b)",status:"critical",confidence:3,
+   explanation:"Your SOP focuses almost entirely on corrective actions. Preventive action \u2014 addressing potential problems before they occur \u2014 has only a brief mention without any defined triggers or process.",
+   evidence:'"Preventive actions should be considered when potential issues are identified" \u2014 Section 6.1',
+   gap:"No defined triggers, risk assessment criteria, or process for initiating preventive actions. This is a separate regulatory requirement from corrective actions.",
+   recommendation:"Create a parallel preventive action process with specific triggers based on risk assessment, trending data, and near-miss events.",
+   fullDetail:{
+     requirementText:"Each manufacturer shall establish and maintain procedures for implementing preventive action including analyzing processes to detect potential causes of nonconforming product.",
+     regulatoryContext:"820.90(b) is a separate subsection from corrective action. FDA expects a distinct preventive action process, not just an afterthought.",
+     documentEvidence:['"Preventive actions should be considered when potential issues are identified" \u2014 Section 6.1'],
+     relatedRequirements:["CAPA-003","CAPA-007","CAPA-010"],
+     riskLevel:"Critical \u2014 Preventive action is separately regulated and commonly cited.",
+     implementationGuidance:"1. Define preventive action triggers (trends, risk assessments, near-misses)\n2. Establish risk-based prioritization\n3. Create PA-specific forms/templates\n4. Define effectiveness verification for PAs\n5. Track PA metrics separately from CAs"
+   }},
+  {id:"CAPA-007",name:"Risk-Based CAPA Prioritization",clause:"820.90(a)",status:"critical",confidence:2,
+   explanation:"There's no risk-based framework for prioritizing CAPAs. When you have multiple open CAPAs, you need clear criteria for which ones get addressed first.",
+   evidence:'No risk classification or prioritization criteria found.',
+   gap:"Missing risk classification scheme and prioritization matrix for CAPA records.",
+   recommendation:"Implement a risk-based prioritization system (e.g., severity x probability matrix) with defined response timelines for each risk level.",
+   fullDetail:{
+     requirementText:"The procedures shall include requirements for analysis of quality data and implementation of corrective and preventive actions based on risk.",
+     regulatoryContext:"FDA expects risk-based approaches throughout the QMS. ISO 14971 principles should inform CAPA prioritization.",
+     documentEvidence:['No risk classification or prioritization criteria found.'],
+     relatedRequirements:["CAPA-001","CAPA-006","CAPA-008"],
+     riskLevel:"High \u2014 Without prioritization, critical CAPAs may be delayed.",
+     implementationGuidance:"1. Define severity levels (Critical/Major/Minor)\n2. Create probability assessment criteria\n3. Build risk matrix with response timelines\n4. Require risk assessment at CAPA initiation\n5. Review prioritization at CAPA board meetings"
+   }},
+  {id:"CAPA-008",name:"CAPA Record Retention Requirements",clause:"820.184",status:"critical",confidence:3,
+   explanation:"Your SOP doesn't specify how long CAPA records must be retained. FDA has specific record retention requirements that need to be addressed.",
+   evidence:'No record retention period specified for CAPA documentation.',
+   gap:"Missing retention periods, archival procedures, and reference to record control procedures.",
+   recommendation:"Define CAPA record retention period (minimum: life of device + 2 years, or per your record retention policy) and reference your document control SOP.",
+   fullDetail:{
+     requirementText:"All activities required under this part shall be documented. Records shall be maintained for a period of time equivalent to the design and expected life of the device.",
+     regulatoryContext:"21 CFR 820.184 requires CAPA records to be maintained. Retention period depends on device classification and expected life.",
+     documentEvidence:['No record retention period specified for CAPA documentation.'],
+     relatedRequirements:["CAPA-009","CAPA-052"],
+     riskLevel:"Medium-High \u2014 Missing retention requirements can lead to lost audit trail.",
+     implementationGuidance:"1. Define retention period per device type\n2. Reference document control SOP\n3. Specify archival format (electronic/paper)\n4. Define destruction procedures\n5. Include in document control training"
+   }},
+  {id:"CAPA-009",name:"CAPA Closure Criteria",clause:"820.90(a)",status:"critical",confidence:3,
+   explanation:"The SOP doesn't define what constitutes a complete, closeable CAPA. Without closure criteria, CAPAs may be closed prematurely or remain open indefinitely.",
+   evidence:'"CAPAs shall be closed when complete" \u2014 Section 5.4',
+   gap:"No defined closure checklist or minimum requirements for CAPA closure (e.g., effectiveness verified, all actions complete, management approved).",
+   recommendation:"Create a formal closure checklist requiring: all actions complete, effectiveness verified, documentation complete, and quality manager approval.",
+   fullDetail:{
+     requirementText:"Verify or validate the corrective action to ensure that such action is effective and does not adversely affect the finished device.",
+     regulatoryContext:"CAPAs closed without adequate verification is a common 483 observation. A formal closure process prevents premature closure.",
+     documentEvidence:['"CAPAs shall be closed when complete" \u2014 Section 5.4'],
+     relatedRequirements:["CAPA-002","CAPA-008"],
+     riskLevel:"High \u2014 Premature closure is frequently cited in FDA observations.",
+     implementationGuidance:"1. Create closure checklist template\n2. Require all action items verified complete\n3. Require effectiveness check completion\n4. Define approval authority for closure\n5. Require final CAPA summary document"
+   }},
+  {id:"CAPA-010",name:"Statistical Methods for Data Analysis",clause:"820.250",status:"critical",confidence:2,
+   explanation:"Where statistical techniques are needed for quality data analysis, your SOP doesn't define which methods to use or when they're required.",
+   evidence:'"Data shall be analyzed using appropriate methods" \u2014 Section 3.2',
+   gap:"No specific statistical methods identified. 'Appropriate methods' is too vague for FDA expectations.",
+   recommendation:"Define specific statistical techniques (Pareto, control charts, trend analysis) and when each should be applied.",
+   fullDetail:{
+     requirementText:"Where results of analyses indicate trends, the manufacturer shall implement appropriate corrective and preventive actions.",
+     regulatoryContext:"820.250 requires valid statistical techniques. The specific methods should be appropriate to the data being analyzed.",
+     documentEvidence:['"Data shall be analyzed using appropriate methods" \u2014 Section 3.2'],
+     relatedRequirements:["CAPA-003","CAPA-007"],
+     riskLevel:"Medium \u2014 Vague statistical requirements undermine trending effectiveness.",
+     implementationGuidance:"1. List approved statistical methods\n2. Define when each method applies\n3. Specify software tools (Minitab, Excel)\n4. Require statistical training for analysts\n5. Include worked examples in training materials"
+   }},
+  {id:"CAPA-011",name:"Supplier CAPA Integration",clause:"820.90(a)",status:"critical",confidence:2,
+   explanation:"Your SOP doesn't address how supplier-related nonconformities feed into your CAPA system, or how corrective actions are communicated to and verified with suppliers.",
+   evidence:'No mention of supplier-related CAPA processes.',
+   gap:"Missing supplier CAPA linkage. Supplier quality issues need a defined path into the CAPA system.",
+   recommendation:"Add a section on supplier CAPA management including intake criteria, communication requirements, and supplier effectiveness verification.",
+   fullDetail:{
+     requirementText:"Each manufacturer shall establish procedures for corrective action including investigating the cause of nonconformities from all sources.",
+     regulatoryContext:"Suppliers are a critical source of nonconformities. FDA expects supplier issues to flow into the CAPA system.",
+     documentEvidence:['No mention of supplier-related CAPA processes.'],
+     relatedRequirements:["CAPA-004","CAPA-005"],
+     riskLevel:"Medium-High \u2014 Supplier issues are a common source of product quality problems.",
+     implementationGuidance:"1. Define supplier CAPA intake criteria\n2. Create supplier notification template\n3. Establish supplier response timelines\n4. Define supplier effectiveness verification\n5. Link to supplier qualification program"
+   }},
+  {id:"CAPA-012",name:"CAPA Timeliness Requirements",clause:"820.90(a)",status:"critical",confidence:3,
+   explanation:"There are no defined timelines for CAPA completion stages. Without time-bound requirements, CAPAs can languish without resolution.",
+   evidence:'No timeline requirements found for CAPA stages.',
+   gap:"Missing stage-based timelines (initiation, investigation, action implementation, effectiveness check).",
+   recommendation:"Define maximum durations for each CAPA phase with escalation procedures for overdue items.",
+   fullDetail:{
+     requirementText:"The organization shall implement corrective and preventive actions in a timely manner.",
+     regulatoryContext:"FDA expects timely resolution. During inspections, investigators check CAPA aging and may cite excessively old open CAPAs.",
+     documentEvidence:['No timeline requirements found for CAPA stages.'],
+     relatedRequirements:["CAPA-007","CAPA-009"],
+     riskLevel:"High \u2014 Aged CAPAs are a red flag during FDA inspections.",
+     implementationGuidance:"1. Define phase durations (e.g., Investigation: 30 days)\n2. Create escalation matrix for overdue CAPAs\n3. Implement aging reports/dashboard\n4. Include overdue CAPAs in management review\n5. Define extension request process"
+   }},
+
+  // ---- ATTENTION (18) ----
+  {id:"CAPA-013",name:"Investigation Scope Definition",clause:"820.90(a)",status:"attention",confidence:2,
+   explanation:"The SOP mentions investigation but doesn't clearly define how to scope an investigation \u2014 what's in bounds, what's out, and how to determine the breadth of impact.",
+   evidence:'"A thorough investigation shall be conducted" \u2014 Section 4.1',
+   gap:"Investigation scoping criteria not defined. Investigators may under- or over-scope without guidance.",
+   recommendation:"Add scoping criteria including product impact assessment, lot/batch identification, and similar product/process review.",
+   fullDetail:{requirementText:"Investigating the cause of nonconformities relating to product, processes, and the quality system.",regulatoryContext:"FDA expects investigations to be proportionate to the issue. Over-scoping wastes resources; under-scoping misses related problems.",documentEvidence:['"A thorough investigation shall be conducted" \u2014 Section 4.1'],relatedRequirements:["CAPA-001","CAPA-014"],riskLevel:"Medium",implementationGuidance:"1. Define scoping checklist\n2. Require product/lot impact assessment\n3. Include similar product review\n4. Document scoping rationale\n5. Require scope approval by quality"}},
+  {id:"CAPA-014",name:"Cross-Functional Investigation Teams",clause:"820.90(a)",status:"attention",confidence:1,
+   explanation:"I didn't see requirements for involving cross-functional teams in CAPA investigations. Complex quality issues often need expertise from multiple departments.",
+   evidence:'Section 4 assigns investigations to "quality personnel" only.',
+   gap:"No cross-functional team requirements or guidance on when to involve other departments.",
+   recommendation:"Define criteria for when cross-functional teams are required and which departments to involve based on the type of nonconformity.",
+   fullDetail:{requirementText:"Investigating the cause of nonconformities relating to product, processes, and the quality system.",regulatoryContext:"Best practice per FDA expectations. Complex investigations benefit from diverse expertise.",documentEvidence:['Section 4 assigns investigations to "quality personnel" only.'],relatedRequirements:["CAPA-013","CAPA-001"],riskLevel:"Medium",implementationGuidance:"1. Define team composition guidelines\n2. Create RACI matrix for CAPA roles\n3. Require cross-functional input for major CAPAs\n4. Document team member qualifications\n5. Include team selection in CAPA initiation form"}},
+  {id:"CAPA-015",name:"Action Plan Documentation",clause:"820.90(a)",status:"attention",confidence:2,
+   explanation:"The SOP requires actions but doesn't specify how action plans should be documented \u2014 responsible parties, due dates, and specific deliverables.",
+   evidence:'"Corrective actions shall be defined and implemented" \u2014 Section 5.1',
+   gap:"Incomplete action plan requirements. Missing: responsible party assignment, due dates, deliverable definitions.",
+   recommendation:"Require structured action plans with owner, due date, deliverable, and status for each action item.",
+   fullDetail:{requirementText:"Implementing and recording changes in methods and procedures needed to correct and prevent identified quality problems.",regulatoryContext:"Vague action plans lead to incomplete implementation. FDA expects specific, assignable, measurable actions.",documentEvidence:['"Corrective actions shall be defined and implemented" \u2014 Section 5.1'],relatedRequirements:["CAPA-012","CAPA-009"],riskLevel:"Medium",implementationGuidance:"1. Create action plan template\n2. Require: Who, What, When for each action\n3. Define status tracking requirements\n4. Require regular progress updates\n5. Link action completion to closure criteria"}},
+  {id:"CAPA-016",name:"Impact on Existing Products",clause:"820.90(a)",status:"attention",confidence:2,
+   explanation:"Your SOP doesn't require assessing whether a corrective action impacts products already in the field or in distribution.",
+   evidence:'No field impact assessment procedure found.',
+   gap:"Missing product impact assessment for distributed/in-field products.",
+   recommendation:"Add a product impact assessment step that evaluates field actions, recalls, or advisory notices when CAPAs affect released products.",
+   fullDetail:{requirementText:"Verify or validate the corrective action to ensure that such action does not adversely affect the finished device.",regulatoryContext:"Changes from CAPAs may affect devices already in the field. MDR reporting may be required.",documentEvidence:['No field impact assessment procedure found.'],relatedRequirements:["CAPA-002","CAPA-017"],riskLevel:"High",implementationGuidance:"1. Add impact assessment to CAPA form\n2. Define field action criteria\n3. Link to complaint handling and MDR procedures\n4. Require regulatory affairs review for field actions\n5. Document lot/serial number traceability"}},
+  {id:"CAPA-017",name:"Change Control Integration",clause:"820.90(a)",status:"attention",confidence:2,
+   explanation:"When CAPAs result in changes to processes, procedures, or products, those changes should go through change control. I see a brief mention but no formal linkage.",
+   evidence:'"Changes resulting from CAPAs shall follow applicable procedures" \u2014 Section 5.3',
+   gap:"Weak linkage between CAPA and change control systems. No requirement to initiate change orders.",
+   recommendation:"Require formal change control documentation for all CAPA-driven changes, with cross-references between CAPA and change control records.",
+   fullDetail:{requirementText:"Implementing and recording changes in methods and procedures needed to correct and prevent identified quality problems.",regulatoryContext:"CAPA and change control are closely linked. FDA expects traceability between them.",documentEvidence:['"Changes resulting from CAPAs shall follow applicable procedures" \u2014 Section 5.3'],relatedRequirements:["CAPA-016","CAPA-052"],riskLevel:"Medium-High",implementationGuidance:"1. Require change order for all CAPA changes\n2. Cross-reference CAPA# on change orders\n3. Require change impact assessment\n4. Include validation requirements\n5. Define when design controls apply"}},
+  {id:"CAPA-018",name:"Training on CAPA Changes",clause:"820.90(a)",status:"attention",confidence:1,
+   explanation:"After CAPA-driven changes are made, affected personnel need training. I didn't find explicit requirements for post-CAPA training assessments.",
+   evidence:'No training requirements linked to CAPA implementation.',
+   gap:"Missing post-CAPA training requirements and effectiveness verification of training.",
+   recommendation:"Require training needs assessment as part of CAPA action plans, with documented training completion before implementation.",
+   fullDetail:{requirementText:"Implementing corrective and preventive actions and ensuring they are effective.",regulatoryContext:"Training is a key element of effective implementation. Untrained personnel cannot effectively execute new procedures.",documentEvidence:['No training requirements linked to CAPA implementation.'],relatedRequirements:["CAPA-015","CAPA-052"],riskLevel:"Medium",implementationGuidance:"1. Add training assessment to CAPA action plan\n2. Define training completion requirements\n3. Verify training effectiveness\n4. Document training records in CAPA file\n5. Include in effectiveness verification criteria"}},
+  {id:"CAPA-019",name:"Complaint-to-CAPA Linkage",clause:"820.198/820.90",status:"attention",confidence:2,
+   explanation:"While complaints are listed as a CAPA source, the specific criteria for when a complaint triggers a CAPA aren't defined.",
+   evidence:'"Customer complaints may result in CAPA initiation" \u2014 Section 2.2',
+   gap:"No defined threshold or criteria for complaint-to-CAPA escalation.",
+   recommendation:"Define specific triggers: number of similar complaints, severity level, regulatory reportability, or trend threshold.",
+   fullDetail:{requirementText:"Analyzing processes, work operations, quality records, complaints, returned product and other sources of quality data.",regulatoryContext:"FDA expects clear criteria for when complaints escalate to CAPAs. Ad-hoc escalation is insufficient.",documentEvidence:['"Customer complaints may result in CAPA initiation" \u2014 Section 2.2'],relatedRequirements:["CAPA-004","CAPA-003"],riskLevel:"Medium-High",implementationGuidance:"1. Define complaint severity categories\n2. Set CAPA initiation thresholds\n3. Require trending of complaint data\n4. Cross-reference complaint and CAPA records\n5. Include in complaint handling procedure"}},
+  {id:"CAPA-020",name:"CAPA Approval Workflow",clause:"820.90(a)",status:"attention",confidence:2,
+   explanation:"The SOP doesn't clearly define who approves CAPA plans, who reviews investigation results, and who authorizes closure at each stage.",
+   evidence:'"Quality management shall oversee the CAPA process" \u2014 Section 1.2',
+   gap:"Vague approval authority. No defined approval roles for initiation, investigation, action plan, and closure stages.",
+   recommendation:"Define a stage-gate approval matrix showing who approves at each CAPA phase based on risk level.",
+   fullDetail:{requirementText:"Management with executive responsibility shall review the suitability and effectiveness of the quality system at defined intervals.",regulatoryContext:"Clear authority ensures accountability. FDA expects defined roles throughout the CAPA lifecycle.",documentEvidence:['"Quality management shall oversee the CAPA process" \u2014 Section 1.2'],relatedRequirements:["CAPA-005","CAPA-009"],riskLevel:"Medium",implementationGuidance:"1. Create stage-gate approval matrix\n2. Define approval authority by risk level\n3. Require documented approvals at each stage\n4. Include electronic signature where applicable\n5. Define delegation procedures"}},
+  {id:"CAPA-021",name:"Interim Containment Actions",clause:"820.90(a)",status:"attention",confidence:2,
+   explanation:"When a nonconformity is identified, immediate containment may be needed before the full CAPA investigation. Your SOP doesn't address interim actions.",
+   evidence:'No containment action procedures found.',
+   gap:"Missing interim/containment action requirements to prevent further occurrence while investigating root cause.",
+   recommendation:"Add a containment section requiring immediate risk assessment and interim actions before full investigation begins.",
+   fullDetail:{requirementText:"Implementing corrective action to address identified quality problems.",regulatoryContext:"Containment prevents ongoing impact while root cause is investigated. FDA expects timely containment.",documentEvidence:['No containment action procedures found.'],relatedRequirements:["CAPA-007","CAPA-016"],riskLevel:"High",implementationGuidance:"1. Define containment action triggers\n2. Require containment within 24-48 hours\n3. Document containment actions in CAPA record\n4. Assess containment effectiveness\n5. Transition from containment to permanent corrective action"}},
+  {id:"CAPA-022",name:"CAPA Metrics and KPIs",clause:"820.90(a)",status:"attention",confidence:1,
+   explanation:"I found no defined metrics for measuring CAPA system performance. Management review needs quantifiable data on CAPA effectiveness.",
+   evidence:'No CAPA metrics or KPIs defined.',
+   gap:"Missing CAPA system performance metrics (e.g., on-time closure rate, recurrence rate, average cycle time).",
+   recommendation:"Define at minimum: CAPA aging, on-time closure rate, effectiveness rate, and recurrence metrics.",
+   fullDetail:{requirementText:"Monitoring and measuring ISMS effectiveness.",regulatoryContext:"Metrics drive continuous improvement. FDA expects data-driven quality management.",documentEvidence:['No CAPA metrics or KPIs defined.'],relatedRequirements:["CAPA-003","CAPA-005"],riskLevel:"Medium",implementationGuidance:"1. Define key CAPA metrics\n2. Set targets for each metric\n3. Create dashboards/reports\n4. Include in management review\n5. Trend metrics over time"}},
+  {id:"CAPA-023",name:"Audit Finding CAPA Process",clause:"820.90(a)",status:"attention",confidence:2,
+   explanation:"Audits are listed as a CAPA source, but there's no defined process for how audit findings flow into the CAPA system and at what severity threshold.",
+   evidence:'"Audit findings may initiate CAPA actions" \u2014 Section 2.2',
+   gap:"No defined criteria for which audit findings require CAPAs vs. simpler corrective responses.",
+   recommendation:"Define audit finding classification (Major/Minor/Observation) and which classifications require formal CAPA.",
+   fullDetail:{requirementText:"Analyzing quality audit reports as sources of quality data for corrective and preventive action.",regulatoryContext:"Not all audit findings need full CAPAs. A clear threshold prevents both over- and under-reaction.",documentEvidence:['"Audit findings may initiate CAPA actions" \u2014 Section 2.2'],relatedRequirements:["CAPA-004","CAPA-019"],riskLevel:"Medium",implementationGuidance:"1. Define audit finding severity scale\n2. Map severity to response type\n3. Require CAPA for major findings\n4. Track audit-to-CAPA linkage\n5. Include in internal audit procedure"}},
+  {id:"CAPA-024",name:"CAPA System Procedure Review",clause:"820.90(a)",status:"attention",confidence:1,
+   explanation:"There's no requirement to periodically review the CAPA procedure itself for adequacy. The SOP should be subject to its own continuous improvement.",
+   evidence:'No procedure review cycle defined.',
+   gap:"Missing self-assessment cycle for the CAPA procedure. No triggers for SOP revision.",
+   recommendation:"Add an annual review requirement for the CAPA SOP with defined triggers for off-cycle revision.",
+   fullDetail:{requirementText:"Each manufacturer shall establish and maintain procedures for corrective action.",regulatoryContext:"QMS procedures need periodic review. Management review should include QMS procedure adequacy.",documentEvidence:['No procedure review cycle defined.'],relatedRequirements:["CAPA-022","CAPA-068"],riskLevel:"Low-Medium",implementationGuidance:"1. Define annual review cycle\n2. List revision triggers\n3. Require management approval for changes\n4. Track revision history\n5. Communicate changes to affected personnel"}},
+  {id:"CAPA-025",name:"Electronic Record Integrity",clause:"820.90/Part 11",status:"attention",confidence:1,
+   explanation:"If CAPA records are maintained electronically, Part 11 considerations apply. Your SOP doesn't address electronic record controls.",
+   evidence:'No electronic record controls mentioned.',
+   gap:"Missing Part 11 compliance considerations for electronic CAPA records.",
+   recommendation:"Reference your Part 11 compliance policy or add basic electronic record requirements (audit trail, electronic signatures, access controls).",
+   fullDetail:{requirementText:"Records that are electronically maintained must meet Part 11 requirements for electronic records.",regulatoryContext:"21 CFR Part 11 applies to electronic records. If using an eQMS, Part 11 controls are required.",documentEvidence:['No electronic record controls mentioned.'],relatedRequirements:["CAPA-008","CAPA-052"],riskLevel:"Medium",implementationGuidance:"1. Reference Part 11 compliance policy\n2. Define audit trail requirements\n3. Require electronic signature controls\n4. Specify access control requirements\n5. Address system validation"}},
+  {id:"CAPA-026",name:"Regulatory Reporting Assessment",clause:"820.90(a)/820.198",status:"attention",confidence:2,
+   explanation:"CAPAs related to device safety or efficacy may trigger MDR reporting. Your SOP doesn't include a regulatory reporting assessment step.",
+   evidence:'No regulatory reporting linkage found.',
+   gap:"Missing MDR/regulatory reporting assessment as part of CAPA evaluation.",
+   recommendation:"Add a mandatory regulatory impact assessment at CAPA initiation to evaluate MDR reportability.",
+   fullDetail:{requirementText:"Analysis of sources of quality data including product complaints and service records.",regulatoryContext:"CAPAs may reveal reportable events. FDA expects linkage between CAPA and MDR systems.",documentEvidence:['No regulatory reporting linkage found.'],relatedRequirements:["CAPA-016","CAPA-019"],riskLevel:"High",implementationGuidance:"1. Add regulatory assessment to CAPA form\n2. Define reportability criteria\n3. Require regulatory affairs review\n4. Link to MDR procedure\n5. Document reporting decisions"}},
+  {id:"CAPA-027",name:"CAPA Extension Justification",clause:"820.90(a)",status:"attention",confidence:2,
+   explanation:"When CAPAs can't be completed within the defined timeline, there should be a formal extension process. I didn't find one in your SOP.",
+   evidence:'No extension or timeline modification procedure found.',
+   gap:"No formal process for requesting and approving CAPA timeline extensions.",
+   recommendation:"Define an extension request process with justification requirements, approval authority, and maximum number of extensions.",
+   fullDetail:{requirementText:"Implementing corrective and preventive actions in a timely manner.",regulatoryContext:"Extensions happen, but they need to be justified and approved. Unapproved extensions look like non-compliance.",documentEvidence:['No extension or timeline modification procedure found.'],relatedRequirements:["CAPA-012","CAPA-020"],riskLevel:"Medium",implementationGuidance:"1. Create extension request form\n2. Define maximum extensions allowed\n3. Require management approval\n4. Document justification\n5. Track extensions in CAPA metrics"}},
+  {id:"CAPA-028",name:"Similar Product/Process Review",clause:"820.90(a)",status:"attention",confidence:2,
+   explanation:"When a CAPA is opened for one product, your SOP doesn't require reviewing whether similar products or processes have the same issue.",
+   evidence:'No horizontal deployment or similar product review required.',
+   gap:"Missing requirement to assess applicability of findings to other products/processes/lines.",
+   recommendation:"Require a horizontal deployment assessment for each CAPA to determine if the issue affects other products or processes.",
+   fullDetail:{requirementText:"Identifying the action needed to correct and prevent recurrence of nonconforming product and other quality problems.",regulatoryContext:"FDA expects manufacturers to proactively look for the same issue in related products/processes.",documentEvidence:['No horizontal deployment or similar product review required.'],relatedRequirements:["CAPA-013","CAPA-016"],riskLevel:"Medium-High",implementationGuidance:"1. Add horizontal assessment to investigation\n2. Define criteria for similar product identification\n3. Require documented assessment results\n4. Extend CAPA scope if applicable\n5. Track horizontal deployments"}},
+  {id:"CAPA-029",name:"Design Control Linkage",clause:"820.90/820.30",status:"attention",confidence:1,
+   explanation:"When CAPAs affect product design, there should be a linkage to the design control process. This isn't addressed in your SOP.",
+   evidence:'No design control reference found.',
+   gap:"Missing linkage between CAPA system and design control process for design-related CAPAs.",
+   recommendation:"Add a design impact assessment step and reference to the design control SOP for CAPAs that may affect product design.",
+   fullDetail:{requirementText:"Implementing and recording changes in methods and procedures needed to correct and prevent identified quality problems.",regulatoryContext:"Design-related CAPAs must flow through design controls per 820.30. This is a common oversight.",documentEvidence:['No design control reference found.'],relatedRequirements:["CAPA-017","CAPA-016"],riskLevel:"Medium-High",implementationGuidance:"1. Add design impact assessment to CAPA form\n2. Define design CAPA criteria\n3. Reference design control procedure\n4. Require design review for affected CAPAs\n5. Document design history file updates"}},
+  {id:"CAPA-030",name:"CAPA Reopening Criteria",clause:"820.90(a)",status:"attention",confidence:2,
+   explanation:"Your SOP doesn't address when a closed CAPA should be reopened \u2014 for example, if the issue recurs or effectiveness verification fails.",
+   evidence:'No reopening criteria found.',
+   gap:"No defined triggers or process for reopening closed CAPAs.",
+   recommendation:"Define reopening triggers (recurrence, failed effectiveness check, new information) and require a new or linked CAPA for recurrences.",
+   fullDetail:{requirementText:"Verify or validate the corrective action to ensure that such action is effective.",regulatoryContext:"Recurrence of a closed CAPA issue is a significant quality signal. FDA expects a defined response.",documentEvidence:['No reopening criteria found.'],relatedRequirements:["CAPA-002","CAPA-009"],riskLevel:"Medium",implementationGuidance:"1. Define reopening triggers\n2. Create reopening approval process\n3. Require enhanced investigation for recurrences\n4. Link to original CAPA record\n5. Escalate to management review"}},
+
+  // ---- PASSING (34) ----
+  {id:"CAPA-031",name:"CAPA Procedure Established",clause:"820.90(a)",status:"passing",confidence:3,explanation:"A documented CAPA procedure exists and is controlled.",evidence:'"This SOP defines the CAPA process for [Company]" \u2014 Section 1.1',gap:"",recommendation:""},
+  {id:"CAPA-032",name:"Quality Policy Reference",clause:"820.90(a)",status:"passing",confidence:3,explanation:"The SOP references the quality policy and quality management system.",evidence:'"This procedure supports the Quality Management System per 21 CFR 820" \u2014 Section 1.1',gap:"",recommendation:""},
+  {id:"CAPA-033",name:"Scope and Applicability",clause:"820.90(a)",status:"passing",confidence:3,explanation:"The SOP clearly defines its scope and applicability across the organization.",evidence:'"This procedure applies to all departments and products" \u2014 Section 1.3',gap:"",recommendation:""},
+  {id:"CAPA-034",name:"CAPA Definition Provided",clause:"820.90",status:"passing",confidence:3,explanation:"Clear definitions of corrective and preventive action are included.",evidence:'"Corrective Action: Action to eliminate the cause of a detected nonconformity" \u2014 Section 2.1',gap:"",recommendation:""},
+  {id:"CAPA-035",name:"Roles and Responsibilities",clause:"820.90(a)",status:"passing",confidence:3,explanation:"Key roles (Quality Manager, CAPA Owner, Department Heads) are defined with responsibilities.",evidence:'"Quality Manager is responsible for CAPA system oversight..." \u2014 Section 3.1',gap:"",recommendation:""},
+  {id:"CAPA-036",name:"CAPA Initiation Process",clause:"820.90(a)",status:"passing",confidence:3,explanation:"A clear process for initiating CAPAs is described.",evidence:'"CAPA requests may be submitted by any employee using Form CAPA-001" \u2014 Section 2.3',gap:"",recommendation:""},
+  {id:"CAPA-037",name:"Investigation Requirement",clause:"820.90(a)",status:"passing",confidence:2,explanation:"Investigation is required for all CAPAs, though scoping could be improved.",evidence:'"All CAPAs shall include a formal investigation" \u2014 Section 4.1',gap:"",recommendation:""},
+  {id:"CAPA-038",name:"Document Control Reference",clause:"820.40",status:"passing",confidence:3,explanation:"The SOP is under document control with version history and approval signatures.",evidence:'Document control header with revision history and approvals present.',gap:"",recommendation:""},
+  {id:"CAPA-039",name:"Nonconformity Identification",clause:"820.90(a)",status:"passing",confidence:3,explanation:"The SOP requires clear identification and description of the nonconformity.",evidence:'"Each CAPA shall include a clear description of the nonconformity or potential nonconformity" \u2014 Section 2.4',gap:"",recommendation:""},
+  {id:"CAPA-040",name:"CAPA Numbering System",clause:"820.90(a)",status:"passing",confidence:3,explanation:"A sequential numbering system for CAPA records is defined.",evidence:'"CAPAs shall be numbered sequentially: CAPA-YYYY-NNN" \u2014 Section 2.5',gap:"",recommendation:""},
+  {id:"CAPA-041",name:"Quality Manager Oversight",clause:"820.90(a)",status:"passing",confidence:3,explanation:"Quality Manager is designated as the CAPA system owner with oversight authority.",evidence:'"The Quality Manager shall have overall authority for the CAPA system" \u2014 Section 3.1',gap:"",recommendation:""},
+  {id:"CAPA-042",name:"Complaint Reference",clause:"820.198",status:"passing",confidence:2,explanation:"Customer complaints are referenced as a CAPA input source.",evidence:'"Customer complaints are a primary source for CAPA initiation" \u2014 Section 2.2',gap:"",recommendation:""},
+  {id:"CAPA-043",name:"Audit Reference",clause:"820.22",status:"passing",confidence:3,explanation:"Internal and external audits are referenced as CAPA input sources.",evidence:'"Internal and external audit findings shall be evaluated for CAPA" \u2014 Section 2.2',gap:"",recommendation:""},
+  {id:"CAPA-044",name:"Corrective Action Requirements",clause:"820.90(a)",status:"passing",confidence:2,explanation:"Basic corrective action requirements are stated, though action plan detail could be improved.",evidence:'"Corrective actions shall be defined and implemented to address root causes" \u2014 Section 5.1',gap:"",recommendation:""},
+  {id:"CAPA-045",name:"Preventive Action Mentioned",clause:"820.90(b)",status:"passing",confidence:1,explanation:"Preventive action is mentioned, though the process needs strengthening (see CAPA-006).",evidence:'"Preventive actions should be considered" \u2014 Section 6.1',gap:"",recommendation:""},
+  {id:"CAPA-046",name:"Management Responsibility",clause:"820.20",status:"passing",confidence:3,explanation:"Management responsibility for the quality system including CAPA is established.",evidence:'"Senior management is responsible for ensuring the effectiveness of the QMS including the CAPA system" \u2014 Section 1.2',gap:"",recommendation:""},
+  {id:"CAPA-047",name:"Documentation Requirements",clause:"820.90(a)",status:"passing",confidence:2,explanation:"Basic documentation requirements are stated for CAPA records.",evidence:'"All CAPA activities shall be documented" \u2014 Section 7.1',gap:"",recommendation:""},
+  {id:"CAPA-048",name:"CAPA Form/Template",clause:"820.90(a)",status:"passing",confidence:3,explanation:"A CAPA form template is referenced for consistent documentation.",evidence:'"Use CAPA Form (Form CAPA-001) for all CAPA records" \u2014 Section 7.2',gap:"",recommendation:""},
+  {id:"CAPA-049",name:"Verification Step Mentioned",clause:"820.90(a)",status:"passing",confidence:2,explanation:"Verification of corrective actions is mentioned, though the process needs detail (see CAPA-002).",evidence:'"Corrective actions shall be verified for effectiveness" \u2014 Section 5.2',gap:"",recommendation:""},
+  {id:"CAPA-050",name:"Process Approach",clause:"820.90(a)",status:"passing",confidence:3,explanation:"The SOP follows a process-based approach with inputs, activities, and outputs.",evidence:'Sections organized as: Inputs (2) \u2192 Investigation (4) \u2192 Actions (5) \u2192 Verification (5.2) \u2192 Closure (5.4)',gap:"",recommendation:""},
+  {id:"CAPA-051",name:"Regulatory Framework Reference",clause:"820.90",status:"passing",confidence:3,explanation:"The applicable regulatory framework (21 CFR 820) is properly referenced.",evidence:'"This procedure is established in accordance with 21 CFR 820.90" \u2014 Section 1.1',gap:"",recommendation:""},
+  {id:"CAPA-052",name:"Record Control Procedures",clause:"820.180",status:"passing",confidence:2,explanation:"General record control is referenced, though CAPA-specific retention needs improvement.",evidence:'"Records shall be maintained per the Document Control SOP" \u2014 Section 7.1',gap:"",recommendation:""},
+  {id:"CAPA-053",name:"Implementation Tracking",clause:"820.90(a)",status:"passing",confidence:2,explanation:"Action implementation tracking is mentioned with status categories.",evidence:'"CAPA status shall be tracked as: Open, In Progress, Pending Verification, Closed" \u2014 Section 7.3',gap:"",recommendation:""},
+  {id:"CAPA-054",name:"Quality System Integration",clause:"820.90(a)",status:"passing",confidence:3,explanation:"The CAPA procedure is integrated within the broader quality management system.",evidence:'"The CAPA system interfaces with complaint handling, audit, and management review procedures" \u2014 Section 1.4',gap:"",recommendation:""},
+  {id:"CAPA-055",name:"Personnel Qualifications",clause:"820.25",status:"passing",confidence:2,explanation:"Basic qualification requirements for CAPA investigators are stated.",evidence:'"Personnel conducting CAPA investigations shall have appropriate training and experience" \u2014 Section 3.2',gap:"",recommendation:""},
+  {id:"CAPA-056",name:"Nonconformance Product Reference",clause:"820.90(a)",status:"passing",confidence:2,explanation:"Nonconforming product procedures are referenced as a CAPA input.",evidence:'"Nonconforming product reports shall be evaluated for CAPA" \u2014 Section 2.2',gap:"",recommendation:""},
+  {id:"CAPA-057",name:"Continuous Improvement Commitment",clause:"820.90(a)",status:"passing",confidence:3,explanation:"The SOP includes a commitment to continuous improvement through the CAPA system.",evidence:'"The CAPA system is a key driver of continuous quality improvement" \u2014 Section 1.1',gap:"",recommendation:""},
+  {id:"CAPA-058",name:"Communication to Quality Manager",clause:"820.90(a)",status:"passing",confidence:3,explanation:"All CAPAs must be communicated to the Quality Manager.",evidence:'"The Quality Manager shall be notified of all new CAPA initiations" \u2014 Section 2.6',gap:"",recommendation:""},
+  {id:"CAPA-059",name:"Root Cause Reference",clause:"820.90(a)",status:"passing",confidence:2,explanation:"Root cause analysis is referenced as a requirement, though methodology needs defining (see CAPA-001).",evidence:'"Root cause analysis shall be performed for all CAPAs" \u2014 Section 4.3',gap:"",recommendation:""},
+  {id:"CAPA-060",name:"Closure Documentation",clause:"820.90(a)",status:"passing",confidence:2,explanation:"CAPA closure is documented, though criteria need strengthening (see CAPA-009).",evidence:'"CAPAs shall be closed when complete" \u2014 Section 5.4',gap:"",recommendation:""},
+  {id:"CAPA-061",name:"Scope of QMS Coverage",clause:"820.90(a)",status:"passing",confidence:3,explanation:"The SOP covers both manufacturing and design-related CAPA activities.",evidence:'"This procedure applies to manufacturing processes, design activities, and support functions" \u2014 Section 1.3',gap:"",recommendation:""},
+  {id:"CAPA-062",name:"SOP Approval Signatures",clause:"820.40",status:"passing",confidence:3,explanation:"The SOP has proper approval signatures from quality and management.",evidence:'Approval signatures from Quality Director and VP Operations on record.',gap:"",recommendation:""},
+  {id:"CAPA-063",name:"Revision History",clause:"820.40",status:"passing",confidence:3,explanation:"A complete revision history is maintained showing all changes.",evidence:'Revision history table showing v1.0 through v2.1 with change descriptions.',gap:"",recommendation:""},
+  {id:"CAPA-064",name:"Training Record Reference",clause:"820.25",status:"passing",confidence:2,explanation:"Training on the CAPA SOP is required for quality personnel.",evidence:'"All quality personnel shall be trained on this SOP upon hire and after revisions" \u2014 Section 8.2',gap:"",recommendation:""},
+
+  // ---- N/A (4) ----
+  {id:"CAPA-065",name:"Software Validation CAPA",clause:"820.70(i)",status:"na",explanation:"Software validation CAPA requirements not applicable \u2014 no software components in current product lines."},
+  {id:"CAPA-066",name:"Sterile Processing CAPA",clause:"820.70(d)",status:"na",explanation:"Sterile processing CAPA requirements not applicable \u2014 products are non-sterile."},
+  {id:"CAPA-067",name:"Environmental Controls CAPA",clause:"820.70(c)",status:"na",explanation:"Environmental control CAPA requirements not applicable \u2014 controlled environments not required for product manufacturing."},
+  {id:"CAPA-068",name:"Installation CAPA",clause:"820.170",status:"na",explanation:"Installation CAPA requirements not applicable \u2014 products do not require installation."}
+];
+
+// ========== RENDER ==========
+function render() {
+  var critical = findings.filter(function(f){return f.status==='critical'});
+  var attention = findings.filter(function(f){return f.status==='attention'});
+  var passing = findings.filter(function(f){return f.status==='passing'});
+  var na = findings.filter(function(f){return f.status==='na'});
+
+  renderFindings('critical-body', critical);
+  renderFindings('attention-body', attention);
+  renderFindings('passing-body', passing);
+  renderNA('na-body', na);
+}
+
+function renderFindings(containerId, items) {
+  var container = document.getElementById(containerId);
+  var html = '';
+  items.forEach(function(f) {
+    var confDots = '';
+    if (f.confidence !== undefined) {
+      for (var i = 0; i < 3; i++) {
+        confDots += '<span class="conf-dot' + (i < f.confidence ? ' filled' : '') + '"></span>';
+      }
+    }
+    html += '<div class="finding-row ' + f.status + '" data-id="' + f.id + '" onclick="toggleFinding(this)">';
+    html += '  <span class="status-dot"></span>';
+    html += '  <span class="finding-id">' + f.id + '</span>';
+    html += '  <span class="finding-name">' + f.name + '</span>';
+    html += '  <span class="finding-clause">' + f.clause + '</span>';
+    if (confDots) {
+      html += '  <span class="finding-confidence">' + confDots + '</span>';
+    }
+    html += '  <span class="row-chevron">&#9660;</span>';
+    html += '</div>';
+
+    // Detail panel (Level 1)
+    html += '<div class="finding-detail-panel ' + f.status + '" data-panel="' + f.id + '">';
+    if (f.explanation) {
+      html += '<div class="detail-explanation">';
+      html += '  <div class="mini-avatar">C</div>';
+      html += '  <div class="explanation-text">' + f.explanation + '</div>';
+      html += '</div>';
+    }
+    if (f.evidence) {
+      html += '<div class="evidence-quote">';
+      html += '  <span class="evidence-label">Document evidence</span>';
+      html += '  ' + f.evidence;
+      html += '</div>';
+    }
+    if (f.gap) {
+      html += '<div class="detail-gap">';
+      html += '  <div class="gap-label">Gap</div>';
+      html += '  <div class="gap-text">' + f.gap + '</div>';
+      html += '</div>';
+    }
+    if (f.recommendation) {
+      html += '<div class="detail-gap">';
+      html += '  <div class="gap-label">Recommendation</div>';
+      html += '  <div class="gap-text">' + f.recommendation + '</div>';
+      html += '</div>';
+    }
+
+    html += '<div class="detail-actions">';
+    if (f.fullDetail) {
+      html += '<button class="more-details-btn" onclick="event.stopPropagation(); openModal(\'' + f.id + '\')">More Details <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>';
+    }
+    if (f.status !== 'passing') {
+      html += '<span class="response-label">Response:</span>';
+      html += '<button class="response-btn agree" onclick="event.stopPropagation(); handleResponse(this, \'agreed\')">Agree</button>';
+      html += '<button class="response-btn disagree" onclick="event.stopPropagation(); handleResponse(this, \'disagreed\')">Disagree</button>';
+      html += '<button class="response-btn discuss" onclick="event.stopPropagation(); handleResponse(this, \'discuss\')">Discuss</button>';
+    }
+    html += '<div class="response-confirmation"></div>';
+    html += '</div>';
+
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function renderNA(containerId, items) {
+  var container = document.getElementById(containerId);
+  var html = '<div class="na-list">';
+  items.forEach(function(f) {
+    html += '<div class="na-item">';
+    html += '<span class="na-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></span>';
+    html += '<div><strong>' + f.id + ' \u2014 ' + f.name + '</strong> (' + f.clause + ')<br>' + f.explanation + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ========== INTERACTIONS ==========
+
+function toggleSection(header) {
+  var section = header.closest('.section');
+  section.classList.toggle('collapsed');
+}
+
+function toggleFinding(row) {
+  var id = row.getAttribute('data-id');
+  var panel = document.querySelector('[data-panel="' + id + '"]');
+  var wasOpen = panel.classList.contains('open');
+
+  // Close all other open panels in the same section
+  var sectionBody = row.closest('.section-body');
+  sectionBody.querySelectorAll('.finding-row.expanded').forEach(function(r) {
+    r.classList.remove('expanded');
+  });
+  sectionBody.querySelectorAll('.finding-detail-panel.open').forEach(function(p) {
+    p.classList.remove('open');
+  });
+
+  if (!wasOpen) {
+    row.classList.add('expanded');
+    panel.classList.add('open');
+  }
+}
+
+function scrollToSection(id) {
+  var section = document.getElementById(id);
+  if (section.classList.contains('collapsed')) {
+    section.classList.remove('collapsed');
+  }
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ========== MODAL (Level 2) ==========
+
+function openModal(findingId) {
+  var f = findings.find(function(item) { return item.id === findingId; });
+  if (!f || !f.fullDetail) return;
+
+  var d = f.fullDetail;
+  var statusLabel = f.status === 'critical' ? 'Not Met' : f.status === 'attention' ? 'Needs Review' : 'Passing';
+
+  document.getElementById('modalTitle').textContent = f.id + ' \u2014 ' + f.name;
+
+  var metaHtml = '<span class="tag ' + f.status + '">' + statusLabel + '</span>';
+  metaHtml += '<span style="color: var(--brown-light);">' + f.clause + '</span>';
+  document.getElementById('modalMeta').innerHTML = metaHtml;
+
+  var bodyHtml = '';
+
+  // Requirement text
+  bodyHtml += '<div class="modal-section">';
+  bodyHtml += '<div class="modal-section-title">Requirement</div>';
+  bodyHtml += '<p>' + d.requirementText + '</p>';
+  bodyHtml += '</div>';
+
+  // Regulatory context
+  bodyHtml += '<div class="modal-section">';
+  bodyHtml += '<div class="modal-section-title">Regulatory Context</div>';
+  bodyHtml += '<p>' + d.regulatoryContext + '</p>';
+  bodyHtml += '</div>';
+
+  // All document evidence
+  if (d.documentEvidence && d.documentEvidence.length > 0) {
+    bodyHtml += '<div class="modal-section">';
+    bodyHtml += '<div class="modal-section-title">Document Evidence</div>';
+    d.documentEvidence.forEach(function(ev) {
+      bodyHtml += '<div class="evidence-quote"><span class="evidence-label">Evidence</span>' + ev + '</div>';
+    });
+    bodyHtml += '</div>';
+  }
+
+  // Confidence
+  if (f.confidence !== undefined) {
+    var confLabels = ['','Low','Medium','High'];
+    var dots = '';
+    for (var i = 0; i < 3; i++) {
+      dots += '<span class="confidence-dot' + (i < f.confidence ? ' filled' : '') + '"></span>';
+    }
+    bodyHtml += '<div class="modal-section">';
+    bodyHtml += '<div class="modal-section-title">AI Confidence</div>';
+    bodyHtml += '<div class="confidence-row"><div class="confidence-dots">' + dots + '</div> ' + confLabels[f.confidence] + ' confidence</div>';
+    bodyHtml += '</div>';
+  }
+
+  // Risk level
+  if (d.riskLevel) {
+    bodyHtml += '<div class="modal-section">';
+    bodyHtml += '<div class="modal-section-title">Risk Assessment</div>';
+    bodyHtml += '<p>' + d.riskLevel + '</p>';
+    bodyHtml += '</div>';
+  }
+
+  // Gap analysis
+  if (f.gap) {
+    bodyHtml += '<div class="modal-section">';
+    bodyHtml += '<div class="modal-section-title">Gap Analysis</div>';
+    bodyHtml += '<p>' + f.gap + '</p>';
+    bodyHtml += '</div>';
+  }
+
+  // Implementation guidance
+  if (d.implementationGuidance) {
+    bodyHtml += '<div class="modal-section">';
+    bodyHtml += '<div class="modal-section-title">Implementation Guidance</div>';
+    var steps = d.implementationGuidance.split('\n');
+    bodyHtml += '<div style="font-size:14px; line-height:1.8; color: var(--brown-dark);">';
+    steps.forEach(function(step) {
+      bodyHtml += '<div style="padding: 2px 0;">' + step + '</div>';
+    });
+    bodyHtml += '</div>';
+    bodyHtml += '</div>';
+  }
+
+  // Related requirements
+  if (d.relatedRequirements && d.relatedRequirements.length > 0) {
+    bodyHtml += '<div class="modal-section">';
+    bodyHtml += '<div class="modal-section-title">Related Requirements</div>';
+    bodyHtml += '<div class="modal-related">';
+    d.relatedRequirements.forEach(function(r) {
+      bodyHtml += '<span class="related-tag" style="cursor:pointer" onclick="closeModal(); setTimeout(function(){jumpToFinding(\'' + r + '\')},300)">' + r + '</span>';
+    });
+    bodyHtml += '</div>';
+    bodyHtml += '</div>';
+  }
+
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(event) {
+  if (event && event.target !== document.getElementById('modalOverlay')) return;
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function jumpToFinding(id) {
+  // Find the row and expand it
+  var row = document.querySelector('.finding-row[data-id="' + id + '"]');
+  if (!row) return;
+
+  // Make sure the section is expanded
+  var section = row.closest('.section');
+  if (section.classList.contains('collapsed')) {
+    section.classList.remove('collapsed');
+  }
+
+  // Scroll to and expand the finding
+  setTimeout(function() {
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(function() { toggleFinding(row); }, 400);
+  }, 100);
+}
+
+// Escape key closes modal
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ========== RESPONSE BUTTONS ==========
+function handleResponse(btn, status) {
+  var actions = btn.closest('.detail-actions');
+  var allBtns = actions.querySelectorAll('.response-btn');
+  var confirmation = actions.querySelector('.response-confirmation');
+  var panel = btn.closest('.finding-detail-panel');
+  var id = panel.getAttribute('data-panel');
+
+  allBtns.forEach(function(b) {
+    b.classList.remove('selected');
+    b.style.opacity = '0.45';
+    b.style.pointerEvents = 'none';
+  });
+
+  btn.classList.add('selected');
+  btn.style.opacity = '1';
+
+  var statusMap = { 'agreed': 'agreed', 'disagreed': 'disagreed', 'discuss': 'marked for discussion' };
+  confirmation.textContent = 'Noted \u2014 ' + id + ' marked as ' + statusMap[status] + '.';
+  confirmation.classList.add('visible');
+  showToast('Response recorded for ' + id);
+
+  setTimeout(function() {
+    allBtns.forEach(function(b) {
+      if (!b.classList.contains('selected')) {
+        b.style.opacity = '0.65';
+        b.style.pointerEvents = 'auto';
+      }
+    });
+  }, 400);
+}
+
+// ========== TOAST ==========
+var toastTimer = null;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('visible'); }, 2800);
+}
+
+// ========== SCROLL PROGRESS ==========
+(function() {
+  var fill = document.getElementById('progressFill');
+  window.addEventListener('scroll', function() {
+    var scrollTop = window.scrollY;
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    fill.style.width = Math.min(pct, 100) + '%';
+  });
+})();
+
+// ========== INIT ==========
+render();
+</script>
+</body>
+</html>

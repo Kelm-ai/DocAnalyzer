@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compliance Ledger — ISO 27001 Assessment</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+    color: #1a1a2e;
+    background: #fff;
+    line-height: 1.45;
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 12px;
+    background: #fafafa;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .header .doc-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a2e;
+  }
+  .header .meta-item {
+    color: #6b7280;
+  }
+  .header .meta-item span {
+    color: #1a1a2e;
+    font-weight: 500;
+  }
+  .header .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .header .score-badge .score-value {
+    color: #1a1a2e;
+  }
+  .header .score-badge .score-total {
+    color: #9ca3af;
+    font-weight: 400;
+  }
+
+  /* ── Filter Bar ─────────────────────────────────────────── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fff;
+    flex-wrap: wrap;
+  }
+  .filter-bar label {
+    font-size: 11px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+  .filter-bar select,
+  .filter-bar input[type="text"] {
+    font-family: inherit;
+    font-size: 12px;
+    padding: 5px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    background: #fff;
+    color: #1a1a2e;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .filter-bar select:focus,
+  .filter-bar input[type="text"]:focus {
+    border-color: #9ca3af;
+  }
+  .filter-bar select {
+    padding-right: 22px;
+    cursor: pointer;
+  }
+  .filter-bar input[type="text"] {
+    width: 180px;
+  }
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .filter-sep {
+    width: 1px;
+    height: 20px;
+    background: #e5e7eb;
+    margin: 0 4px;
+  }
+  .btn-export {
+    margin-left: auto;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 5px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    background: #fff;
+    color: #1a1a2e;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn-export:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  /* ── Table ───────────────────────────────────────────────── */
+  .table-wrapper {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fafafa;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    padding: 7px 10px;
+    border-bottom: 1px solid #d1d5db;
+    white-space: nowrap;
+    user-select: none;
+  }
+  thead th:first-child { width: 36px; text-align: center; }
+  thead th:nth-child(2) { width: 110px; }
+  thead th:nth-child(3) { /* title — flexible */ }
+  thead th:nth-child(4) { width: 60px; }
+  thead th:nth-child(5) { width: 80px; }
+  thead th:nth-child(6) { width: 100px; }
+
+  tbody tr.row-main {
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  tbody tr.row-main:hover {
+    background: #f9fafb;
+  }
+  tbody tr.row-main.expanded {
+    background: #f5f6f8;
+  }
+  tbody tr.row-main td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12px;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Status dot */
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    vertical-align: middle;
+  }
+  .status-dot.pass   { background: #22c55e; }
+  .status-dot.fail   { background: #ef4444; }
+  .status-dot.flagged { background: #f59e0b; }
+  .status-dot.na     { background: #d1d5db; }
+
+  td.col-status { text-align: center; }
+
+  td.col-id {
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+    font-size: 11px;
+    color: #374151;
+    letter-spacing: -0.01em;
+  }
+  td.col-title {
+    font-weight: 500;
+    color: #1a1a2e;
+  }
+  td.col-clause {
+    color: #6b7280;
+    font-size: 11px;
+  }
+
+  /* Confidence badge */
+  .conf-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .conf-badge.high   { background: #ecfdf5; color: #047857; }
+  .conf-badge.medium { background: #fef9c3; color: #92400e; }
+  .conf-badge.low    { background: #fef2f2; color: #b91c1c; }
+
+  /* Review status */
+  .review-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border: 1px solid transparent;
+  }
+  .review-badge.pending  { background: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
+  .review-badge.approved { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+  .review-badge.rejected { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+
+  /* ── Expanded Detail Row ─────────────────────────────────── */
+  tr.row-detail {
+    display: none;
+  }
+  tr.row-detail.visible {
+    display: table-row;
+  }
+  tr.row-detail td {
+    padding: 0;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fafafa;
+  }
+  .detail-inner {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding: 0 20px;
+  }
+  tr.row-detail.visible .detail-inner {
+    max-height: 500px;
+    padding: 14px 20px 16px;
+  }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+    font-size: 12px;
+  }
+  .detail-section {
+    margin-bottom: 2px;
+  }
+  .detail-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    margin-bottom: 3px;
+  }
+  .detail-value {
+    color: #1a1a2e;
+    line-height: 1.5;
+  }
+  .detail-evidence {
+    border-left: 2px solid #d1d5db;
+    padding-left: 10px;
+    color: #4b5563;
+    font-style: italic;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .detail-gap {
+    color: #b91c1c;
+    background: #fef2f2;
+    padding: 6px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .detail-recommendation {
+    color: #1a1a2e;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .detail-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e5e7eb;
+  }
+  .btn-approve, .btn-reject {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 4px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .btn-approve {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+  }
+  .btn-approve:hover { background: #d1fae5; }
+  .btn-approve.active {
+    background: #047857;
+    color: #fff;
+    border-color: #047857;
+  }
+  .btn-reject {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+  }
+  .btn-reject:hover { background: #fee2e2; }
+  .btn-reject.active {
+    background: #b91c1c;
+    color: #fff;
+    border-color: #b91c1c;
+  }
+  .detail-actions .review-label {
+    margin-left: 8px;
+    font-size: 11px;
+    color: #6b7280;
+  }
+
+  /* ── Footer ──────────────────────────────────────────────── */
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+    font-size: 11px;
+    color: #6b7280;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .footer-counts {
+    display: flex;
+    gap: 14px;
+  }
+  .footer-counts .fc-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .footer .ai-notice {
+    font-style: italic;
+    color: #9ca3af;
+    font-size: 10px;
+  }
+
+  /* ── Utility ──────────────────────────────────────────────── */
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ═══ Header ═══ -->
+<div class="header">
+  <div class="header-left">
+    <span class="doc-name">InfoSec-Policy-v3.2.pdf</span>
+    <span class="meta-item">Framework: <span>ISO 27001:2022</span></span>
+    <span class="score-badge">
+      Score: <span class="score-value" id="headerScore">9</span><span class="score-total">/14</span>
+    </span>
+    <span class="meta-item">Assessed: <span>2026-02-27</span></span>
+  </div>
+</div>
+
+<!-- ═══ Filter Bar ═══ -->
+<div class="filter-bar">
+  <div class="filter-group">
+    <label for="filterStatus">Status</label>
+    <select id="filterStatus">
+      <option value="all">All</option>
+      <option value="pass">Pass</option>
+      <option value="fail">Fail</option>
+      <option value="flagged">Flagged</option>
+      <option value="na">N/A</option>
+    </select>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <label for="filterClause">Clause</label>
+    <select id="filterClause">
+      <option value="all">All</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+    </select>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <label for="filterConf">Confidence</label>
+    <select id="filterConf">
+      <option value="all">All</option>
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+    </select>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <label for="filterSearch">Search</label>
+    <input type="text" id="filterSearch" placeholder="Filter requirements...">
+  </div>
+  <button class="btn-export" onclick="handleExport()">Export CSV</button>
+</div>
+
+<!-- ═══ Table ═══ -->
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>ID</th>
+        <th>Requirement</th>
+        <th>Clause</th>
+        <th>Confidence</th>
+        <th>Review</th>
+      </tr>
+    </thead>
+    <tbody id="ledgerBody"></tbody>
+  </table>
+</div>
+
+<!-- ═══ Footer ═══ -->
+<div class="footer">
+  <div class="footer-counts" id="footerCounts"></div>
+  <div id="footerFilterSummary" style="font-size:10px;color:#9ca3af;"></div>
+  <div class="ai-notice">AI Assessment — Human verification required</div>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────
+const DATA = [
+  {
+    id:"REQ-6.1.2", title:"Risk Assessment Process", clause:"6.1", status:"fail",
+    confidence:"medium",
+    gap:"No documented risk assessment methodology found. The policy references risk management in general terms but lacks a specific, repeatable process.",
+    evidence:"The organization shall ensure information security risks are managed appropriately (Section 4.2)",
+    recommendation:"Develop and document a formal risk assessment methodology.",
+    reason:null, review:"pending"
+  },
+  {
+    id:"REQ-8.1.1", title:"Operational Planning and Control", clause:"8.1", status:"fail",
+    confidence:"high",
+    gap:"Missing documented operational procedures for security controls.",
+    evidence:"Security controls shall be implemented as deemed necessary by management (Section 7.1)",
+    recommendation:"Create detailed operational procedures for each security control.",
+    reason:null, review:"pending"
+  },
+  {
+    id:"REQ-6.2.1", title:"Information Security Objectives", clause:"6.2", status:"fail",
+    confidence:"high",
+    gap:"No measurable information security objectives defined.",
+    evidence:"The organization is committed to maintaining a high level of information security (Section 1.3)",
+    recommendation:"Define SMART information security objectives.",
+    reason:null, review:"pending"
+  },
+  {
+    id:"REQ-7.2.1", title:"Competence Requirements", clause:"7.2", status:"flagged",
+    confidence:"low",
+    gap:"Partial competence framework found but missing evidence of implementation.",
+    evidence:"Staff shall receive appropriate information security training upon joining and annually thereafter (Section 5.4)",
+    recommendation:null, reason:null, review:"pending"
+  },
+  {
+    id:"REQ-9.1.1", title:"Monitoring and Measurement", clause:"9.1", status:"flagged",
+    confidence:"medium",
+    gap:"Monitoring requirements mentioned but no specific metrics or KPIs defined.",
+    evidence:"Information security performance shall be monitored and reported to management (Section 8.2)",
+    recommendation:null, reason:null, review:"pending"
+  },
+  {
+    id:"REQ-9.3.1", title:"Management Review Inputs", clause:"9.3", status:"flagged",
+    confidence:"medium",
+    gap:"Management review process exists but input requirements are incomplete.",
+    evidence:"Management shall review the ISMS at planned intervals (Section 9.1)",
+    recommendation:null, reason:null, review:"pending"
+  },
+  {
+    id:"REQ-5.1.1", title:"Leadership Commitment", clause:"5.1", status:"pass",
+    confidence:"high", gap:null,
+    evidence:"The Board of Directors and Senior Management are committed to supporting information security (Section 2.1)",
+    recommendation:null, reason:null, review:"pending"
+  },
+  {
+    id:"REQ-5.2.1", title:"Information Security Policy", clause:"5.2", status:"pass",
+    confidence:"high", gap:null,
+    evidence:"This Information Security Policy establishes the framework for managing information security risks (Section 1.1)",
+    recommendation:null, reason:null, review:"pending"
+  },
+  {
+    id:"REQ-5.3.1", title:"Organizational Roles", clause:"5.3", status:"pass",
+    confidence:"medium", gap:null,
+    evidence:"The CISO is responsible for the overall ISMS. Department heads implement controls in their areas (Section 3.1)",
+    recommendation:null, reason:null, review:"pending"
+  },
+  {
+    id:"REQ-7.1.1", title:"Resources", clause:"7.1", status:"pass",
+    confidence:"high", gap:null,
+    evidence:"The organization shall provide resources needed for the ISMS including budget allocation reviewed annually (Section 5.1)",
+    recommendation:null, reason:null, review:"pending"
+  },
+  {
+    id:"REQ-7.3.1", title:"Awareness", clause:"7.3", status:"pass",
+    confidence:"high", gap:null,
+    evidence:"All employees shall be made aware of the information security policy (Section 5.5)",
+    recommendation:null, reason:null, review:"pending"
+  },
+  {
+    id:"REQ-7.4.1", title:"Communication", clause:"7.4", status:"pass",
+    confidence:"medium", gap:null,
+    evidence:"Internal and external communications shall follow the defined communication plan (Section 5.6)",
+    recommendation:null, reason:null, review:"pending"
+  },
+  {
+    id:"REQ-9.2.1", title:"Internal Audit", clause:"9.2", status:"pass",
+    confidence:"high", gap:null,
+    evidence:"Internal audits shall be conducted at planned intervals, at least annually (Section 8.3)",
+    recommendation:null, reason:null, review:"pending"
+  },
+  {
+    id:"REQ-7.5.1", title:"Documented Information", clause:"7.5", status:"pass",
+    confidence:"high", gap:null,
+    evidence:"All ISMS documentation shall be controlled, versioned, and maintained (Section 5.7)",
+    recommendation:null, reason:null, review:"pending"
+  },
+  {
+    id:"REQ-8.2.1", title:"Risk Assessment (Separate)", clause:"8.2", status:"na",
+    confidence:"high", gap:null, evidence:null, recommendation:null,
+    reason:"Assessed under REQ-6.1.2", review:"pending"
+  }
+];
+
+// Sort: fail first, flagged, pass, na — then by ID within each group
+const STATUS_ORDER = { fail:0, flagged:1, pass:2, na:3 };
+DATA.sort((a,b) => {
+  const d = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+  if (d !== 0) return d;
+  return a.id.localeCompare(b.id);
+});
+
+// ── State ─────────────────────────────────────────────────────
+let expandedId = null;
+
+// ── Render ────────────────────────────────────────────────────
+function statusLabel(s) {
+  return { pass:'Pass', fail:'Fail', flagged:'Flagged', na:'N/A' }[s] || s;
+}
+
+function confidenceExplanation(item) {
+  const map = {
+    high: 'High confidence: Strong, explicit evidence found in the document directly addressing this requirement.',
+    medium: 'Medium confidence: Partial or indirect evidence found. The document references the topic but may lack specificity.',
+    low: 'Low confidence: Weak or ambiguous evidence. Interpretation required; manual review strongly recommended.'
+  };
+  return map[item.confidence] || '';
+}
+
+function buildRow(item, idx) {
+  // Main row
+  const mainTr = document.createElement('tr');
+  mainTr.className = 'row-main';
+  mainTr.dataset.idx = idx;
+  mainTr.innerHTML = `
+    <td class="col-status"><span class="status-dot ${item.status}"></span></td>
+    <td class="col-id">${item.id}</td>
+    <td class="col-title">${item.title}</td>
+    <td class="col-clause">${item.clause}</td>
+    <td><span class="conf-badge ${item.confidence}">${item.confidence}</span></td>
+    <td><span class="review-badge ${item.review}" id="rev-badge-${idx}">${cap(item.review)}</span></td>
+  `;
+  mainTr.addEventListener('click', () => toggleExpand(idx));
+
+  // Detail row
+  const detailTr = document.createElement('tr');
+  detailTr.className = 'row-detail';
+  detailTr.id = 'detail-' + idx;
+  detailTr.innerHTML = `<td colspan="6"><div class="detail-inner" id="detail-inner-${idx}">${buildDetail(item, idx)}</div></td>`;
+
+  return [mainTr, detailTr];
+}
+
+function buildDetail(item, idx) {
+  let html = '<div class="detail-grid">';
+
+  // Left column
+  html += '<div>';
+  if (item.evidence) {
+    html += `<div class="detail-section"><div class="detail-label">Evidence</div><div class="detail-evidence">"${esc(item.evidence)}"</div></div>`;
+  }
+  if (item.gap) {
+    html += `<div class="detail-section" style="margin-top:8px"><div class="detail-label">Gap</div><div class="detail-gap">${esc(item.gap)}</div></div>`;
+  }
+  if (item.reason) {
+    html += `<div class="detail-section" style="margin-top:8px"><div class="detail-label">Reason (N/A)</div><div class="detail-value">${esc(item.reason)}</div></div>`;
+  }
+  html += '</div>';
+
+  // Right column
+  html += '<div>';
+  if (item.recommendation) {
+    html += `<div class="detail-section"><div class="detail-label">Recommendation</div><div class="detail-recommendation">${esc(item.recommendation)}</div></div>`;
+  }
+  html += `<div class="detail-section" style="margin-top:${item.recommendation ? 8 : 0}px"><div class="detail-label">AI Confidence</div><div class="detail-value">${confidenceExplanation(item)}</div></div>`;
+  html += '</div>';
+
+  html += '</div>'; // close grid
+
+  // Actions
+  html += `<div class="detail-actions">
+    <button class="btn-approve ${item.review === 'approved' ? 'active' : ''}" onclick="event.stopPropagation(); setReview(${idx},'approved')">Approve</button>
+    <button class="btn-reject ${item.review === 'rejected' ? 'active' : ''}" onclick="event.stopPropagation(); setReview(${idx},'rejected')">Reject</button>
+    <span class="review-label" id="rev-label-${idx}">${reviewLabel(item.review)}</span>
+  </div>`;
+
+  return html;
+}
+
+function reviewLabel(r) {
+  if (r === 'approved') return 'Approved by reviewer';
+  if (r === 'rejected') return 'Rejected — needs revision';
+  return '';
+}
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ── Expand / Collapse ─────────────────────────────────────────
+function toggleExpand(idx) {
+  const prev = expandedId;
+  if (prev !== null && prev !== idx) {
+    collapseRow(prev);
+  }
+  if (prev === idx) {
+    collapseRow(idx);
+    expandedId = null;
+  } else {
+    expandRow(idx);
+    expandedId = idx;
+  }
+}
+
+function expandRow(idx) {
+  const detail = document.getElementById('detail-' + idx);
+  const main = document.querySelector(`tr.row-main[data-idx="${idx}"]`);
+  if (detail) detail.classList.add('visible');
+  if (main) main.classList.add('expanded');
+}
+
+function collapseRow(idx) {
+  const detail = document.getElementById('detail-' + idx);
+  const main = document.querySelector(`tr.row-main[data-idx="${idx}"]`);
+  if (detail) detail.classList.remove('visible');
+  if (main) main.classList.remove('expanded');
+}
+
+// ── Approve / Reject ──────────────────────────────────────────
+function setReview(idx, newState) {
+  const item = DATA[idx];
+  // Toggle off if clicking the same state
+  if (item.review === newState) {
+    item.review = 'pending';
+  } else {
+    item.review = newState;
+  }
+  // Update badge in main row
+  const badge = document.getElementById('rev-badge-' + idx);
+  if (badge) {
+    badge.className = 'review-badge ' + item.review;
+    badge.textContent = cap(item.review);
+  }
+  // Update detail inner (buttons + label)
+  const inner = document.getElementById('detail-inner-' + idx);
+  if (inner) {
+    inner.innerHTML = buildDetail(item, idx);
+  }
+  updateFooter();
+}
+
+// ── Filtering ─────────────────────────────────────────────────
+function applyFilters() {
+  const status = document.getElementById('filterStatus').value;
+  const clause = document.getElementById('filterClause').value;
+  const conf = document.getElementById('filterConf').value;
+  const search = document.getElementById('filterSearch').value.toLowerCase().trim();
+
+  let visibleCount = 0;
+
+  DATA.forEach((item, idx) => {
+    const mainRow = document.querySelector(`tr.row-main[data-idx="${idx}"]`);
+    const detailRow = document.getElementById('detail-' + idx);
+    if (!mainRow) return;
+
+    let show = true;
+    if (status !== 'all' && item.status !== status) show = false;
+    if (clause !== 'all' && !item.clause.startsWith(clause)) show = false;
+    if (conf !== 'all' && item.confidence !== conf) show = false;
+    if (search && !(
+      item.id.toLowerCase().includes(search) ||
+      item.title.toLowerCase().includes(search) ||
+      item.clause.toLowerCase().includes(search) ||
+      (item.evidence && item.evidence.toLowerCase().includes(search)) ||
+      (item.gap && item.gap.toLowerCase().includes(search))
+    )) show = false;
+
+    if (show) {
+      mainRow.classList.remove('hidden');
+      visibleCount++;
+    } else {
+      mainRow.classList.add('hidden');
+      if (detailRow) detailRow.classList.remove('visible');
+      if (mainRow) mainRow.classList.remove('expanded');
+      if (expandedId === idx) expandedId = null;
+    }
+  });
+
+  updateFooter(visibleCount);
+}
+
+// ── Footer Update ─────────────────────────────────────────────
+function updateFooter(visibleOverride) {
+  const counts = { pass:0, fail:0, flagged:0, na:0 };
+  const reviews = { pending:0, approved:0, rejected:0 };
+  DATA.forEach(item => {
+    counts[item.status]++;
+    reviews[item.review]++;
+  });
+
+  const total = DATA.length;
+  const applicable = total - counts.na;
+  const passRate = applicable > 0 ? Math.round((counts.pass / applicable) * 100) : 0;
+
+  document.getElementById('footerCounts').innerHTML = `
+    <span class="fc-item"><span class="status-dot pass"></span> ${counts.pass} Passed</span>
+    <span class="fc-item"><span class="status-dot fail"></span> ${counts.fail} Failed</span>
+    <span class="fc-item"><span class="status-dot flagged"></span> ${counts.flagged} Flagged</span>
+    <span class="fc-item"><span class="status-dot na"></span> ${counts.na} N/A</span>
+    <span class="fc-item" style="border-left:1px solid #e5e7eb;padding-left:10px;">Pass rate: ${passRate}%</span>
+    <span class="fc-item" style="border-left:1px solid #e5e7eb;padding-left:10px;">Reviewed: ${reviews.approved + reviews.rejected}/${total}</span>
+  `;
+
+  // Update header score (pass count / applicable)
+  document.getElementById('headerScore').textContent = counts.pass;
+
+  // Filter summary
+  const vis = visibleOverride !== undefined ? visibleOverride : total;
+  const filterSum = document.getElementById('footerFilterSummary');
+  if (vis < total) {
+    filterSum.textContent = `Showing ${vis} of ${total} requirements`;
+  } else {
+    filterSum.textContent = '';
+  }
+}
+
+// ── Export ─────────────────────────────────────────────────────
+function handleExport() {
+  const headers = ['Status','ID','Requirement','Clause','Confidence','Review','Gap','Evidence','Recommendation'];
+  const rows = DATA.map(item => [
+    statusLabel(item.status),
+    item.id,
+    item.title,
+    item.clause,
+    item.confidence,
+    cap(item.review),
+    item.gap || '',
+    item.evidence || '',
+    item.recommendation || ''
+  ]);
+
+  let csv = headers.join(',') + '\n';
+  rows.forEach(r => {
+    csv += r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',') + '\n';
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'compliance-ledger-export.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Init ──────────────────────────────────────────────────────
+function init() {
+  const tbody = document.getElementById('ledgerBody');
+  DATA.forEach((item, idx) => {
+    const [mainTr, detailTr] = buildRow(item, idx);
+    tbody.appendChild(mainTr);
+    tbody.appendChild(detailTr);
+  });
+
+  // Wire filters
+  document.getElementById('filterStatus').addEventListener('change', applyFilters);
+  document.getElementById('filterClause').addEventListener('change', applyFilters);
+  document.getElementById('filterConf').addEventListener('change', applyFilters);
+  document.getElementById('filterSearch').addEventListener('input', applyFilters);
+
+  updateFooter();
+}
+
+init();
+</script>
+</body>
+</html>

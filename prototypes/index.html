@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compliance Report — Design Prototypes</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #1a1a1a; padding: 48px 24px; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .subtitle { color: #666; font-size: 16px; margin-bottom: 48px; line-height: 1.5; }
+  .brand-section { margin-bottom: 56px; }
+  .brand-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .brand-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .brand-name { font-size: 20px; font-weight: 600; }
+  .brand-desc { font-size: 14px; color: #888; margin-left: auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; transition: all 0.2s; cursor: pointer; text-decoration: none; color: inherit; display: block; }
+  .card:hover { border-color: #aaa; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+  .card-num { font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .card-title { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+  .card-desc { font-size: 14px; color: #666; line-height: 1.5; margin-bottom: 16px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 11px; padding: 3px 10px; border-radius: 100px; background: #f3f4f6; color: #555; font-weight: 500; }
+  .tag.layout { background: #e0f2fe; color: #0369a1; }
+  .tag.density { background: #fef3c7; color: #92400e; }
+  .tag.interaction { background: #ede9fe; color: #6d28d9; }
+  .ramp .brand-dot { background: #1a1a1a; }
+  .claude .brand-dot { background: #da7756; }
+  .vercel .brand-dot { background: #000; }
+  .sc .brand-dot { background: #00978F; }
+  .principles { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px; margin-bottom: 56px; }
+  .principles h2 { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+  .principles ul { list-style: none; }
+  .principles li { padding: 8px 0; font-size: 14px; color: #555; border-bottom: 1px solid #f3f4f6; display: flex; gap: 12px; }
+  .principles li:last-child { border: none; }
+  .principles .num { font-weight: 700; color: #1a1a1a; min-width: 24px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Compliance Report — Design Prototypes</h1>
+  <p class="subtitle">25 prototype variations exploring interaction patterns, information density, and layout for the compliance evaluation report. Each prototype addresses cognitive load reduction, AI trust signals, and the gap-first action model.</p>
+
+  <div class="principles">
+    <h2>Design Principles Applied</h2>
+    <ul>
+      <li><span class="num">1</span> Gaps first — failures and flagged items surface before passes</li>
+      <li><span class="num">2</span> Evidence-led trust — every verdict is backed by document quotes visible on demand</li>
+      <li><span class="num">3</span> Progressive disclosure — summary → clause → requirement → evidence</li>
+      <li><span class="num">4</span> Human-in-the-loop — approve/reject/override every AI finding</li>
+      <li><span class="num">5</span> Confidence transparency — uncertainty is visible, not hidden</li>
+      <li><span class="num">6</span> Export-ready — every view can be shared with stakeholders</li>
+    </ul>
+  </div>
+
+  <div class="brand-section ramp">
+    <div class="brand-header">
+      <span class="brand-dot"></span>
+      <span class="brand-name">Ramp Style</span>
+      <span class="brand-desc">Minimal chrome · Data-forward · Professional</span>
+    </div>
+    <div class="grid">
+      <a href="ramp-01-priority-queue.html" class="card">
+        <div class="card-num">Ramp 01</div>
+        <div class="card-title">Priority Queue</div>
+        <div class="card-desc">Gap-first prioritized list. Failures rise to top as actionable items. Expand rows to reveal evidence and confidence. Minimal chrome.</div>
+        <div class="tags"><span class="tag interaction">Progressive Disclosure</span><span class="tag density">Low Density</span><span class="tag layout">Linear List</span></div>
+      </a>
+      <a href="ramp-02-compliance-ledger.html" class="card">
+        <div class="card-num">Ramp 02</div>
+        <div class="card-title">Compliance Ledger</div>
+        <div class="card-desc">Dense financial-ledger table. All requirements visible with status, confidence, clause. Inline filters. Row expansion for detail.</div>
+        <div class="tags"><span class="tag interaction">Filterable</span><span class="tag density">High Density</span><span class="tag layout">Data Table</span></div>
+      </a>
+      <a href="ramp-03-split-review.html" class="card">
+        <div class="card-num">Ramp 03</div>
+        <div class="card-title">Split Review Panel</div>
+        <div class="card-desc">Left panel: navigable requirement list with status dots. Right panel: full detail with evidence, rationale, and approve/reject.</div>
+        <div class="tags"><span class="tag interaction">Master-Detail</span><span class="tag density">Medium Density</span><span class="tag layout">Split View</span></div>
+      </a>
+      <a href="ramp-04-drill-down.html" class="card">
+        <div class="card-num">Ramp 04</div>
+        <div class="card-title">Drill-Down Report</div>
+        <div class="card-desc">Multi-level navigation: Summary → Clause overview → Individual requirement detail. Breadcrumb navigation between levels.</div>
+        <div class="tags"><span class="tag interaction">Drill-Down</span><span class="tag density">Progressive</span><span class="tag layout">Multi-Page</span></div>
+      </a>
+      <a href="ramp-05-action-board.html" class="card">
+        <div class="card-num">Ramp 05</div>
+        <div class="card-title">Review Board</div>
+        <div class="card-desc">Kanban-style board: Needs Review → Approved → Rejected → N/A. Drag cards between columns. Human-in-the-loop first.</div>
+        <div class="tags"><span class="tag interaction">Kanban / Drag</span><span class="tag density">Low Density</span><span class="tag layout">Board</span></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="brand-section claude">
+    <div class="brand-header">
+      <span class="brand-dot"></span>
+      <span class="brand-name">Claude Style</span>
+      <span class="brand-desc">Warm · Conversational · Approachable</span>
+    </div>
+    <div class="grid">
+      <a href="claude-01-conversational.html" class="card">
+        <div class="card-num">Claude 01</div>
+        <div class="card-title">Conversational Review</div>
+        <div class="card-desc">AI presents findings as a conversation. "I found 3 critical gaps…" with inline evidence and user can approve or flag each.</div>
+        <div class="tags"><span class="tag interaction">Conversational</span><span class="tag density">Low Density</span><span class="tag layout">Chat-Like</span></div>
+      </a>
+      <a href="claude-02-guided-review.html" class="card">
+        <div class="card-num">Claude 02</div>
+        <div class="card-title">Guided Walkthrough</div>
+        <div class="card-desc">Stepper/wizard: Overview → Critical Findings (one at a time) → Review Summary. Focused, low cognitive load.</div>
+        <div class="tags"><span class="tag interaction">Stepper / Wizard</span><span class="tag density">Minimal</span><span class="tag layout">Single Focus</span></div>
+      </a>
+      <a href="claude-03-warm-cards.html" class="card">
+        <div class="card-num">Claude 03</div>
+        <div class="card-title">Warm Card Grid</div>
+        <div class="card-desc">Card-based layout. Each requirement is a warm-toned card with status, evidence snippet, confidence bar. Expand for detail.</div>
+        <div class="tags"><span class="tag interaction">Expandable Cards</span><span class="tag density">Medium Density</span><span class="tag layout">Card Grid</span></div>
+      </a>
+      <a href="claude-04-narrative.html" class="card">
+        <div class="card-num">Claude 04</div>
+        <div class="card-title">Narrative Report</div>
+        <div class="card-desc">Reads like a written assessment. Sections with prose, inline evidence quotes, and inline approve/reject actions per finding.</div>
+        <div class="tags"><span class="tag interaction">Inline Actions</span><span class="tag density">Medium Density</span><span class="tag layout">Document</span></div>
+      </a>
+      <a href="claude-05-accordion-review.html" class="card">
+        <div class="card-num">Claude 05</div>
+        <div class="card-title">Accordion Review</div>
+        <div class="card-desc">Accordion by clause. Expand clause → see requirements. Expand requirement → see evidence, confidence, and approve/reject.</div>
+        <div class="tags"><span class="tag interaction">Accordion</span><span class="tag density">Progressive</span><span class="tag layout">Nested Sections</span></div>
+      </a>
+      <a href="claude-06-compliance-table.html" class="card">
+        <div class="card-num">Claude 06</div>
+        <div class="card-title">Compliance Table</div>
+        <div class="card-desc">Warm data table with Georgia evidence quotes. Confidence fill bars, terracotta accents, filterable columns. Row expansion for detail.</div>
+        <div class="tags"><span class="tag interaction">Filterable</span><span class="tag density">High Density</span><span class="tag layout">Data Table</span></div>
+      </a>
+      <a href="claude-07-action-board.html" class="card">
+        <div class="card-num">Claude 07</div>
+        <div class="card-title">Review Board</div>
+        <div class="card-desc">Kanban-style board with warm terracotta aesthetic. Needs Review → Approved → Rejected → Auto-Passed. Click-to-expand cards with evidence.</div>
+        <div class="tags"><span class="tag interaction">Kanban / Drag</span><span class="tag density">Low Density</span><span class="tag layout">Board</span></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="brand-section vercel">
+    <div class="brand-header">
+      <span class="brand-dot"></span>
+      <span class="brand-name">OpenAI / Vercel Style</span>
+      <span class="brand-desc">Black & White · Stark · Typographic</span>
+    </div>
+    <div class="grid">
+      <a href="vercel-01-minimal-list.html" class="card">
+        <div class="card-num">Vercel 01</div>
+        <div class="card-title">Minimal List</div>
+        <div class="card-desc">Ultra-minimal. Stark black on white. Simple list of findings with status dots. Click to expand inline. Almost no chrome.</div>
+        <div class="tags"><span class="tag interaction">Inline Expand</span><span class="tag density">Minimal</span><span class="tag layout">Linear List</span></div>
+      </a>
+      <a href="vercel-02-grid-overview.html" class="card">
+        <div class="card-num">Vercel 02</div>
+        <div class="card-title">Grid Overview</div>
+        <div class="card-desc">Grid of requirement cells. Monochrome status indicators. Click cell for full-screen detail overlay with evidence.</div>
+        <div class="tags"><span class="tag interaction">Modal Overlay</span><span class="tag density">High Density</span><span class="tag layout">Grid</span></div>
+      </a>
+      <a href="vercel-03-split-mono.html" class="card">
+        <div class="card-num">Vercel 03</div>
+        <div class="card-title">Split Monochrome</div>
+        <div class="card-desc">Two-column monochrome. Left: tree navigation with status. Right: detail view. Ultra-clean typography, generous whitespace.</div>
+        <div class="tags"><span class="tag interaction">Tree Navigation</span><span class="tag density">Medium Density</span><span class="tag layout">Split View</span></div>
+      </a>
+      <a href="vercel-04-focus-mode.html" class="card">
+        <div class="card-num">Vercel 04</div>
+        <div class="card-title">Focus Mode</div>
+        <div class="card-desc">One requirement at a time. Full-screen focus with evidence and confidence. Navigate with prev/next. Ultra-low cognitive load.</div>
+        <div class="tags"><span class="tag interaction">Sequential Focus</span><span class="tag density">Minimal</span><span class="tag layout">Single Item</span></div>
+      </a>
+      <a href="vercel-05-command-palette.html" class="card">
+        <div class="card-num">Vercel 05</div>
+        <div class="card-title">Command Palette</div>
+        <div class="card-desc">CMD+K inspired. Search/filter bar at top. Results dynamically filtered below. Click for slide-in detail panel.</div>
+        <div class="tags"><span class="tag interaction">Search + Filter</span><span class="tag density">Dynamic</span><span class="tag layout">Search-First</span></div>
+      </a>
+      <a href="vercel-06-data-table.html" class="card">
+        <div class="card-num">Vercel 06</div>
+        <div class="card-title">Data Table</div>
+        <div class="card-desc">Stark monochrome table. No chrome, no color — just borders, dots, and type. Text toggle filters, minimal row expansion.</div>
+        <div class="tags"><span class="tag interaction">Filterable</span><span class="tag density">High Density</span><span class="tag layout">Data Table</span></div>
+      </a>
+      <a href="vercel-07-action-board.html" class="card">
+        <div class="card-num">Vercel 07</div>
+        <div class="card-title">Review Board</div>
+        <div class="card-desc">Stark monochrome kanban board. Four columns, no color except status dots. Minimal chrome, maximum clarity.</div>
+        <div class="tags"><span class="tag interaction">Kanban / Drag</span><span class="tag density">Low Density</span><span class="tag layout">Board</span></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="brand-section sc">
+    <div class="brand-header">
+      <span class="brand-dot"></span>
+      <span class="brand-name">Suttons Creek Style</span>
+      <span class="brand-desc">Branded · Professional · Clinical precision</span>
+    </div>
+    <div class="grid">
+      <a href="sc-01-compliance-table.html" class="card">
+        <div class="card-num">SC 01</div>
+        <div class="card-title">Compliance Table</div>
+        <div class="card-desc">Dense filterable table with SC branding. Teal/purple/gold palette. Expandable detail rows with evidence, gaps, and approve/reject.</div>
+        <div class="tags"><span class="tag interaction">Filterable</span><span class="tag density">High Density</span><span class="tag layout">Data Table</span></div>
+      </a>
+      <a href="sc-02-dashboard-cards.html" class="card">
+        <div class="card-num">SC 02</div>
+        <div class="card-title">Dashboard Cards</div>
+        <div class="card-desc">Summary stat cards at top, filterable card grid below. Status-colored left borders, expandable detail with evidence and actions.</div>
+        <div class="tags"><span class="tag interaction">Expandable Cards</span><span class="tag density">Medium Density</span><span class="tag layout">Card Grid</span></div>
+      </a>
+      <a href="sc-03-split-panel.html" class="card">
+        <div class="card-num">SC 03</div>
+        <div class="card-title">Split Review Panel</div>
+        <div class="card-desc">Master-detail split view. Left: navigable list with status dots. Right: full evidence, gaps, recommendations. Keyboard navigation.</div>
+        <div class="tags"><span class="tag interaction">Master-Detail</span><span class="tag density">Medium Density</span><span class="tag layout">Split View</span></div>
+      </a>
+      <a href="sc-04-accordion-report.html" class="card">
+        <div class="card-num">SC 04</div>
+        <div class="card-title">Accordion Report</div>
+        <div class="card-desc">Progressive disclosure by clause. Expand clause → requirements → evidence. Status-colored clause borders. Nested accordion.</div>
+        <div class="tags"><span class="tag interaction">Accordion</span><span class="tag density">Progressive</span><span class="tag layout">Nested Sections</span></div>
+      </a>
+      <a href="sc-05-sequential-review.html" class="card">
+        <div class="card-num">SC 05</div>
+        <div class="card-title">Sequential Review</div>
+        <div class="card-desc">One requirement at a time. Progress bar, approve/reject/skip flow. Dot navigation, keyboard support. Completion summary screen.</div>
+        <div class="tags"><span class="tag interaction">Sequential Focus</span><span class="tag density">Minimal</span><span class="tag layout">Single Item</span></div>
+      </a>
+      <a href="sc-06-action-board.html" class="card">
+        <div class="card-num">SC 06</div>
+        <div class="card-title">Review Board</div>
+        <div class="card-desc">Branded kanban board with teal/gold/purple palette. Column-based review workflow with SC corporate styling.</div>
+        <div class="tags"><span class="tag interaction">Kanban / Drag</span><span class="tag density">Low Density</span><span class="tag layout">Board</span></div>
+      </a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

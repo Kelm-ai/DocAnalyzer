@@ -58,10 +58,12 @@ export interface EvaluationStatus {
   supporting_docs_count?: number;
   summaries_status?: 'pending' | 'generating' | 'completed' | 'failed' | 'not_required';
   metadata?: {
+    phase?: string;
     progress_percent?: number;
     completed_requirements?: number;
     total_requirements?: number;
     status_message?: string;
+    estimated_seconds_remaining?: number;
     last_updated?: string;
     batch_number?: number;
     batch_total?: number;
@@ -135,6 +137,38 @@ export interface ExecutiveSummary {
   generated_at: string;
 }
 
+export interface RequirementPresentationCitation {
+  label: string;
+  location: string;
+  excerpt: string;
+  provider?: string | null;
+  file_id?: string | null;
+  page_number?: number | null;
+  section_title?: string | null;
+}
+
+export interface RequirementPresentationClaim {
+  text: string;
+  kind: 'assessment' | 'supporting' | 'gap' | 'verification' | 'ofi';
+  citations: RequirementPresentationCitation[];
+}
+
+export interface RequirementPresentationAnalysisBlock {
+  label: string;
+  body: string;
+  citations: RequirementPresentationCitation[];
+}
+
+export interface RequirementPresentationSummary {
+  status: 'PASS' | 'FAIL' | 'FLAGGED' | 'PARTIAL' | 'NOT_APPLICABLE' | 'ERROR';
+  confidence_level: 'low' | 'medium' | 'high';
+  inline_claims: RequirementPresentationClaim[];
+  modal_claims: RequirementPresentationClaim[];
+  full_analysis: RequirementPresentationAnalysisBlock[];
+  generated_at?: string;
+  presentation_version?: string;
+}
+
 export interface ComplianceReport {
   evaluation_id: string;
   document_name: string;
@@ -152,6 +186,7 @@ export interface ComplianceReport {
   high_risk_findings: string[];
   key_gaps: string[];
   executive_summary?: ExecutiveSummary;
+  requirement_presentations?: Record<string, RequirementPresentationSummary>;
 }
 
 export interface RequirementCreatePayload {

@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accordion Review — Compliance Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #faf7f2;
+    --cream-dark: #f3ede4;
+    --terracotta: #da7756;
+    --terracotta-light: #e8a08a;
+    --terracotta-dark: #c4603f;
+    --brown: #5a4a3f;
+    --brown-light: #7a6a5f;
+    --brown-lighter: #9a8a7f;
+    --warm-gray: #b8ada4;
+    --warm-gray-light: #d9d2cb;
+    --warm-gray-lighter: #ece8e3;
+    --green: #5a9a6a;
+    --green-bg: #edf5ef;
+    --green-light: #c8e0cd;
+    --red: #c45a4a;
+    --red-bg: #fbeae8;
+    --red-light: #e8b0a8;
+    --amber: #c8923a;
+    --amber-bg: #fdf3e4;
+    --amber-light: #e8cc8a;
+    --neutral: #8a8a8a;
+    --neutral-bg: #f0f0ee;
+    --white: #ffffff;
+    --shadow-sm: 0 1px 3px rgba(90, 74, 63, 0.08);
+    --shadow-md: 0 4px 12px rgba(90, 74, 63, 0.1);
+    --shadow-lg: 0 8px 24px rgba(90, 74, 63, 0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--cream);
+    color: var(--brown);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ───────────────────────────────── */
+  .header {
+    background: var(--white);
+    border-bottom: 1px solid var(--warm-gray-lighter);
+    padding: 24px 32px;
+    box-shadow: var(--shadow-sm);
+  }
+  .header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--brown);
+    margin-bottom: 4px;
+  }
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--brown-lighter);
+    margin-top: 4px;
+  }
+  .header-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .score-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .score-badge .score-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--terracotta);
+    line-height: 1;
+  }
+  .score-badge .score-label {
+    font-size: 12px;
+    color: var(--brown-lighter);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--amber-bg);
+    color: var(--amber);
+    border: 1px solid var(--amber-light);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .ai-badge svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  /* ── Summary Bar ──────────────────────────── */
+  .summary-bar {
+    max-width: 960px;
+    margin: 20px auto;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .status-pills {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .status-pill.fail { background: var(--red-bg); color: var(--red); }
+  .status-pill.flagged { background: var(--amber-bg); color: var(--amber); }
+  .status-pill.pass { background: var(--green-bg); color: var(--green); }
+  .status-pill.na { background: var(--neutral-bg); color: var(--neutral); }
+  .status-pill .pill-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .status-pill.fail .pill-dot { background: var(--red); }
+  .status-pill.flagged .pill-dot { background: var(--amber); }
+  .status-pill.pass .pill-dot { background: var(--green); }
+  .status-pill.na .pill-dot { background: var(--neutral); }
+
+  .summary-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .review-progress {
+    font-size: 13px;
+    color: var(--brown-lighter);
+  }
+  .review-progress strong {
+    color: var(--brown);
+  }
+  .btn-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border: 1px solid var(--warm-gray-light);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    color: var(--brown);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .btn-export:hover {
+    background: var(--cream);
+    border-color: var(--warm-gray);
+  }
+  .btn-export svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ── Main Content ─────────────────────────── */
+  .main-content {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 0 60px;
+  }
+
+  /* ── Clause Accordion ─────────────────────── */
+  .clause-accordion {
+    margin-bottom: 12px;
+    border-radius: var(--radius);
+    background: var(--white);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: box-shadow var(--transition);
+  }
+  .clause-accordion:hover {
+    box-shadow: var(--shadow-md);
+  }
+  .clause-accordion.border-red { border-left: 4px solid var(--red); }
+  .clause-accordion.border-amber { border-left: 4px solid var(--amber); }
+  .clause-accordion.border-green { border-left: 4px solid var(--green); }
+  .clause-accordion.border-neutral { border-left: 4px solid var(--neutral); }
+
+  .clause-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition);
+  }
+  .clause-header:hover {
+    background: var(--cream);
+  }
+  .clause-chevron {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--brown-lighter);
+    transition: transform var(--transition);
+  }
+  .clause-accordion.open > .clause-header .clause-chevron {
+    transform: rotate(90deg);
+  }
+  .clause-title {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--brown);
+  }
+  .clause-pills {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .clause-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .clause-pill.fail { background: var(--red-bg); color: var(--red); }
+  .clause-pill.flagged { background: var(--amber-bg); color: var(--amber); }
+  .clause-pill.pass { background: var(--green-bg); color: var(--green); }
+  .clause-pill.na { background: var(--neutral-bg); color: var(--neutral); }
+
+  .clause-body {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .clause-accordion.open > .clause-body {
+    max-height: 5000px;
+  }
+  .clause-body-inner {
+    padding: 0 20px 16px 20px;
+  }
+
+  /* ── Requirement Sub-Accordion ────────────── */
+  .req-accordion {
+    border: 1px solid var(--warm-gray-lighter);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .req-accordion:last-child {
+    margin-bottom: 0;
+  }
+  .req-accordion:hover {
+    border-color: var(--warm-gray-light);
+  }
+  .req-accordion.open {
+    box-shadow: var(--shadow-sm);
+    border-color: var(--warm-gray-light);
+  }
+  .req-accordion.reviewed {
+    opacity: 0.7;
+  }
+  .req-accordion.reviewed .req-header {
+    background: var(--cream);
+  }
+
+  .req-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition);
+  }
+  .req-header:hover {
+    background: var(--cream);
+  }
+
+  .req-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .req-status-dot.fail { background: var(--red); }
+  .req-status-dot.flagged { background: var(--amber); }
+  .req-status-dot.pass { background: var(--green); }
+  .req-status-dot.na { background: var(--neutral); }
+
+  .req-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .req-id-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .req-id {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--brown);
+  }
+  .req-title {
+    font-size: 13px;
+    color: var(--brown-light);
+  }
+  .req-summary {
+    font-size: 12px;
+    color: var(--brown-lighter);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .confidence-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .confidence-badge.high { background: var(--green-bg); color: var(--green); }
+  .confidence-badge.medium { background: var(--amber-bg); color: var(--amber); }
+  .confidence-badge.low { background: var(--red-bg); color: var(--red); }
+
+  .review-check {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--green);
+    opacity: 0;
+    transition: opacity var(--transition);
+  }
+  .req-accordion.reviewed .review-check {
+    opacity: 1;
+  }
+
+  .req-chevron {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--warm-gray);
+    transition: transform var(--transition);
+  }
+  .req-accordion.open > .req-header .req-chevron {
+    transform: rotate(90deg);
+  }
+
+  .req-body {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .req-accordion.open > .req-body {
+    max-height: 2000px;
+  }
+  .req-body-inner {
+    padding: 0 16px 16px 36px;
+  }
+
+  /* ── Detail Sections ──────────────────────── */
+  .detail-section {
+    margin-bottom: 14px;
+  }
+  .detail-section:last-child {
+    margin-bottom: 0;
+  }
+  .detail-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--brown-lighter);
+    margin-bottom: 6px;
+  }
+  .detail-content {
+    font-size: 13px;
+    color: var(--brown);
+    line-height: 1.6;
+  }
+
+  .evidence-block {
+    background: var(--cream);
+    border-left: 3px solid var(--warm-gray-light);
+    padding: 10px 14px;
+    border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+    font-size: 13px;
+    color: var(--brown-light);
+    font-style: italic;
+    line-height: 1.6;
+  }
+  .evidence-source {
+    font-size: 11px;
+    color: var(--brown-lighter);
+    font-style: normal;
+    margin-top: 6px;
+  }
+
+  .gap-block {
+    background: var(--red-bg);
+    border-left: 3px solid var(--red-light);
+    padding: 10px 14px;
+    border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+    font-size: 13px;
+    color: var(--brown);
+    line-height: 1.6;
+  }
+  .flagged-gap-block {
+    background: var(--amber-bg);
+    border-left: 3px solid var(--amber-light);
+    padding: 10px 14px;
+    border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+    font-size: 13px;
+    color: var(--brown);
+    line-height: 1.6;
+  }
+
+  .recommendation-block {
+    background: var(--cream);
+    border-left: 3px solid var(--terracotta-light);
+    padding: 10px 14px;
+    border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+    font-size: 13px;
+    color: var(--brown);
+    line-height: 1.6;
+  }
+
+  .na-block {
+    background: var(--neutral-bg);
+    border-left: 3px solid var(--neutral);
+    padding: 10px 14px;
+    border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+    font-size: 13px;
+    color: var(--brown-light);
+    line-height: 1.6;
+  }
+
+  /* ── Review Actions ───────────────────────── */
+  .review-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--warm-gray-lighter);
+    flex-wrap: wrap;
+  }
+  .review-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 16px;
+    border-radius: var(--radius-xs);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: var(--transition);
+  }
+  .review-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  .btn-approve {
+    background: var(--green-bg);
+    color: var(--green);
+    border-color: var(--green-light);
+  }
+  .btn-approve:hover {
+    background: var(--green);
+    color: var(--white);
+  }
+  .btn-approve.active {
+    background: var(--green);
+    color: var(--white);
+  }
+  .btn-reject {
+    background: var(--red-bg);
+    color: var(--red);
+    border-color: var(--red-light);
+  }
+  .btn-reject:hover {
+    background: var(--red);
+    color: var(--white);
+  }
+  .btn-reject.active {
+    background: var(--red);
+    color: var(--white);
+  }
+  .btn-flag {
+    background: var(--amber-bg);
+    color: var(--amber);
+    border-color: var(--amber-light);
+  }
+  .btn-flag:hover {
+    background: var(--amber);
+    color: var(--white);
+  }
+  .btn-flag.active {
+    background: var(--amber);
+    color: var(--white);
+  }
+  .btn-comment {
+    background: transparent;
+    color: var(--brown-lighter);
+    border-color: var(--warm-gray-light);
+    margin-left: auto;
+  }
+  .btn-comment:hover {
+    background: var(--cream);
+    color: var(--brown);
+  }
+
+  .comment-area {
+    margin-top: 10px;
+    display: none;
+  }
+  .comment-area.visible {
+    display: block;
+  }
+  .comment-textarea {
+    width: 100%;
+    border: 1px solid var(--warm-gray-light);
+    border-radius: var(--radius-xs);
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--brown);
+    background: var(--white);
+    resize: vertical;
+    min-height: 64px;
+    transition: border-color var(--transition);
+    outline: none;
+  }
+  .comment-textarea:focus {
+    border-color: var(--terracotta);
+  }
+  .comment-textarea::placeholder {
+    color: var(--warm-gray);
+  }
+  .comment-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .btn-save-comment {
+    padding: 6px 14px;
+    border-radius: var(--radius-xs);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: var(--terracotta);
+    color: var(--white);
+    transition: var(--transition);
+  }
+  .btn-save-comment:hover {
+    background: var(--terracotta-dark);
+  }
+  .btn-cancel-comment {
+    padding: 6px 14px;
+    border-radius: var(--radius-xs);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--warm-gray-light);
+    background: var(--white);
+    color: var(--brown-lighter);
+    transition: var(--transition);
+  }
+  .btn-cancel-comment:hover {
+    background: var(--cream);
+  }
+
+  /* ── Toast ────────────────────────────────── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--brown);
+    color: var(--white);
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+  }
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* ── Responsive ───────────────────────────── */
+  @media (max-width: 700px) {
+    .header { padding: 16px 16px; }
+    .summary-bar { margin: 12px 16px; padding: 12px 16px; }
+    .main-content { padding: 0 16px 40px; }
+    .header-top { flex-direction: column; }
+    .header-right { align-items: flex-start; flex-direction: row; gap: 12px; }
+    .summary-bar { flex-direction: column; align-items: flex-start; }
+    .summary-right { width: 100%; justify-content: space-between; }
+    .clause-pills { flex-wrap: wrap; }
+    .req-body-inner { padding-left: 16px; }
+    .req-summary { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="header-left">
+        <h1>ISMS Policy Document — Compliance Assessment</h1>
+        <div class="header-meta">
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            ISO 27001:2022
+          </span>
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            27 Feb 2026
+          </span>
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            15 requirements
+          </span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="score-badge">
+          <div>
+            <div class="score-value">73%</div>
+            <div class="score-label">Compliance</div>
+          </div>
+        </div>
+        <span class="ai-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z"/><circle cx="9" cy="15" r="1"/><circle cx="15" cy="15" r="1"/></svg>
+          AI Assessment — Human verification required
+        </span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Summary Bar ─────────────────────────── -->
+<div class="summary-bar">
+  <div class="status-pills">
+    <span class="status-pill fail"><span class="pill-dot"></span>3 Failures</span>
+    <span class="status-pill flagged"><span class="pill-dot"></span>3 Flagged</span>
+    <span class="status-pill pass"><span class="pill-dot"></span>8 Passed</span>
+    <span class="status-pill na"><span class="pill-dot"></span>1 N/A</span>
+  </div>
+  <div class="summary-right">
+    <span class="review-progress">Review progress: <strong id="reviewProgress">0 of 15</strong> reviewed</span>
+    <button class="btn-export" onclick="handleExport()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export
+    </button>
+  </div>
+</div>
+
+<!-- ── Main Content ────────────────────────── -->
+<main class="main-content" id="accordionRoot"></main>
+
+<!-- ── Toast ────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   DATA
+   ================================================================ */
+const clauseData = [
+  {
+    id: 'clause-6',
+    number: 6,
+    name: 'Planning',
+    border: 'red',
+    expanded: true,
+    pills: [{ label: '2 Fail', cls: 'fail' }],
+    requirements: [
+      {
+        id: 'REQ-6.1.2',
+        title: 'Risk Assessment Methodology',
+        status: 'fail',
+        confidence: 'medium',
+        summary: 'No documented risk assessment methodology addressing information security risks',
+        evidence: 'The organization shall ensure information security risks are managed appropriately.',
+        evidenceSource: 'ISMS Policy Document, Section 4.2',
+        gap: 'No documented risk assessment methodology found. The policy references risk management in general terms but does not define a specific methodology for identifying, analyzing, and evaluating information security risks as required by the standard.',
+        recommendation: 'Develop and document a formal risk assessment methodology that includes criteria for risk identification, risk analysis approach, risk evaluation criteria, and risk acceptance thresholds. Ensure alignment with ISO 27005 or a comparable risk management framework.',
+        confidenceExplanation: 'Medium confidence. The policy was thoroughly reviewed and no risk assessment methodology was found. However, the methodology may exist in a separate risk management document not provided for this assessment.'
+      },
+      {
+        id: 'REQ-6.2.1',
+        title: 'Information Security Objectives',
+        status: 'fail',
+        confidence: 'high',
+        summary: 'No measurable information security objectives defined with plans to achieve them',
+        evidence: 'The organization is committed to maintaining a high level of information security.',
+        evidenceSource: 'ISMS Policy Document, Section 1.3',
+        gap: 'No measurable information security objectives defined. The policy contains a general commitment statement but lacks specific, measurable objectives at relevant functions and levels, along with plans for how to achieve them.',
+        recommendation: 'Define SMART information security objectives that are consistent with the information security policy, measurable, aligned with applicable requirements, monitored, communicated, and updated as appropriate. Document plans specifying what will be done, resources required, responsibilities, completion timelines, and evaluation methods.',
+        confidenceExplanation: 'High confidence. The entire policy document was reviewed and contains only high-level commitment statements without specific, measurable objectives or achievement plans.'
+      }
+    ]
+  },
+  {
+    id: 'clause-8',
+    number: 8,
+    name: 'Operation',
+    border: 'red',
+    expanded: true,
+    pills: [{ label: '1 Fail', cls: 'fail' }, { label: '1 N/A', cls: 'na' }],
+    requirements: [
+      {
+        id: 'REQ-8.1.1',
+        title: 'Operational Planning and Control',
+        status: 'fail',
+        confidence: 'high',
+        summary: 'Missing documented operational procedures for security controls implementation',
+        evidence: 'Security controls shall be implemented as deemed necessary by management.',
+        evidenceSource: 'ISMS Policy Document, Section 7.1',
+        gap: 'Missing documented operational procedures for the processes needed to meet information security requirements. The policy delegates control implementation to management discretion without specifying how processes are planned, implemented, and controlled.',
+        recommendation: 'Create detailed operational procedures for each security control, including implementation criteria, process controls, documented procedures to the extent necessary, and records of process outputs. Establish criteria for the processes and implement control of those processes in accordance with the criteria.',
+        confidenceExplanation: 'High confidence. The policy clearly lacks operational-level procedural documentation. The reference found delegates decisions to management without procedural guidance.'
+      },
+      {
+        id: 'REQ-8.2.1',
+        title: 'Information Security Risk Assessment Execution',
+        status: 'na',
+        confidence: 'high',
+        summary: 'Not separately assessed — covered under risk assessment methodology',
+        evidence: null,
+        evidenceSource: null,
+        naReason: 'Assessed under REQ-6.1.2. The risk assessment execution requirements cannot be meaningfully evaluated separately from the risk assessment methodology, which was found to be absent.',
+        confidenceExplanation: 'High confidence. This requirement is directly dependent on the risk assessment methodology evaluated in REQ-6.1.2.'
+      }
+    ]
+  },
+  {
+    id: 'clause-9',
+    number: 9,
+    name: 'Performance Evaluation',
+    border: 'amber',
+    expanded: false,
+    pills: [{ label: '2 Flagged', cls: 'flagged' }, { label: '1 Pass', cls: 'pass' }],
+    requirements: [
+      {
+        id: 'REQ-9.1.1',
+        title: 'Monitoring, Measurement, Analysis and Evaluation',
+        status: 'flagged',
+        confidence: 'medium',
+        summary: 'Monitoring requirements mentioned but lacks specific metrics and KPIs',
+        evidence: 'Information security performance shall be monitored and reported to management.',
+        evidenceSource: 'ISMS Policy Document, Section 8.2',
+        gap: 'Monitoring requirements mentioned but no specific metrics or KPIs defined. The policy commits to monitoring and management reporting but does not specify what to monitor, methods for measurement, when to analyze results, or who is responsible.',
+        recommendation: 'Define specific monitoring metrics and KPIs for information security performance. Document what needs to be monitored, measurement methods, monitoring frequency, who performs monitoring, analysis timing, and reporting recipients.',
+        confidenceExplanation: 'Medium confidence. The policy references monitoring but the specifics may be documented in operational procedures not provided for review.'
+      },
+      {
+        id: 'REQ-9.2.1',
+        title: 'Internal Audit Programme',
+        status: 'pass',
+        confidence: 'high',
+        summary: 'Internal audit programme documented with appropriate scope, frequency, and methodology',
+        evidence: 'Internal audits of the ISMS shall be conducted at planned intervals not exceeding twelve months, covering all clauses of ISO 27001 and relevant controls from Annex A. The audit programme shall consider the importance of processes and results of previous audits.',
+        evidenceSource: 'ISMS Policy Document, Section 8.3',
+        confidenceExplanation: 'High confidence. The policy contains a detailed internal audit section that addresses frequency, scope, methodology, auditor independence, and reporting requirements.'
+      },
+      {
+        id: 'REQ-9.3.1',
+        title: 'Management Review',
+        status: 'flagged',
+        confidence: 'medium',
+        summary: 'Management review process exists but required input items are incomplete',
+        evidence: 'Management shall review the ISMS at planned intervals to ensure its continuing suitability, adequacy, and effectiveness.',
+        evidenceSource: 'ISMS Policy Document, Section 9.1',
+        gap: 'Management review process exists but input requirements are incomplete. The policy establishes a management review cycle but does not list all required inputs as specified by the standard, including status of actions, changes in external/internal issues, and feedback on performance.',
+        recommendation: 'Update the management review procedure to explicitly include all required inputs: status of actions from previous reviews, changes in external and internal issues, nonconformities and corrective actions, monitoring and measurement results, audit results, fulfillment of objectives, and feedback from interested parties.',
+        confidenceExplanation: 'Medium confidence. The management review section exists but appears incomplete. Additional input requirements may be documented in a separate management review procedure.'
+      }
+    ]
+  },
+  {
+    id: 'clause-7',
+    number: 7,
+    name: 'Support',
+    border: 'amber',
+    expanded: false,
+    pills: [{ label: '1 Flagged', cls: 'flagged' }, { label: '4 Pass', cls: 'pass' }],
+    requirements: [
+      {
+        id: 'REQ-7.1.1',
+        title: 'Resources',
+        status: 'pass',
+        confidence: 'high',
+        summary: 'Resource allocation and management responsibilities clearly documented',
+        evidence: 'The organization shall determine and provide the resources needed for the establishment, implementation, maintenance, and continual improvement of the ISMS. Management shall allocate adequate budget and personnel resources on an annual basis.',
+        evidenceSource: 'ISMS Policy Document, Section 5.1',
+        confidenceExplanation: 'High confidence. The policy explicitly addresses resource allocation including budget, personnel, and management responsibility for provisioning.'
+      },
+      {
+        id: 'REQ-7.2.1',
+        title: 'Competence',
+        status: 'flagged',
+        confidence: 'low',
+        summary: 'Partial competence framework found but missing evidence of implementation',
+        evidence: 'Staff shall receive appropriate information security training.',
+        evidenceSource: 'ISMS Policy Document, Section 5.4',
+        gap: 'Partial competence framework found but missing evidence of implementation. The policy mentions training requirements but does not define competence criteria, training evaluation methods, or evidence retention requirements for demonstrating competence.',
+        recommendation: 'Establish a competence framework that defines required competencies for each ISMS role, procedures for ensuring competence through education, training, or experience, methods for evaluating training effectiveness, and requirements for retaining documented evidence of competence.',
+        confidenceExplanation: 'Low confidence. Only a brief reference to training was found. The competence framework may be more fully documented in HR policies or training procedures not included in this review.'
+      },
+      {
+        id: 'REQ-7.3.1',
+        title: 'Awareness',
+        status: 'pass',
+        confidence: 'high',
+        summary: 'Security awareness programme well-documented with regular activities',
+        evidence: 'All employees and contractors shall be made aware of the information security policy, their contribution to ISMS effectiveness, and implications of non-conformance. Awareness activities shall be conducted at onboarding and refreshed annually.',
+        evidenceSource: 'ISMS Policy Document, Section 5.5',
+        confidenceExplanation: 'High confidence. The policy contains a comprehensive awareness section addressing all standard requirements including policy awareness, contribution to effectiveness, and consequences of non-conformance.'
+      },
+      {
+        id: 'REQ-7.4.1',
+        title: 'Communication',
+        status: 'pass',
+        confidence: 'medium',
+        summary: 'Communication requirements documented including internal and external processes',
+        evidence: 'The organization shall determine the need for internal and external communications relevant to the ISMS, including what to communicate, when, with whom, and the processes by which communication shall be effected.',
+        evidenceSource: 'ISMS Policy Document, Section 5.6',
+        confidenceExplanation: 'Medium confidence. The communication section addresses the required elements but the level of detail is moderate. Specific communication procedures may exist in supplementary documents.'
+      },
+      {
+        id: 'REQ-7.5.1',
+        title: 'Documented Information',
+        status: 'pass',
+        confidence: 'high',
+        summary: 'Document control procedures established with creation, update, and control requirements',
+        evidence: 'The ISMS shall include documented information required by ISO 27001 and determined by the organization as necessary. Document control procedures shall address creation, updating, approval, distribution, access, storage, preservation, and disposition of documented information.',
+        evidenceSource: 'ISMS Policy Document, Section 5.7',
+        confidenceExplanation: 'High confidence. The document control section is comprehensive and addresses all standard requirements for documented information control including creation, review, approval, and disposition.'
+      }
+    ]
+  },
+  {
+    id: 'clause-5',
+    number: 5,
+    name: 'Leadership',
+    border: 'green',
+    expanded: false,
+    pills: [{ label: '3 Pass', cls: 'pass' }],
+    requirements: [
+      {
+        id: 'REQ-5.1.1',
+        title: 'Leadership and Commitment',
+        status: 'pass',
+        confidence: 'high',
+        summary: 'Top management commitment clearly established with defined responsibilities',
+        evidence: 'Top management shall demonstrate leadership and commitment to the ISMS by ensuring the information security policy and objectives are established and compatible with strategic direction, ensuring integration of ISMS requirements into business processes, and ensuring resources are available.',
+        evidenceSource: 'ISMS Policy Document, Section 3.1',
+        confidenceExplanation: 'High confidence. The leadership section clearly articulates management commitment, strategic alignment, resource allocation, and integration requirements consistent with the standard.'
+      },
+      {
+        id: 'REQ-5.2.1',
+        title: 'Information Security Policy',
+        status: 'pass',
+        confidence: 'high',
+        summary: 'Policy established appropriate to purpose with commitment to satisfy requirements',
+        evidence: 'This policy establishes the framework for setting information security objectives and demonstrates commitment to satisfying applicable information security requirements and to continual improvement of the ISMS.',
+        evidenceSource: 'ISMS Policy Document, Section 1.1',
+        confidenceExplanation: 'High confidence. The policy document itself serves as evidence, containing purpose alignment, commitment to requirements, and continual improvement provisions as required.'
+      },
+      {
+        id: 'REQ-5.3.1',
+        title: 'Organizational Roles, Responsibilities and Authorities',
+        status: 'pass',
+        confidence: 'medium',
+        summary: 'ISMS roles and responsibilities defined including CISO and information security team',
+        evidence: 'The Chief Information Security Officer (CISO) is responsible for ensuring the ISMS conforms to ISO 27001 requirements and reporting on ISMS performance to top management. Department heads are responsible for implementation within their areas.',
+        evidenceSource: 'ISMS Policy Document, Section 3.2',
+        confidenceExplanation: 'Medium confidence. Key roles (CISO, department heads) are defined with responsibilities. However, a complete RACI matrix or detailed role descriptions may exist in supplementary documentation not reviewed.'
+      }
+    ]
+  }
+];
+
+/* ================================================================
+   STATE
+   ================================================================ */
+const reviewState = {};  // { 'REQ-x.x.x': 'approved' | 'rejected' | 'flagged' }
+const commentState = {}; // { 'REQ-x.x.x': 'comment text' }
+
+/* ================================================================
+   ICONS (inline SVG strings)
+   ================================================================ */
+const icons = {
+  chevron: '<svg class="clause-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+  chevronSm: '<svg class="req-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  approve: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  reject: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  flag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
+  comment: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+};
+
+/* ================================================================
+   RENDER
+   ================================================================ */
+function renderAll() {
+  const root = document.getElementById('accordionRoot');
+  root.innerHTML = clauseData.map(renderClause).join('');
+  updateProgressCount();
+}
+
+function renderClause(clause) {
+  const openCls = clause.expanded ? ' open' : '';
+  const pills = clause.pills.map(p => `<span class="clause-pill ${p.cls}">${p.label}</span>`).join('');
+  const reqs = clause.requirements.map(renderRequirement).join('');
+
+  return `
+    <div class="clause-accordion border-${clause.border}${openCls}" data-clause="${clause.id}">
+      <div class="clause-header" onclick="toggleClause('${clause.id}')">
+        ${icons.chevron}
+        <span class="clause-title">Clause ${clause.number}: ${clause.name}</span>
+        <div class="clause-pills">${pills}</div>
+      </div>
+      <div class="clause-body">
+        <div class="clause-body-inner">
+          ${reqs}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderRequirement(req) {
+  const reviewed = reviewState[req.id] ? ' reviewed' : '';
+  const reviewedCheck = reviewState[req.id]
+    ? `<span class="review-check">${icons.check}</span>`
+    : `<span class="review-check">${icons.check}</span>`;
+
+  /* Build detail sections */
+  let detailHTML = '';
+
+  // Evidence
+  if (req.evidence) {
+    detailHTML += `
+      <div class="detail-section">
+        <div class="detail-label">Evidence</div>
+        <div class="evidence-block">
+          "${req.evidence}"
+          ${req.evidenceSource ? `<div class="evidence-source">${req.evidenceSource}</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // N/A reason
+  if (req.status === 'na' && req.naReason) {
+    detailHTML += `
+      <div class="detail-section">
+        <div class="detail-label">Not Applicable</div>
+        <div class="na-block">${req.naReason}</div>
+      </div>`;
+  }
+
+  // Gap
+  if (req.gap && (req.status === 'fail' || req.status === 'flagged')) {
+    const gapCls = req.status === 'flagged' ? 'flagged-gap-block' : 'gap-block';
+    detailHTML += `
+      <div class="detail-section">
+        <div class="detail-label">Gap Identified</div>
+        <div class="${gapCls}">${req.gap}</div>
+      </div>`;
+  }
+
+  // Recommendation
+  if (req.recommendation) {
+    detailHTML += `
+      <div class="detail-section">
+        <div class="detail-label">Recommendation</div>
+        <div class="recommendation-block">${req.recommendation}</div>
+      </div>`;
+  }
+
+  // Confidence explanation
+  if (req.confidenceExplanation) {
+    detailHTML += `
+      <div class="detail-section">
+        <div class="detail-label">Confidence Explanation</div>
+        <div class="detail-content">${req.confidenceExplanation}</div>
+      </div>`;
+  }
+
+  // Review actions
+  const approveActive = reviewState[req.id] === 'approved' ? ' active' : '';
+  const rejectActive  = reviewState[req.id] === 'rejected' ? ' active' : '';
+  const flagActive    = reviewState[req.id] === 'flagged'  ? ' active' : '';
+  const commentVisible = commentState[req.id] !== undefined ? ' visible' : '';
+  const commentText    = commentState[req.id] || '';
+
+  detailHTML += `
+    <div class="review-actions">
+      <button class="review-btn btn-approve${approveActive}" onclick="event.stopPropagation(); setReview('${req.id}', 'approved')">${icons.approve} Approve</button>
+      <button class="review-btn btn-reject${rejectActive}" onclick="event.stopPropagation(); setReview('${req.id}', 'rejected')">${icons.reject} Reject</button>
+      <button class="review-btn btn-flag${flagActive}" onclick="event.stopPropagation(); setReview('${req.id}', 'flagged')">${icons.flag} Flag for Review</button>
+      <button class="review-btn btn-comment" onclick="event.stopPropagation(); toggleComment('${req.id}')">${icons.comment} Comment</button>
+    </div>
+    <div class="comment-area${commentVisible}" id="comment-${req.id}">
+      <textarea class="comment-textarea" id="textarea-${req.id}" placeholder="Add a comment about this requirement...">${commentText}</textarea>
+      <div class="comment-actions">
+        <button class="btn-cancel-comment" onclick="event.stopPropagation(); cancelComment('${req.id}')">Cancel</button>
+        <button class="btn-save-comment" onclick="event.stopPropagation(); saveComment('${req.id}')">Save Comment</button>
+      </div>
+    </div>`;
+
+  return `
+    <div class="req-accordion${reviewed}" data-req="${req.id}">
+      <div class="req-header" onclick="toggleReq('${req.id}')">
+        <span class="req-status-dot ${req.status}"></span>
+        <div class="req-info">
+          <div class="req-id-line">
+            <span class="req-id">${req.id}</span>
+            <span class="req-title">${req.title}</span>
+          </div>
+          <div class="req-summary">${req.summary}</div>
+        </div>
+        <span class="confidence-badge ${req.confidence}">${capitalize(req.confidence)}</span>
+        ${reviewedCheck}
+        ${icons.chevronSm}
+      </div>
+      <div class="req-body">
+        <div class="req-body-inner">
+          ${detailHTML}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ================================================================
+   INTERACTIONS
+   ================================================================ */
+function toggleClause(id) {
+  const el = document.querySelector(`.clause-accordion[data-clause="${id}"]`);
+  if (el) el.classList.toggle('open');
+}
+
+function toggleReq(id) {
+  const el = document.querySelector(`.req-accordion[data-req="${id}"]`);
+  if (el) el.classList.toggle('open');
+}
+
+function setReview(reqId, action) {
+  if (reviewState[reqId] === action) {
+    delete reviewState[reqId];
+  } else {
+    reviewState[reqId] = action;
+  }
+  /* Re-render just that requirement row */
+  const reqEl = document.querySelector(`.req-accordion[data-req="${reqId}"]`);
+  const wasOpen = reqEl && reqEl.classList.contains('open');
+
+  /* Find the requirement data */
+  let reqData = null;
+  for (const clause of clauseData) {
+    for (const r of clause.requirements) {
+      if (r.id === reqId) { reqData = r; break; }
+    }
+    if (reqData) break;
+  }
+  if (!reqData || !reqEl) return;
+
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = renderRequirement(reqData);
+  const newEl = tempDiv.firstElementChild;
+  if (wasOpen) newEl.classList.add('open');
+
+  reqEl.replaceWith(newEl);
+  updateProgressCount();
+
+  const actionLabel = reviewState[reqId]
+    ? `${reqId} marked as ${reviewState[reqId]}`
+    : `${reqId} review cleared`;
+  showToast(actionLabel);
+}
+
+function toggleComment(reqId) {
+  const area = document.getElementById(`comment-${reqId}`);
+  if (!area) return;
+  area.classList.toggle('visible');
+  if (area.classList.contains('visible')) {
+    const ta = document.getElementById(`textarea-${reqId}`);
+    if (ta) ta.focus();
+  }
+}
+
+function saveComment(reqId) {
+  const ta = document.getElementById(`textarea-${reqId}`);
+  if (!ta) return;
+  const text = ta.value.trim();
+  if (text) {
+    commentState[reqId] = text;
+    showToast(`Comment saved for ${reqId}`);
+  } else {
+    delete commentState[reqId];
+    showToast(`Comment removed for ${reqId}`);
+  }
+  const area = document.getElementById(`comment-${reqId}`);
+  if (area) area.classList.remove('visible');
+}
+
+function cancelComment(reqId) {
+  const area = document.getElementById(`comment-${reqId}`);
+  if (area) area.classList.remove('visible');
+  const ta = document.getElementById(`textarea-${reqId}`);
+  if (ta) ta.value = commentState[reqId] || '';
+}
+
+function updateProgressCount() {
+  const total = clauseData.reduce((s, c) => s + c.requirements.length, 0);
+  const reviewed = Object.keys(reviewState).length;
+  const el = document.getElementById('reviewProgress');
+  if (el) el.textContent = `${reviewed} of ${total}`;
+}
+
+function handleExport() {
+  showToast('Report exported (demo)');
+}
+
+/* ================================================================
+   TOAST
+   ================================================================ */
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ================================================================
+   UTILS
+   ================================================================ */
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/* ================================================================
+   INIT
+   ================================================================ */
+renderAll();
+</script>
+</body>
+</html>

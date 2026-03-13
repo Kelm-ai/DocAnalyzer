@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priority Queue — Compliance Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1a1a2e;
+    background: #fff;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header bar */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 32px;
+    border-bottom: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .header-doc-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a2e;
+  }
+
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .header-meta-item {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  .header-meta-item span {
+    color: #1a1a2e;
+    font-weight: 500;
+  }
+
+  .header-score {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a2e;
+    letter-spacing: -0.02em;
+  }
+
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #9ca3af;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    user-select: none;
+  }
+
+  .ai-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: #d1d5db;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Stat pills */
+  .stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 32px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #4b5563;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+  }
+
+  .stat-pill .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .stat-pill .dot.red { background: #dc2626; }
+  .stat-pill .dot.amber { background: #d97706; }
+  .stat-pill .dot.green { background: #16a34a; }
+  .stat-pill .dot.gray { background: #9ca3af; }
+
+  /* Content area */
+  .content {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 32px 80px;
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 8px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .section-header:hover {
+    background: #fafafa;
+    margin-left: -8px;
+    margin-right: -8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 4px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a2e;
+    letter-spacing: 0.01em;
+  }
+
+  .section-count {
+    font-size: 12px;
+    color: #9ca3af;
+    font-weight: 400;
+  }
+
+  .section-chevron {
+    width: 16px;
+    height: 16px;
+    color: #9ca3af;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .section-chevron.expanded {
+    transform: rotate(90deg);
+  }
+
+  .section-body {
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.25s ease;
+  }
+
+  .section-body.collapsed {
+    max-height: 0 !important;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .section-body.expanded {
+    opacity: 1;
+  }
+
+  /* Item row */
+  .item-row {
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .item-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .item-summary:hover {
+    background: #fafafa;
+    margin-left: -8px;
+    margin-right: -8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 4px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-dot.fail { background: #dc2626; }
+  .status-dot.flagged { background: #d97706; }
+  .status-dot.pass { background: #16a34a; }
+  .status-dot.na { background: #9ca3af; }
+
+  .item-req-id {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1a1a2e;
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, monospace;
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+
+  .item-title {
+    font-size: 13px;
+    color: #1a1a2e;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .item-clause {
+    font-size: 11px;
+    color: #9ca3af;
+    flex-shrink: 0;
+    min-width: 60px;
+  }
+
+  .confidence-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    min-width: 52px;
+    text-align: center;
+  }
+
+  .confidence-badge.high {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+
+  .confidence-badge.medium {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+  }
+
+  .confidence-badge.low {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+
+  .item-chevron {
+    width: 14px;
+    height: 14px;
+    color: #d1d5db;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .item-chevron.expanded {
+    transform: rotate(90deg);
+  }
+
+  /* Item detail */
+  .item-detail {
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.25s ease;
+  }
+
+  .item-detail.collapsed {
+    max-height: 0 !important;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .item-detail.expanded {
+    opacity: 1;
+  }
+
+  .item-detail-inner {
+    padding: 4px 0 20px 20px;
+  }
+
+  .detail-row {
+    margin-bottom: 14px;
+  }
+
+  .detail-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .detail-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+
+  .detail-text {
+    font-size: 13px;
+    color: #374151;
+    line-height: 1.6;
+  }
+
+  .evidence-quote {
+    font-size: 13px;
+    color: #6b7280;
+    border-left: 2px solid #e5e7eb;
+    padding: 8px 16px;
+    margin: 4px 0;
+    font-style: italic;
+    background: #fafafa;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .confidence-detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .reason-text {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  /* Action buttons */
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .btn {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+
+  .btn:hover {
+    border-color: #d1d5db;
+    background: #f9fafb;
+  }
+
+  .btn.active-approve {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #15803d;
+  }
+
+  .btn.active-reject {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+  }
+
+  .btn.active-flag {
+    background: #fffbeb;
+    border-color: #fcd34d;
+    color: #b45309;
+  }
+
+  .reviewed-label {
+    font-size: 11px;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+  }
+
+  .reviewed-label .check {
+    color: #16a34a;
+  }
+
+  /* NA reason */
+  .na-reason {
+    font-size: 13px;
+    color: #6b7280;
+    padding: 4px 0 16px 20px;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .header { padding: 12px 16px; }
+    .stats-bar { padding: 10px 16px; gap: 8px; flex-wrap: wrap; }
+    .content { padding: 16px; }
+    .item-title { font-size: 12px; }
+    .item-clause { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <span class="header-doc-name">Information Security Management Policy v3.2</span>
+    <div class="header-meta">
+      <span class="header-meta-item">Framework: <span>ISO 27001:2022</span></span>
+      <span class="header-meta-item">Date: <span>2024-01-15</span></span>
+    </div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 16px;">
+    <span class="ai-badge">AI Assessment — Human verification required</span>
+    <span class="header-score">73%</span>
+  </div>
+</div>
+
+<!-- Stat pills -->
+<div class="stats-bar">
+  <span class="stat-pill"><span class="dot red"></span>3 Failures</span>
+  <span class="stat-pill"><span class="dot amber"></span>3 Flagged</span>
+  <span class="stat-pill"><span class="dot green"></span>8 Passed</span>
+  <span class="stat-pill"><span class="dot gray"></span>1 N/A</span>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+  <!-- Needs Attention section -->
+  <div class="section" id="section-attention">
+    <div class="section-header" onclick="toggleSection('attention')">
+      <div>
+        <span class="section-title">Needs Attention</span>
+        <span class="section-count"> — 6 items</span>
+      </div>
+      <svg class="section-chevron expanded" id="chevron-attention" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+    </div>
+    <div class="section-body expanded" id="body-attention">
+
+      <!-- FAILURE 1 -->
+      <div class="item-row" id="item-1">
+        <div class="item-summary" onclick="toggleItem(1)">
+          <span class="status-dot fail"></span>
+          <span class="item-req-id">REQ-6.1.2</span>
+          <span class="item-title">Risk Assessment Process</span>
+          <span class="item-clause">Clause 6.1</span>
+          <span class="confidence-badge medium">Medium</span>
+          <svg class="item-chevron" id="item-chevron-1" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-1">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"The organization shall ensure information security risks are managed appropriately (Section 4.2)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Gap Identified</div>
+              <div class="detail-text">No documented risk assessment methodology found. The policy references risk management in general terms but lacks a specific, repeatable process for identifying, analyzing, and evaluating information security risks.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Recommendation</div>
+              <div class="detail-text">Develop and document a formal risk assessment methodology including criteria for risk acceptance and assessment frequency.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge medium">Medium</span>
+                <span class="reason-text">General risk language detected but no structured methodology present</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-1">
+              <button class="btn" onclick="setAction(event, 1, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 1, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 1, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-1" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAILURE 2 -->
+      <div class="item-row" id="item-2">
+        <div class="item-summary" onclick="toggleItem(2)">
+          <span class="status-dot fail"></span>
+          <span class="item-req-id">REQ-8.1.1</span>
+          <span class="item-title">Operational Planning and Control</span>
+          <span class="item-clause">Clause 8.1</span>
+          <span class="confidence-badge high">High</span>
+          <svg class="item-chevron" id="item-chevron-2" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-2">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"Security controls shall be implemented as deemed necessary by management (Section 7.1)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Gap Identified</div>
+              <div class="detail-text">Missing documented operational procedures for security controls. While the policy states controls should be implemented, there are no references to specific operational procedures or work instructions.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Recommendation</div>
+              <div class="detail-text">Create detailed operational procedures for each security control, including responsibilities, frequency, and documentation requirements.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge high">High</span>
+                <span class="reason-text">Clear absence of operational procedures in the document</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-2">
+              <button class="btn" onclick="setAction(event, 2, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 2, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 2, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-2" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAILURE 3 -->
+      <div class="item-row" id="item-3">
+        <div class="item-summary" onclick="toggleItem(3)">
+          <span class="status-dot fail"></span>
+          <span class="item-req-id">REQ-6.2.1</span>
+          <span class="item-title">Information Security Objectives</span>
+          <span class="item-clause">Clause 6.2</span>
+          <span class="confidence-badge high">High</span>
+          <svg class="item-chevron" id="item-chevron-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-3">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"The organization is committed to maintaining a high level of information security (Section 1.3)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Gap Identified</div>
+              <div class="detail-text">No measurable information security objectives defined. The policy contains aspirational statements but lacks specific, measurable, achievable, relevant, and time-bound (SMART) objectives.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Recommendation</div>
+              <div class="detail-text">Define SMART information security objectives aligned with the overall business objectives and communicate them throughout the organization.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge high">High</span>
+                <span class="reason-text">Only aspirational language found; no measurable objectives present</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-3">
+              <button class="btn" onclick="setAction(event, 3, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 3, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 3, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-3" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLAGGED 1 -->
+      <div class="item-row" id="item-4">
+        <div class="item-summary" onclick="toggleItem(4)">
+          <span class="status-dot flagged"></span>
+          <span class="item-req-id">REQ-7.2.1</span>
+          <span class="item-title">Competence Requirements</span>
+          <span class="item-clause">Clause 7.2</span>
+          <span class="confidence-badge low">Low</span>
+          <svg class="item-chevron" id="item-chevron-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-4">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"Staff shall receive appropriate information security training upon joining and annually thereafter (Section 5.4)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Gap Identified</div>
+              <div class="detail-text">Partial competence framework found but missing evidence of implementation. Training requirements are listed but no records of completion or effectiveness evaluation.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Recommendation</div>
+              <div class="detail-text">Implement a competence tracking system with records of training completion, competency assessments, and periodic reviews.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge low">Low</span>
+                <span class="reason-text">Training framework partially present; implementation evidence unclear from policy text alone</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-4">
+              <button class="btn" onclick="setAction(event, 4, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 4, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 4, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-4" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLAGGED 2 -->
+      <div class="item-row" id="item-5">
+        <div class="item-summary" onclick="toggleItem(5)">
+          <span class="status-dot flagged"></span>
+          <span class="item-req-id">REQ-9.1.1</span>
+          <span class="item-title">Monitoring and Measurement</span>
+          <span class="item-clause">Clause 9.1</span>
+          <span class="confidence-badge medium">Medium</span>
+          <svg class="item-chevron" id="item-chevron-5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-5">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"Information security performance shall be monitored and reported to management (Section 8.2)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Gap Identified</div>
+              <div class="detail-text">Monitoring requirements mentioned but no specific metrics or KPIs defined. The policy states monitoring should occur but doesn't specify what, how, or when.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Recommendation</div>
+              <div class="detail-text">Define specific security metrics and KPIs, establish measurement methods, and create a reporting schedule.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge medium">Medium</span>
+                <span class="reason-text">Monitoring mentioned but lacks specificity on metrics and methods</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-5">
+              <button class="btn" onclick="setAction(event, 5, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 5, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 5, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-5" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLAGGED 3 -->
+      <div class="item-row" id="item-6">
+        <div class="item-summary" onclick="toggleItem(6)">
+          <span class="status-dot flagged"></span>
+          <span class="item-req-id">REQ-9.3.1</span>
+          <span class="item-title">Management Review Inputs</span>
+          <span class="item-clause">Clause 9.3</span>
+          <span class="confidence-badge medium">Medium</span>
+          <svg class="item-chevron" id="item-chevron-6" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-6">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"Management shall review the ISMS at planned intervals to ensure its continuing suitability (Section 9.1)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Gap Identified</div>
+              <div class="detail-text">Management review process exists but input requirements are incomplete. Missing several required input items per ISO 27001.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Recommendation</div>
+              <div class="detail-text">Update the management review procedure to include all required inputs: status of actions, changes in external/internal issues, feedback, and improvement opportunities.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge medium">Medium</span>
+                <span class="reason-text">Review process present but required inputs are only partially addressed</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-6">
+              <button class="btn" onclick="setAction(event, 6, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 6, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 6, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-6" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Passed section -->
+  <div class="section" id="section-passed">
+    <div class="section-header" onclick="toggleSection('passed')">
+      <div>
+        <span class="section-title">Passed</span>
+        <span class="section-count"> — 8 items</span>
+      </div>
+      <svg class="section-chevron" id="chevron-passed" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+    </div>
+    <div class="section-body collapsed" id="body-passed">
+
+      <!-- PASS 1 -->
+      <div class="item-row" id="item-7">
+        <div class="item-summary" onclick="toggleItem(7)">
+          <span class="status-dot pass"></span>
+          <span class="item-req-id">REQ-5.1.1</span>
+          <span class="item-title">Leadership Commitment</span>
+          <span class="item-clause">Clause 5.1</span>
+          <span class="confidence-badge high">High</span>
+          <svg class="item-chevron" id="item-chevron-7" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-7">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"The Board of Directors and Senior Management are committed to supporting information security through adequate resource allocation, policy endorsement, and regular review (Section 2.1)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge high">High</span>
+                <span class="reason-text">Explicit leadership commitment with specific actions documented</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-7">
+              <button class="btn" onclick="setAction(event, 7, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 7, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 7, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-7" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASS 2 -->
+      <div class="item-row" id="item-8">
+        <div class="item-summary" onclick="toggleItem(8)">
+          <span class="status-dot pass"></span>
+          <span class="item-req-id">REQ-5.2.1</span>
+          <span class="item-title">Information Security Policy</span>
+          <span class="item-clause">Clause 5.2</span>
+          <span class="confidence-badge high">High</span>
+          <svg class="item-chevron" id="item-chevron-8" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-8">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"This Information Security Policy establishes the framework for managing information security risks and demonstrates our commitment to protecting information assets (Section 1.1)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge high">High</span>
+                <span class="reason-text">Policy document itself serves as direct evidence of this requirement</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-8">
+              <button class="btn" onclick="setAction(event, 8, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 8, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 8, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-8" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASS 3 -->
+      <div class="item-row" id="item-9">
+        <div class="item-summary" onclick="toggleItem(9)">
+          <span class="status-dot pass"></span>
+          <span class="item-req-id">REQ-5.3.1</span>
+          <span class="item-title">Organizational Roles</span>
+          <span class="item-clause">Clause 5.3</span>
+          <span class="confidence-badge medium">Medium</span>
+          <svg class="item-chevron" id="item-chevron-9" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-9">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"The Chief Information Security Officer (CISO) is responsible for the overall ISMS. Department heads are responsible for implementing security controls within their areas (Section 3.1)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge medium">Medium</span>
+                <span class="reason-text">Key roles defined but granularity of responsibilities could be improved</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-9">
+              <button class="btn" onclick="setAction(event, 9, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 9, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 9, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-9" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASS 4 -->
+      <div class="item-row" id="item-10">
+        <div class="item-summary" onclick="toggleItem(10)">
+          <span class="status-dot pass"></span>
+          <span class="item-req-id">REQ-7.1.1</span>
+          <span class="item-title">Resources</span>
+          <span class="item-clause">Clause 7.1</span>
+          <span class="confidence-badge high">High</span>
+          <svg class="item-chevron" id="item-chevron-10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-10">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"The organization shall determine and provide the resources needed for the ISMS including budget allocation reviewed annually (Section 5.1)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge high">High</span>
+                <span class="reason-text">Explicit resource commitment with annual budget review cycle</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-10">
+              <button class="btn" onclick="setAction(event, 10, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 10, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 10, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-10" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASS 5 -->
+      <div class="item-row" id="item-11">
+        <div class="item-summary" onclick="toggleItem(11)">
+          <span class="status-dot pass"></span>
+          <span class="item-req-id">REQ-7.3.1</span>
+          <span class="item-title">Awareness</span>
+          <span class="item-clause">Clause 7.3</span>
+          <span class="confidence-badge high">High</span>
+          <svg class="item-chevron" id="item-chevron-11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-11">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"All employees shall be made aware of the information security policy, their contribution to the ISMS effectiveness, and implications of non-conformance (Section 5.5)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge high">High</span>
+                <span class="reason-text">Comprehensive awareness requirements covering all ISO 27001 elements</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-11">
+              <button class="btn" onclick="setAction(event, 11, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 11, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 11, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-11" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASS 6 -->
+      <div class="item-row" id="item-12">
+        <div class="item-summary" onclick="toggleItem(12)">
+          <span class="status-dot pass"></span>
+          <span class="item-req-id">REQ-7.4.1</span>
+          <span class="item-title">Communication</span>
+          <span class="item-clause">Clause 7.4</span>
+          <span class="confidence-badge medium">Medium</span>
+          <svg class="item-chevron" id="item-chevron-12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-12">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"Internal and external communications regarding information security shall follow the defined communication plan including what to communicate, when, and to whom (Section 5.6)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge medium">Medium</span>
+                <span class="reason-text">Communication plan referenced but detail level could be deeper</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-12">
+              <button class="btn" onclick="setAction(event, 12, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 12, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 12, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-12" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASS 7 -->
+      <div class="item-row" id="item-13">
+        <div class="item-summary" onclick="toggleItem(13)">
+          <span class="status-dot pass"></span>
+          <span class="item-req-id">REQ-9.2.1</span>
+          <span class="item-title">Internal Audit</span>
+          <span class="item-clause">Clause 9.2</span>
+          <span class="confidence-badge high">High</span>
+          <svg class="item-chevron" id="item-chevron-13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-13">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"Internal audits of the ISMS shall be conducted at planned intervals, at least annually, by qualified auditors independent of the areas being audited (Section 8.3)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge high">High</span>
+                <span class="reason-text">Clear audit requirements with frequency, independence, and qualification criteria</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-13">
+              <button class="btn" onclick="setAction(event, 13, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 13, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 13, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-13" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASS 8 -->
+      <div class="item-row" id="item-14">
+        <div class="item-summary" onclick="toggleItem(14)">
+          <span class="status-dot pass"></span>
+          <span class="item-req-id">REQ-7.5.1</span>
+          <span class="item-title">Documented Information</span>
+          <span class="item-clause">Clause 7.5</span>
+          <span class="confidence-badge high">High</span>
+          <svg class="item-chevron" id="item-chevron-14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-14">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Evidence</div>
+              <div class="evidence-quote">"All ISMS documentation shall be controlled, versioned, and maintained in the document management system with appropriate access controls (Section 5.7)"</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge high">High</span>
+                <span class="reason-text">Comprehensive documentation controls including versioning and access management</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-14">
+              <button class="btn" onclick="setAction(event, 14, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 14, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 14, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-14" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Not Applicable section -->
+  <div class="section" id="section-na">
+    <div class="section-header" onclick="toggleSection('na')">
+      <div>
+        <span class="section-title">Not Applicable</span>
+        <span class="section-count"> — 1 item</span>
+      </div>
+      <svg class="section-chevron" id="chevron-na" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+    </div>
+    <div class="section-body collapsed" id="body-na">
+
+      <div class="item-row" id="item-15">
+        <div class="item-summary" onclick="toggleItem(15)">
+          <span class="status-dot na"></span>
+          <span class="item-req-id">REQ-8.2.1</span>
+          <span class="item-title">Information Security Risk Assessment</span>
+          <span class="item-clause">Clause 8.2</span>
+          <span class="confidence-badge high">High</span>
+          <svg class="item-chevron" id="item-chevron-15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="item-detail collapsed" id="item-detail-15">
+          <div class="item-detail-inner">
+            <div class="detail-row">
+              <div class="detail-label">Reason</div>
+              <div class="detail-text">Assessed under REQ-6.1.2. This requirement is covered by the risk assessment process evaluation.</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Confidence</div>
+              <div class="confidence-detail">
+                <span class="confidence-badge high">High</span>
+                <span class="reason-text">Clear overlap with REQ-6.1.2 assessment</span>
+              </div>
+            </div>
+            <div class="actions" id="actions-15">
+              <button class="btn" onclick="setAction(event, 15, 'approve')">Approve</button>
+              <button class="btn" onclick="setAction(event, 15, 'reject')">Reject</button>
+              <button class="btn" onclick="setAction(event, 15, 'flag')">Flag for Review</button>
+              <span class="reviewed-label" id="reviewed-15" style="display:none;"><span class="check">&#10003;</span> Reviewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Track state
+  var sectionState = {
+    attention: true,
+    passed: false,
+    na: false
+  };
+
+  var itemState = {};
+  var actionState = {};
+
+  // Initialize section heights after DOM load
+  document.addEventListener('DOMContentLoaded', function() {
+    // Set initial max-height for expanded sections
+    var attentionBody = document.getElementById('body-attention');
+    if (attentionBody) {
+      attentionBody.style.maxHeight = attentionBody.scrollHeight + 'px';
+    }
+  });
+
+  function toggleSection(name) {
+    var body = document.getElementById('body-' + name);
+    var chevron = document.getElementById('chevron-' + name);
+    var isExpanded = sectionState[name];
+
+    if (isExpanded) {
+      // Collapse
+      body.style.maxHeight = body.scrollHeight + 'px';
+      // Force reflow
+      body.offsetHeight;
+      body.classList.remove('expanded');
+      body.classList.add('collapsed');
+      chevron.classList.remove('expanded');
+      sectionState[name] = false;
+    } else {
+      // Expand
+      body.classList.remove('collapsed');
+      body.classList.add('expanded');
+      body.style.maxHeight = body.scrollHeight + 'px';
+      chevron.classList.add('expanded');
+      sectionState[name] = true;
+
+      // After transition, allow content to overflow naturally
+      body.addEventListener('transitionend', function handler() {
+        if (sectionState[name]) {
+          body.style.maxHeight = 'none';
+        }
+        body.removeEventListener('transitionend', handler);
+      });
+    }
+  }
+
+  function toggleItem(id) {
+    var detail = document.getElementById('item-detail-' + id);
+    var chevron = document.getElementById('item-chevron-' + id);
+    var isExpanded = itemState[id];
+
+    if (isExpanded) {
+      // Collapse
+      detail.style.maxHeight = detail.scrollHeight + 'px';
+      detail.offsetHeight;
+      detail.classList.remove('expanded');
+      detail.classList.add('collapsed');
+      chevron.classList.remove('expanded');
+      itemState[id] = false;
+    } else {
+      // Expand
+      detail.classList.remove('collapsed');
+      detail.classList.add('expanded');
+      detail.style.maxHeight = detail.scrollHeight + 'px';
+      chevron.classList.add('expanded');
+      itemState[id] = true;
+
+      detail.addEventListener('transitionend', function handler() {
+        if (itemState[id]) {
+          detail.style.maxHeight = 'none';
+        }
+        detail.removeEventListener('transitionend', handler);
+      });
+
+      // Update parent section max-height to accommodate expanded item
+      updateParentSectionHeight(id);
+    }
+  }
+
+  function updateParentSectionHeight(itemId) {
+    // Find which section this item belongs to
+    var itemEl = document.getElementById('item-' + itemId);
+    var sectionBody = itemEl.closest('.section-body');
+    if (sectionBody && sectionBody.style.maxHeight !== 'none') {
+      // Let the section grow
+      setTimeout(function() {
+        sectionBody.style.maxHeight = 'none';
+      }, 50);
+    }
+  }
+
+  function setAction(event, id, action) {
+    event.stopPropagation();
+
+    var actionsContainer = document.getElementById('actions-' + id);
+    var buttons = actionsContainer.querySelectorAll('.btn');
+    var reviewedLabel = document.getElementById('reviewed-' + id);
+    var currentAction = actionState[id];
+
+    // If clicking the same action again, toggle it off
+    if (currentAction === action) {
+      buttons.forEach(function(btn) {
+        btn.classList.remove('active-approve', 'active-reject', 'active-flag');
+      });
+      reviewedLabel.style.display = 'none';
+      actionState[id] = null;
+      return;
+    }
+
+    // Clear all active states
+    buttons.forEach(function(btn) {
+      btn.classList.remove('active-approve', 'active-reject', 'active-flag');
+    });
+
+    // Set new active state
+    var clickedBtn = event.target;
+    if (action === 'approve') {
+      clickedBtn.classList.add('active-approve');
+    } else if (action === 'reject') {
+      clickedBtn.classList.add('active-reject');
+    } else if (action === 'flag') {
+      clickedBtn.classList.add('active-flag');
+    }
+
+    actionState[id] = action;
+    reviewedLabel.style.display = 'flex';
+  }
+</script>
+</body>
+</html>

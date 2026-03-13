@@ -30,6 +30,11 @@ try:
 except ImportError:
     from summary_generator import generate_executive_summary_sync
 
+try:
+    from api.requirement_presentation_generator import generate_requirement_presentations_sync
+except ImportError:
+    from requirement_presentation_generator import generate_requirement_presentations_sync
+
 # Import document summarizer for multi-doc support
 try:
     from api.document_summarizer import (
@@ -53,6 +58,17 @@ try:
 except ImportError:
     from evaluation_queue import get_evaluation_queue, EvaluationQueue, QueueConfig
     from rate_limiter import get_rate_limiter
+
+try:
+    from api.progress_tracker import ProgressTracker
+except ImportError:
+    from progress_tracker import ProgressTracker
+
+# Import storage cleanup scheduler
+try:
+    from api.storage_cleanup import get_storage_cleanup_scheduler, CleanupConfig, StorageCleanupScheduler
+except ImportError:
+    from storage_cleanup import get_storage_cleanup_scheduler, CleanupConfig, StorageCleanupScheduler
 
 # Import document converter for Word to PDF conversion
 try:
@@ -174,6 +190,7 @@ pipeline: Optional[CompliancePipeline] = None
 vision_evaluator: Optional[VisionResponsesEvaluator] = None
 document_intelligence_service: Optional[DocumentIntelligenceService] = None
 evaluation_queue: Optional[EvaluationQueue] = None
+storage_cleanup: Optional[StorageCleanupScheduler] = None
 
 
 @app.get("/api/health")
@@ -291,7 +308,8 @@ def create_vision_compliance_report(
     evaluation_id: str,
     results: List[Dict[str, Any]],
     summary: Dict[str, Any],
-    executive_summary: Optional[Dict[str, Any]] = None
+    executive_summary: Optional[Dict[str, Any]] = None,
+    requirement_presentations: Optional[Dict[str, Any]] = None,
 ) -> None:
     supabase = get_supabase_client()
 
@@ -325,7 +343,7 @@ def create_vision_compliance_report(
 
     key_gaps: List[str] = []
     for record in results:
-        key_gaps.extend(_ensure_list(record.get('gaps')))
+        key_gaps.extend(_ensure_list(record.get('gaps') or record.get('gaps_identified')))
 
     status_counts = summary.get('status_counts', {})
     total = summary.get('total_requirements', len(results))
@@ -357,6 +375,8 @@ def create_vision_compliance_report(
     # Add executive summary if provided
     if executive_summary:
         report_payload['executive_summary'] = executive_summary
+    if requirement_presentations:
+        report_payload['requirement_presentations'] = requirement_presentations
 
     supabase.table('compliance_reports').insert(report_payload).execute()
 
@@ -435,6 +455,7 @@ def persist_vision_results(evaluation_id: str, summary: Dict[str, Any]) -> None:
     # Generate executive summary
     document_name = summary.get('document_info', {}).get('file_name', 'Unknown Document')
     executive_summary = None
+    requirement_presentations: Dict[str, Any] = {}
     try:
         # Build requirements data for summary generator
         requirements_for_summary = []
@@ -460,6 +481,27 @@ def persist_vision_results(evaluation_id: str, summary: Dict[str, Any]) -> None:
         logger.error(f"Failed to generate executive summary: {summary_error}")
         # Continue without executive summary - it's not critical
 
+    try:
+        requirement_presentations = generate_requirement_presentations_sync(
+            evaluation_id=evaluation_id,
+            summary=summary,
+            supabase_client=supabase,
+        )
+        if requirement_presentations:
+            logger.info(
+                "Generated %s requirement presentations for evaluation %s",
+                len(requirement_presentations),
+                evaluation_id,
+            )
+        else:
+            logger.warning(
+                "Requirement presentation generation returned no content for evaluation %s",
+                evaluation_id,
+            )
+    except Exception as presentation_error:
+        logger.error("Failed to generate requirement presentations: %s", presentation_error)
+        requirement_presentations = {}
+
     # Replace existing compliance report
     supabase.table('compliance_reports').delete().eq('document_evaluation_id', evaluation_id).execute()
     create_vision_compliance_report(evaluation_id, requirement_records, {
@@ -467,7 +509,7 @@ def persist_vision_results(evaluation_id: str, summary: Dict[str, Any]) -> None:
         'total_requirements': total_requirements,
         'compliance_score': compliance_score,
         'agreement_by_requirement': agreement_map,
-    }, executive_summary=executive_summary)
+    }, executive_summary=executive_summary, requirement_presentations=requirement_presentations)
 
 # Pydantic models
 class EvaluationStatus(BaseModel):
@@ -485,6 +527,8 @@ class EvaluationStatus(BaseModel):
     requirements_na: Optional[int] = None
     error_message: Optional[str] = None
     total_requirements: Optional[int] = None
+    supporting_docs_count: Optional[int] = None
+    summaries_status: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
 
 class RequirementResult(BaseModel):
@@ -500,6 +544,38 @@ class RequirementResult(BaseModel):
     recommendations: List[str]
     agreement_status: Optional[str] = None
 
+
+class RequirementPresentationCitation(BaseModel):
+    label: str
+    location: str
+    excerpt: str
+    provider: Optional[str] = None
+    file_id: Optional[str] = None
+    page_number: Optional[int] = None
+    section_title: Optional[str] = None
+
+
+class RequirementPresentationClaim(BaseModel):
+    text: str
+    kind: Literal["assessment", "supporting", "gap", "verification", "ofi"]
+    citations: List[RequirementPresentationCitation] = []
+
+
+class RequirementPresentationAnalysisBlock(BaseModel):
+    label: str
+    body: str
+    citations: List[RequirementPresentationCitation] = []
+
+
+class RequirementPresentationSummary(BaseModel):
+    status: str
+    confidence_level: Literal["low", "medium", "high"]
+    inline_claims: List[RequirementPresentationClaim] = []
+    modal_claims: List[RequirementPresentationClaim] = []
+    full_analysis: List[RequirementPresentationAnalysisBlock] = []
+    generated_at: Optional[str] = None
+    presentation_version: Optional[str] = None
+
 class ComplianceReport(BaseModel):
     evaluation_id: str
     document_name: str
@@ -509,6 +585,7 @@ class ComplianceReport(BaseModel):
     high_risk_findings: List[str]
     key_gaps: List[str]
     executive_summary: Optional[Dict[str, Any]] = None
+    requirement_presentations: Optional[Dict[str, RequirementPresentationSummary]] = None
 
 
 class DocumentMarkdownResponse(BaseModel):
@@ -695,6 +772,22 @@ async def startup_event():
             queue_config.max_queue_size
         )
 
+        # Initialize storage cleanup scheduler
+        global storage_cleanup
+        cleanup_config = CleanupConfig(
+            max_age_hours=float(os.getenv("STORAGE_CLEANUP_MAX_AGE_HOURS", "48")),
+            check_interval_seconds=float(os.getenv("STORAGE_CLEANUP_INTERVAL_SECONDS", "3600")),
+            batch_size=int(os.getenv("STORAGE_CLEANUP_BATCH_SIZE", "25")),
+        )
+        storage_cleanup = get_storage_cleanup_scheduler(cleanup_config)
+        storage_cleanup.set_supabase_getter(get_supabase_client)
+        await storage_cleanup.start()
+        logger.info(
+            "Storage cleanup scheduler initialized: max_age=%.0fh, interval=%.0fs",
+            cleanup_config.max_age_hours,
+            cleanup_config.check_interval_seconds,
+        )
+
     except Exception as e:
         logger.error(f"Failed to initialize evaluators: {e}")
         raise
@@ -703,10 +796,13 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
-    global evaluation_queue
+    global evaluation_queue, storage_cleanup
     if evaluation_queue is not None:
         await evaluation_queue.stop()
         logger.info("Evaluation queue stopped")
+    if storage_cleanup is not None:
+        await storage_cleanup.stop()
+        logger.info("Storage cleanup scheduler stopped")
 
 
 @app.get("/")
@@ -1243,6 +1339,7 @@ async def get_evaluation_documents(evaluation_id: str):
 
 async def run_evaluation(evaluation_id: str, file_path: str, original_filename: Optional[str] = None):
     """Background task to run document evaluation"""
+    tracker: Optional[ProgressTracker] = None
     try:
         display_name = original_filename or Path(file_path).name
         logger.info(f"Starting evaluation for {display_name} (path={file_path})")
@@ -1280,6 +1377,8 @@ async def run_evaluation(evaluation_id: str, file_path: str, original_filename: 
             'status': 'in_progress',
             'updated_at': datetime.utcnow().isoformat(),
         }).eq('id', evaluation_id).execute()
+        tracker = ProgressTracker(evaluation_id=evaluation_id, supabase_client=supabase)
+        await tracker.set_phase("uploading_to_provider", "Preparing document for evaluation...")
 
         # Run evaluation using the vision pipeline (uploads to ChatGPT's Files API internally)
         logger.info(
@@ -1302,14 +1401,18 @@ async def run_evaluation(evaluation_id: str, file_path: str, original_filename: 
                 system_prompt=system_prompt,
                 framework_id=framework_id,
                 evaluation_id=evaluation_id,
+                progress_tracker=tracker,
             )
         else:
             framework_evaluator = VisionResponsesEvaluator(
                 system_prompt=system_prompt,
                 framework_id=framework_id,
                 evaluation_id=evaluation_id,
+                progress_tracker=tracker,
             )
         summary = await framework_evaluator.evaluate_document(file_path)
+        if tracker is not None:
+            await tracker.close(flush=True)
         persist_vision_results(evaluation_id, summary)
 
         logger.info(f"Evaluation completed for {display_name}")
@@ -1323,6 +1426,8 @@ async def run_evaluation(evaluation_id: str, file_path: str, original_filename: 
             'completed_at': datetime.utcnow().isoformat()
         }).eq('id', evaluation_id).execute()
     finally:
+        if tracker is not None:
+            await tracker.close(flush=False)
         try:
             os.remove(file_path)
         except FileNotFoundError:
@@ -1896,6 +2001,8 @@ async def list_evaluations():
                 requirements_na=row.get('requirements_na'),
                 error_message=row.get('error_message'),
                 total_requirements=row.get('total_requirements'),
+                supporting_docs_count=row.get('supporting_docs_count'),
+                summaries_status=row.get('summaries_status'),
                 metadata=row.get('metadata'),
             ))
         
@@ -1940,6 +2047,8 @@ async def get_evaluation_status(evaluation_id: str):
             requirements_na=row.get('requirements_na'),
             error_message=row.get('error_message'),
             total_requirements=row.get('total_requirements'),
+            supporting_docs_count=row.get('supporting_docs_count'),
+            summaries_status=row.get('summaries_status'),
             metadata=row.get('metadata'),
         )
         
@@ -2052,7 +2161,8 @@ async def get_compliance_report(evaluation_id: str):
             requirements=requirements,
             high_risk_findings=report_data.get('high_risk_findings', []),
             key_gaps=report_data.get('key_gaps', []),
-            executive_summary=report_data.get('executive_summary')
+            executive_summary=report_data.get('executive_summary'),
+            requirement_presentations=report_data.get('requirement_presentations'),
         )
         
     except Exception as e:
@@ -2062,22 +2172,52 @@ async def get_compliance_report(evaluation_id: str):
 
 @app.delete("/api/evaluations/{evaluation_id}")
 async def delete_evaluation(evaluation_id: str):
-    """Delete an evaluation and its results"""
+    """Delete an evaluation, its results, and its stored files."""
     try:
+        supabase = get_supabase_client()
+
+        # Fetch storage paths before deleting DB records (cascade would remove them)
+        docs_response = supabase.table('evaluation_documents') \
+            .select('storage_path, storage_deleted_at') \
+            .eq('evaluation_id', evaluation_id) \
+            .execute()
+
+        storage_paths = []
+        for doc in (docs_response.data or []):
+            if doc.get('storage_deleted_at') is None and doc.get('storage_path'):
+                path = doc['storage_path']
+                if path.startswith("documents/"):
+                    path = path[len("documents/"):]
+                storage_paths.append(path)
+
+        # Delete files from Supabase Storage
+        if storage_paths:
+            try:
+                supabase.storage.from_("documents").remove(storage_paths)
+                logger.info(
+                    "Deleted %d file(s) from storage for evaluation %s",
+                    len(storage_paths), evaluation_id,
+                )
+            except Exception as storage_error:
+                logger.warning(
+                    "Failed to delete storage files for evaluation %s: %s",
+                    evaluation_id, storage_error,
+                )
+
         # Delete requirement evaluations
-        get_supabase_client().table('requirement_evaluations') \
+        supabase.table('requirement_evaluations') \
             .delete() \
             .eq('document_evaluation_id', evaluation_id) \
             .execute()
 
         # Delete compliance reports
-        get_supabase_client().table('compliance_reports') \
+        supabase.table('compliance_reports') \
             .delete() \
             .eq('document_evaluation_id', evaluation_id) \
             .execute()
 
-        # Delete document evaluation
-        get_supabase_client().table('document_evaluations') \
+        # Delete document evaluation (cascades to evaluation_documents)
+        supabase.table('document_evaluations') \
             .delete() \
             .eq('id', evaluation_id) \
             .execute()

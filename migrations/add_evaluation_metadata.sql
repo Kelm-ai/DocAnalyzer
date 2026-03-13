@@ -1,0 +1,2 @@
+ALTER TABLE document_evaluations
+ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT NULL;

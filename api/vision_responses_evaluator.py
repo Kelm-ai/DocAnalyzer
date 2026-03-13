@@ -157,12 +157,14 @@ Vision handling:
         system_prompt: Optional[str] = None,
         framework_id: Optional[str] = None,
         evaluation_id: Optional[str] = None,
+        progress_tracker: Optional[Any] = None,
     ) -> None:
         # Allow custom system prompt to override class-level BASE_INSTRUCTION
         if system_prompt:
             self.BASE_INSTRUCTION = system_prompt.strip()
         self.framework_id = framework_id
         self.evaluation_id = evaluation_id
+        self._progress_tracker = progress_tracker
         # Supporting document summaries context (loaded lazily)
         self._supporting_docs_context: Optional[str] = None
         self._supporting_docs_loaded: bool = False
@@ -200,7 +202,7 @@ Vision handling:
                 or os.getenv("GEMINI_VISION_MODEL")
                 or os.getenv("GEMINI_MODEL")
                 or vision_model_override
-                or "gemini-3-pro-preview"
+                or "gemini-3.1-pro"
             )
             self.gemini_client = genai.Client(api_key=api_key)
             self.gemini_response_schema = self._build_gemini_schema()
@@ -217,7 +219,7 @@ Vision handling:
                 or os.getenv("CLAUDE_VISION_MODEL")
                 or os.getenv("CLAUDE_MODEL")
                 or vision_model_override
-                or "claude-opus-4-5-20251101"
+                or "claude-opus-4-6"
             )
             self.claude_client = Anthropic(api_key=api_key)
             self.claude_betas = ["files-api-2025-04-14"]
@@ -232,7 +234,7 @@ Vision handling:
                 or os.getenv("OPENAI_VISION_MODEL")
                 or os.getenv("OPENAI_MODEL")
                 or vision_model_override
-                or "gpt-5"
+                or "gpt-5.4"
             )
             self.openai_client = OpenAI(api_key=api_key)
 
@@ -472,6 +474,13 @@ Vision handling:
         if not requirements:
             raise RuntimeError("No requirements available for evaluation")
 
+        if self._progress_tracker:
+            await self._progress_tracker.set_total_requirements(len(requirements))
+            await self._progress_tracker.set_phase(
+                "evaluating",
+                f"Evaluating requirements (0 of {len(requirements)})...",
+            )
+
         run_id = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         run_responses_dir = self.responses_dir / run_id
         run_responses_dir.mkdir(parents=True, exist_ok=True)
@@ -493,13 +502,17 @@ Vision handling:
         semaphore = asyncio.Semaphore(self.concurrent_requests)
         # Include file_hash in file_ref for retry logic
         file_ref["file_hash"] = file_hash
-        tasks = [
-            self._evaluate_single_requirement(
+
+        async def _tracked_evaluate(requirement: Dict[str, Any]) -> Dict[str, Any]:
+            result = await self._evaluate_single_requirement(
                 file_ref, requirement, semaphore, run_responses_dir,
                 document_path=document_path
             )
-            for requirement in requirements
-        ]
+            if self._progress_tracker:
+                await self._progress_tracker.on_requirement_complete()
+            return result
+
+        tasks = [_tracked_evaluate(requirement) for requirement in requirements]
 
         evaluations = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -1440,6 +1453,10 @@ Vision handling:
             "  - For FAIL/FLAGGED: Critical gaps that caused the failure (must be addressed).\n"
             "  - For PASS: Minor opportunities for improvement (OFI) - optional enhancements. Leave empty [] if fully satisfied.\n"
             "- 'recommendations': Actionable suggestions on HOW to address the gaps/OFIs. Always provide if gaps exist.\n"
+            "- 'evidence': Keep each array item atomic and citation-friendly.\n"
+            "  - Prefer one evidentiary point per item.\n"
+            "  - Preserve page/section references whenever available.\n"
+            "  - Do not bundle multiple unrelated findings into one evidence string.\n"
             "Keep responses concise. Avoid lengthy explanations.\n"
             "Confidence level guidelines:\n"
             "- Use \"high\" when evidence is explicit, comprehensive, and directly addresses all criteria\n"
@@ -1721,16 +1738,19 @@ class DualVisionComparator:
         system_prompt: Optional[str] = None,
         framework_id: Optional[str] = None,
         evaluation_id: Optional[str] = None,
+        progress_tracker: Optional[Any] = None,
     ) -> None:
         self.provider = "dual"
         self.system_prompt = system_prompt
         self.framework_id = framework_id
         self.evaluation_id = evaluation_id
+        self._progress_tracker = progress_tracker
         self.primary = VisionResponsesEvaluator(
             provider="claude",
             system_prompt=system_prompt,
             framework_id=framework_id,
             evaluation_id=evaluation_id,
+            progress_tracker=progress_tracker,
         )
         self.secondary = VisionResponsesEvaluator(
             provider="openai",
@@ -1787,6 +1807,9 @@ class DualVisionComparator:
 
         if claude_all_errors and openai_all_errors:
             logger.error("Both Claude and OpenAI failed for all requirements")
+
+        if self._progress_tracker:
+            await self._progress_tracker.set_phase("evaluating", "Merging dual-provider results...")
 
         combined_results, agreement_map, total_tokens = self._combine_results(
             claude_summary.get("requirements_results", []),

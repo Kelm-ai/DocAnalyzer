@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Split Monochrome — Compliance Report</title>
+<style>
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, system-ui, 'Segoe UI', sans-serif;
+    color: #000;
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ── Layout ── */
+  .shell {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+  }
+
+  /* ── Left Panel ── */
+  .left-panel {
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
+    background: #f7f7f7;
+    border-right: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .left-header {
+    padding: 24px 20px 0;
+    flex-shrink: 0;
+  }
+
+  .score-large {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+
+  .score-sub {
+    font-size: 13px;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  .left-divider {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 16px 20px;
+    flex-shrink: 0;
+  }
+
+  .tree-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 0 20px;
+  }
+
+  /* Scrollbar styling */
+  .tree-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .tree-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .tree-scroll::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 2px;
+  }
+
+  /* ── Tree: Clause Groups ── */
+  .clause-group {
+    margin-bottom: 2px;
+  }
+
+  .clause-header {
+    display: flex;
+    align-items: center;
+    padding: 8px 20px 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    transition: background 0.1s;
+  }
+
+  .clause-header:hover {
+    background: #efefef;
+  }
+
+  .clause-toggle {
+    width: 16px;
+    flex-shrink: 0;
+    font-size: 10px;
+    color: #888;
+    text-align: center;
+    margin-right: 4px;
+  }
+
+  .clause-label {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .clause-badges {
+    flex-shrink: 0;
+    margin-left: 8px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+    color: #888;
+    white-space: nowrap;
+  }
+
+  .clause-badge-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 1px;
+  }
+
+  .clause-badge-dot.fail {
+    background: #000;
+  }
+
+  .clause-badge-dot.flagged {
+    background: transparent;
+    border: 1px solid #000;
+  }
+
+  .clause-badge-check {
+    font-size: 11px;
+    color: #888;
+  }
+
+  .clause-summary-text {
+    font-size: 11px;
+    color: #888;
+    margin-left: 4px;
+  }
+
+  /* ── Tree: Requirement Items ── */
+  .clause-children {
+    display: none;
+  }
+
+  .clause-group.expanded > .clause-children {
+    display: block;
+  }
+
+  .req-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 20px 6px 32px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1.3;
+    color: #444;
+    border-left: 3px solid transparent;
+    transition: background 0.1s, border-color 0.1s;
+  }
+
+  .req-item:hover {
+    background: #efefef;
+  }
+
+  .req-item.selected {
+    background: #eaeaea;
+    border-left-color: #000;
+    color: #000;
+  }
+
+  .req-status-icon {
+    width: 16px;
+    flex-shrink: 0;
+    text-align: center;
+    margin-right: 6px;
+    font-size: 12px;
+  }
+
+  .req-status-icon.fail {
+    color: #000;
+  }
+
+  .req-status-icon.flagged {
+    color: #666;
+  }
+
+  .req-status-icon.pass {
+    color: #888;
+  }
+
+  .req-status-icon.na {
+    color: #aaa;
+  }
+
+  .req-item-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Right Panel ── */
+  .right-panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px 48px 60px;
+    min-width: 0;
+  }
+
+  .right-panel::-webkit-scrollbar {
+    width: 6px;
+  }
+  .right-panel::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .right-panel::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 3px;
+  }
+
+  /* ── Empty State ── */
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 15px;
+    color: #aaa;
+  }
+
+  /* ── Detail View ── */
+  .detail-view {
+    max-width: 640px;
+  }
+
+  .detail-title {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.25;
+  }
+
+  .detail-meta {
+    margin-top: 6px;
+    font-size: 14px;
+    color: #888;
+    line-height: 1.5;
+  }
+
+  .detail-meta span + span::before {
+    content: "\00b7";
+    margin: 0 8px;
+  }
+
+  .detail-status {
+    margin-top: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .detail-status.fail {
+    color: #000;
+  }
+
+  .detail-status.flagged {
+    color: #555;
+  }
+
+  .detail-status.pass {
+    color: #888;
+  }
+
+  .detail-status.na {
+    color: #aaa;
+  }
+
+  .detail-divider {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 20px 0;
+  }
+
+  .section-heading {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: lowercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    color: #000;
+  }
+
+  .section-block {
+    margin-bottom: 24px;
+  }
+
+  .evidence-quote {
+    border-left: 2px solid #ddd;
+    padding-left: 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #444;
+    font-style: italic;
+  }
+
+  .section-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #333;
+  }
+
+  .confidence-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #888;
+  }
+
+  /* ── Review Section ── */
+  .review-section {
+    margin-top: 0;
+  }
+
+  .review-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .review-btn {
+    background: #fff;
+    border: 1px solid #000;
+    font-family: inherit;
+    font-size: 13px;
+    color: #000;
+    cursor: pointer;
+    padding: 6px 16px;
+    border-radius: 4px;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1.4;
+  }
+
+  .review-btn:hover {
+    background: #000;
+    color: #fff;
+  }
+
+  .review-btn.active-approve {
+    background: #000;
+    color: #fff;
+  }
+
+  .review-btn.active-reject {
+    background: #000;
+    color: #fff;
+  }
+
+  .review-result {
+    margin-left: 12px;
+    font-size: 13px;
+    color: #888;
+    display: none;
+  }
+
+  .review-result.visible {
+    display: inline;
+  }
+
+  .comment-area {
+    display: none;
+    margin-top: 12px;
+  }
+
+  .comment-area.visible {
+    display: block;
+  }
+
+  .comment-textarea {
+    width: 100%;
+    max-width: 480px;
+    height: 80px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #000;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .comment-textarea:focus {
+    border-color: #000;
+  }
+
+  .comment-textarea::placeholder {
+    color: #bbb;
+  }
+
+  /* ── Footer ── */
+  .detail-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #aaa;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Left Panel -->
+  <div class="left-panel">
+    <div class="left-header">
+      <div class="score-large">73%</div>
+      <div class="score-sub">15 requirements</div>
+    </div>
+    <hr class="left-divider">
+    <div class="tree-scroll" id="treeScroll"></div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-panel" id="rightPanel">
+    <div class="empty-state" id="emptyState">select a requirement</div>
+    <div class="detail-view" id="detailView" style="display:none;"></div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+
+  // ─── Data ───────────────────────────────────────────────────────────
+
+  var requirements = [
+    {
+      id: "REQ-6.1.2",
+      title: "Risk Assessment Process",
+      clause: "Clause 6.1",
+      clauseGroup: "Clause 6: Planning",
+      status: "fail",
+      confidence: "medium",
+      evidence: "The organization shall ensure information security risks are managed appropriately (Section 4.2)",
+      gap: "No documented risk assessment methodology found. The policy references risk management in general terms but lacks a specific, repeatable process for identifying, analyzing, and evaluating information security risks.",
+      recommendation: "Develop and document a formal risk assessment methodology including criteria for risk acceptance and assessment frequency."
+    },
+    {
+      id: "REQ-6.2.1",
+      title: "Information Security Objectives",
+      clause: "Clause 6.2",
+      clauseGroup: "Clause 6: Planning",
+      status: "fail",
+      confidence: "high",
+      evidence: "The organization is committed to maintaining a high level of information security (Section 1.3)",
+      gap: "No measurable information security objectives defined. The policy states a commitment to security but does not translate this into specific, measurable targets.",
+      recommendation: "Define SMART information security objectives aligned with the security policy and business requirements."
+    },
+    {
+      id: "REQ-8.1.1",
+      title: "Operational Planning and Control",
+      clause: "Clause 8.1",
+      clauseGroup: "Clause 8: Operation",
+      status: "fail",
+      confidence: "high",
+      evidence: "Security controls shall be implemented as deemed necessary by management (Section 7.1)",
+      gap: "Missing documented operational procedures for security controls. Controls are referenced at a high level but lack detailed implementation procedures.",
+      recommendation: "Create detailed operational procedures for each security control, including responsibilities, schedules, and verification methods."
+    },
+    {
+      id: "REQ-8.2.1",
+      title: "Risk Assessment (Separate)",
+      clause: "Clause 8.2",
+      clauseGroup: "Clause 8: Operation",
+      status: "na",
+      confidence: null,
+      evidence: "Assessed under REQ-6.1.2",
+      gap: null,
+      recommendation: null
+    },
+    {
+      id: "REQ-9.1.1",
+      title: "Monitoring and Measurement",
+      clause: "Clause 9.1",
+      clauseGroup: "Clause 9: Performance",
+      status: "flagged",
+      confidence: "medium",
+      evidence: "Information security performance shall be monitored and reported to management (Section 8.2)",
+      gap: "Monitoring requirements mentioned but no specific metrics or KPIs defined. The policy acknowledges the need for monitoring but does not specify what to measure or how.",
+      recommendation: "Define specific security metrics and KPIs with measurement methods, frequencies, and responsible parties."
+    },
+    {
+      id: "REQ-9.2.1",
+      title: "Internal Audit",
+      clause: "Clause 9.2",
+      clauseGroup: "Clause 9: Performance",
+      status: "pass",
+      confidence: "high",
+      evidence: "Internal audits shall be conducted at planned intervals, at least annually (Section 8.3)",
+      gap: null,
+      recommendation: null
+    },
+    {
+      id: "REQ-9.3.1",
+      title: "Management Review Inputs",
+      clause: "Clause 9.3",
+      clauseGroup: "Clause 9: Performance",
+      status: "flagged",
+      confidence: "medium",
+      evidence: "Management shall review the ISMS at planned intervals (Section 9.1)",
+      gap: "Management review process exists but input requirements are incomplete. Several required inputs per ISO 27001 are not explicitly addressed.",
+      recommendation: "Update management review procedure to include all required inputs per ISO 27001 Clause 9.3."
+    },
+    {
+      id: "REQ-7.1.1",
+      title: "Resources",
+      clause: "Clause 7.1",
+      clauseGroup: "Clause 7: Support",
+      status: "pass",
+      confidence: "high",
+      evidence: "The organization shall provide resources needed for the ISMS including budget allocation (Section 5.1)",
+      gap: null,
+      recommendation: null
+    },
+    {
+      id: "REQ-7.2.1",
+      title: "Competence Requirements",
+      clause: "Clause 7.2",
+      clauseGroup: "Clause 7: Support",
+      status: "flagged",
+      confidence: "low",
+      evidence: "Staff shall receive appropriate information security training upon joining and annually thereafter (Section 5.4)",
+      gap: "Partial competence framework found but missing evidence of implementation. Training is mentioned but no competence evaluation criteria or records are specified.",
+      recommendation: "Implement a competence tracking system with defined competence criteria, evaluation methods, and training records."
+    },
+    {
+      id: "REQ-7.3.1",
+      title: "Awareness",
+      clause: "Clause 7.3",
+      clauseGroup: "Clause 7: Support",
+      status: "pass",
+      confidence: "high",
+      evidence: "All employees shall be made aware of the information security policy (Section 5.5)",
+      gap: null,
+      recommendation: null
+    },
+    {
+      id: "REQ-7.4.1",
+      title: "Communication",
+      clause: "Clause 7.4",
+      clauseGroup: "Clause 7: Support",
+      status: "pass",
+      confidence: "medium",
+      evidence: "Communications regarding information security shall follow the defined communication plan (Section 5.6)",
+      gap: null,
+      recommendation: null
+    },
+    {
+      id: "REQ-7.5.1",
+      title: "Documented Information",
+      clause: "Clause 7.5",
+      clauseGroup: "Clause 7: Support",
+      status: "pass",
+      confidence: "high",
+      evidence: "All ISMS documentation shall be controlled, versioned, and maintained (Section 5.7)",
+      gap: null,
+      recommendation: null
+    },
+    {
+      id: "REQ-5.1.1",
+      title: "Leadership Commitment",
+      clause: "Clause 5.1",
+      clauseGroup: "Clause 5: Leadership",
+      status: "pass",
+      confidence: "high",
+      evidence: "The Board of Directors and Senior Management are committed to supporting information security (Section 2.1)",
+      gap: null,
+      recommendation: null
+    },
+    {
+      id: "REQ-5.2.1",
+      title: "Information Security Policy",
+      clause: "Clause 5.2",
+      clauseGroup: "Clause 5: Leadership",
+      status: "pass",
+      confidence: "high",
+      evidence: "This Information Security Policy establishes the framework for managing information security risks (Section 1.1)",
+      gap: null,
+      recommendation: null
+    },
+    {
+      id: "REQ-5.3.1",
+      title: "Organizational Roles",
+      clause: "Clause 5.3",
+      clauseGroup: "Clause 5: Leadership",
+      status: "pass",
+      confidence: "medium",
+      evidence: "The CISO is responsible for the overall ISMS. Department heads implement controls within their areas (Section 3.1)",
+      gap: null,
+      recommendation: null
+    }
+  ];
+
+  // ─── Organize into clause groups ───────────────────────────────────
+
+  var clauseOrder = [
+    "Clause 6: Planning",
+    "Clause 8: Operation",
+    "Clause 9: Performance",
+    "Clause 7: Support",
+    "Clause 5: Leadership"
+  ];
+
+  var clauseMap = {};
+  requirements.forEach(function(req) {
+    if (!clauseMap[req.clauseGroup]) {
+      clauseMap[req.clauseGroup] = [];
+    }
+    clauseMap[req.clauseGroup].push(req);
+  });
+
+  // Sort clause groups: failures first, then flagged, then all-pass
+  var statusPriority = { fail: 0, flagged: 1, na: 2, pass: 3 };
+
+  function clauseSortScore(groupName) {
+    var items = clauseMap[groupName];
+    var hasFail = items.some(function(r) { return r.status === "fail"; });
+    var hasFlagged = items.some(function(r) { return r.status === "flagged"; });
+    if (hasFail) return 0;
+    if (hasFlagged) return 1;
+    return 2;
+  }
+
+  clauseOrder.sort(function(a, b) {
+    return clauseSortScore(a) - clauseSortScore(b);
+  });
+
+  // ─── State ─────────────────────────────────────────────────────────
+
+  var selectedReqId = null;
+  var reviewStates = {};   // reqId -> "approved" | "rejected"
+  var reviewComments = {}; // reqId -> string
+  var expandedClauses = {};
+
+  // Expand clauses with failures or flagged items by default
+  clauseOrder.forEach(function(g) {
+    var items = clauseMap[g];
+    var hasFail = items.some(function(r) { return r.status === "fail"; });
+    var hasFlagged = items.some(function(r) { return r.status === "flagged"; });
+    if (hasFail || hasFlagged) {
+      expandedClauses[g] = true;
+    }
+  });
+
+  // ─── Utility ───────────────────────────────────────────────────────
+
+  function esc(s) {
+    var d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function statusIcon(status) {
+    if (status === "fail") return "\u25CF";     // ●
+    if (status === "flagged") return "\u25CB";   // ○
+    if (status === "pass") return "\u2713";      // ✓
+    if (status === "na") return "\u2014";        // —
+    return "";
+  }
+
+  function statusLabel(status) {
+    if (status === "fail") return "failed";
+    if (status === "flagged") return "flagged";
+    if (status === "pass") return "passed";
+    if (status === "na") return "n/a";
+    return status;
+  }
+
+  function confidenceNote(conf) {
+    if (!conf) return null;
+    var desc = "";
+    if (conf === "high") desc = "Strong documentary evidence directly addresses this requirement.";
+    else if (conf === "medium") desc = "Partial evidence found. The policy addresses this area but may lack specificity.";
+    else if (conf === "low") desc = "Limited evidence found. Inference based on indirect references in the document.";
+    return desc;
+  }
+
+  function clauseBadges(items) {
+    var fails = items.filter(function(r) { return r.status === "fail"; }).length;
+    var flagged = items.filter(function(r) { return r.status === "flagged"; }).length;
+    var passes = items.filter(function(r) { return r.status === "pass"; }).length;
+    var total = items.length;
+
+    var html = "";
+
+    if (fails > 0) {
+      for (var i = 0; i < fails; i++) {
+        html += '<span class="clause-badge-dot fail"></span>';
+      }
+      html += '<span class="clause-summary-text">(' + fails + ' failed)</span>';
+    } else if (flagged > 0) {
+      for (var i = 0; i < flagged; i++) {
+        html += '<span class="clause-badge-dot flagged"></span>';
+      }
+      html += '<span class="clause-summary-text">(' + flagged + ' flagged)</span>';
+    } else if (passes === total) {
+      for (var i = 0; i < Math.min(passes, 3); i++) {
+        html += '<span class="clause-badge-check">\u2713</span>';
+      }
+      html += '<span class="clause-summary-text">(all pass)</span>';
+    }
+
+    return html;
+  }
+
+  // ─── Render Tree ───────────────────────────────────────────────────
+
+  var treeScroll = document.getElementById("treeScroll");
+
+  function renderTree() {
+    treeScroll.innerHTML = "";
+
+    clauseOrder.forEach(function(groupName) {
+      var items = clauseMap[groupName];
+      var isExpanded = !!expandedClauses[groupName];
+
+      var groupEl = document.createElement("div");
+      groupEl.className = "clause-group" + (isExpanded ? " expanded" : "");
+
+      // Clause header
+      var header = document.createElement("div");
+      header.className = "clause-header";
+
+      var toggle = document.createElement("span");
+      toggle.className = "clause-toggle";
+      toggle.textContent = isExpanded ? "\u25BC" : "\u25B6";
+
+      var label = document.createElement("span");
+      label.className = "clause-label";
+      label.textContent = groupName;
+
+      var badges = document.createElement("span");
+      badges.className = "clause-badges";
+      badges.innerHTML = clauseBadges(items);
+
+      header.appendChild(toggle);
+      header.appendChild(label);
+      header.appendChild(badges);
+
+      header.addEventListener("click", (function(gn) {
+        return function() {
+          expandedClauses[gn] = !expandedClauses[gn];
+          renderTree();
+        };
+      })(groupName));
+
+      groupEl.appendChild(header);
+
+      // Children
+      var children = document.createElement("div");
+      children.className = "clause-children";
+
+      items.forEach(function(req) {
+        var item = document.createElement("div");
+        item.className = "req-item" + (req.id === selectedReqId ? " selected" : "");
+        item.setAttribute("data-req-id", req.id);
+
+        var icon = document.createElement("span");
+        icon.className = "req-status-icon " + req.status;
+        icon.textContent = statusIcon(req.status);
+
+        var lbl = document.createElement("span");
+        lbl.className = "req-item-label";
+        lbl.textContent = req.id + " " + req.title;
+
+        item.appendChild(icon);
+        item.appendChild(lbl);
+
+        item.addEventListener("click", (function(rid) {
+          return function() {
+            selectRequirement(rid);
+          };
+        })(req.id));
+
+        children.appendChild(item);
+      });
+
+      groupEl.appendChild(children);
+      treeScroll.appendChild(groupEl);
+    });
+  }
+
+  // ─── Select Requirement ────────────────────────────────────────────
+
+  function selectRequirement(reqId) {
+    selectedReqId = reqId;
+    renderTree();
+    renderDetail();
+  }
+
+  // ─── Render Detail ─────────────────────────────────────────────────
+
+  var emptyState = document.getElementById("emptyState");
+  var detailView = document.getElementById("detailView");
+
+  function findReq(id) {
+    for (var i = 0; i < requirements.length; i++) {
+      if (requirements[i].id === id) return requirements[i];
+    }
+    return null;
+  }
+
+  function renderDetail() {
+    if (!selectedReqId) {
+      emptyState.style.display = "flex";
+      detailView.style.display = "none";
+      return;
+    }
+
+    var req = findReq(selectedReqId);
+    if (!req) return;
+
+    emptyState.style.display = "none";
+    detailView.style.display = "block";
+
+    var confStr = req.confidence ? ("confidence: " + req.confidence) : "";
+    var reviewState = reviewStates[req.id] || null;
+    var commentVal = reviewComments[req.id] || "";
+
+    var html = "";
+
+    // Title
+    html += '<div class="detail-title">' + esc(req.title) + '</div>';
+
+    // Metadata
+    html += '<div class="detail-meta">';
+    html += '<span>' + esc(req.id) + '</span>';
+    html += '<span>' + esc(req.clause) + '</span>';
+    if (confStr) html += '<span>' + esc(confStr) + '</span>';
+    html += '</div>';
+
+    // Status
+    html += '<div class="detail-status ' + req.status + '">' + statusLabel(req.status) + '</div>';
+
+    html += '<hr class="detail-divider">';
+
+    // Evidence
+    if (req.evidence) {
+      html += '<div class="section-block">';
+      html += '<div class="section-heading">evidence</div>';
+      html += '<div class="evidence-quote">\u201c' + esc(req.evidence) + '\u201d</div>';
+      html += '</div>';
+    }
+
+    // Gap
+    if (req.gap) {
+      html += '<div class="section-block">';
+      html += '<div class="section-heading">gap</div>';
+      html += '<div class="section-text">' + esc(req.gap) + '</div>';
+      html += '</div>';
+    }
+
+    // Recommendation
+    if (req.recommendation) {
+      html += '<div class="section-block">';
+      html += '<div class="section-heading">recommendation</div>';
+      html += '<div class="section-text">' + esc(req.recommendation) + '</div>';
+      html += '</div>';
+    }
+
+    // Confidence note
+    var cn = confidenceNote(req.confidence);
+    if (cn) {
+      html += '<div class="section-block">';
+      html += '<div class="section-heading">confidence note</div>';
+      html += '<div class="confidence-text">' + esc(cn) + '</div>';
+      html += '</div>';
+    }
+
+    html += '<hr class="detail-divider">';
+
+    // Review
+    html += '<div class="section-block review-section">';
+    html += '<div class="section-heading">review</div>';
+    html += '<div class="review-actions">';
+
+    html += '<button class="review-btn' + (reviewState === "approved" ? " active-approve" : "") + '" data-action="approved" id="btnApprove">approve</button>';
+    html += '<button class="review-btn' + (reviewState === "rejected" ? " active-reject" : "") + '" data-action="rejected" id="btnReject">reject</button>';
+
+    var resultText = "";
+    var resultVisible = false;
+    if (reviewState === "approved") {
+      resultText = "approved \u2713";
+      resultVisible = true;
+    } else if (reviewState === "rejected") {
+      resultText = "rejected \u00d7";
+      resultVisible = true;
+    }
+    html += '<span class="review-result' + (resultVisible ? " visible" : "") + '" id="reviewResult">' + resultText + '</span>';
+
+    html += '</div>';
+
+    // Comment area
+    html += '<div class="comment-area' + (reviewState ? " visible" : "") + '" id="commentArea">';
+    html += '<textarea class="comment-textarea" id="commentTextarea" placeholder="Add a comment...">' + esc(commentVal) + '</textarea>';
+    html += '</div>';
+
+    html += '</div>';
+
+    // Footer
+    html += '<div class="detail-footer">ai assessment &mdash; human verification required</div>';
+
+    detailView.innerHTML = html;
+
+    // Bind review buttons
+    var btnApprove = document.getElementById("btnApprove");
+    var btnReject = document.getElementById("btnReject");
+    var reviewResult = document.getElementById("reviewResult");
+    var commentArea = document.getElementById("commentArea");
+    var commentTextarea = document.getElementById("commentTextarea");
+
+    function handleReview(action) {
+      // Toggle off if same action
+      if (reviewStates[req.id] === action) {
+        delete reviewStates[req.id];
+        btnApprove.classList.remove("active-approve");
+        btnReject.classList.remove("active-reject");
+        reviewResult.textContent = "";
+        reviewResult.classList.remove("visible");
+        commentArea.classList.remove("visible");
+      } else {
+        reviewStates[req.id] = action;
+        btnApprove.classList.remove("active-approve");
+        btnReject.classList.remove("active-reject");
+
+        if (action === "approved") {
+          btnApprove.classList.add("active-approve");
+          reviewResult.textContent = "approved \u2713";
+        } else {
+          btnReject.classList.add("active-reject");
+          reviewResult.textContent = "rejected \u00d7";
+        }
+        reviewResult.classList.add("visible");
+        commentArea.classList.add("visible");
+        commentTextarea.focus();
+      }
+    }
+
+    btnApprove.addEventListener("click", function() { handleReview("approved"); });
+    btnReject.addEventListener("click", function() { handleReview("rejected"); });
+
+    // Save comment on input
+    commentTextarea.addEventListener("input", function() {
+      reviewComments[req.id] = commentTextarea.value;
+    });
+  }
+
+  // ─── Init ──────────────────────────────────────────────────────────
+
+  renderTree();
+
+  // Auto-select first failed requirement
+  var firstFail = requirements.find(function(r) { return r.status === "fail"; });
+  if (firstFail) {
+    selectRequirement(firstFail.id);
+  } else {
+    renderDetail();
+  }
+
+})();
+</script>
+
+</body>
+</html>

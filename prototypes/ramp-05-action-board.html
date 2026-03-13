@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review Board — ISO 27001 Compliance Assessment</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f7f8fa;
+    color: #1a1a2e;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* --- Header --- */
+  .header {
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .header-left .doc-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: #1a1a2e;
+  }
+
+  .header-left .separator {
+    color: #d1d5db;
+    font-weight: 300;
+  }
+
+  .header-left .framework {
+    font-size: 12px;
+    font-weight: 500;
+    background: #f3f4f6;
+    color: #4b5563;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .header-left .score {
+    font-size: 13px;
+    font-weight: 600;
+    color: #d97706;
+  }
+
+  .header-left .date {
+    font-size: 12px;
+    color: #9ca3af;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  .header-right .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .header-right .ai-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f59e0b;
+    display: inline-block;
+  }
+
+  /* --- Progress bar --- */
+  .progress-section {
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 49px;
+    z-index: 99;
+  }
+
+  .progress-label {
+    font-size: 12px;
+    color: #6b7280;
+    white-space: nowrap;
+    min-width: 140px;
+  }
+
+  .progress-label strong {
+    color: #1a1a2e;
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    background: #f3f4f6;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #1a1a2e;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .progress-pct {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1a1a2e;
+    min-width: 36px;
+    text-align: right;
+  }
+
+  /* --- Board --- */
+  .board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    min-height: calc(100vh - 110px);
+    padding: 0;
+  }
+
+  .column {
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .column:last-child {
+    border-right: none;
+  }
+
+  .column-header {
+    padding: 14px 16px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: sticky;
+    top: 85px;
+    z-index: 10;
+  }
+
+  .column[data-column="needs-review"] .column-header { background: #fef9f0; }
+  .column[data-column="approved"] .column-header { background: #f0fdf4; }
+  .column[data-column="rejected"] .column-header { background: #fef2f2; }
+  .column[data-column="auto-passed"] .column-header { background: #f8f9fb; }
+
+  .column-header .col-icon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .column[data-column="needs-review"] .col-icon { background: #f59e0b; }
+  .column[data-column="approved"] .col-icon { background: #22c55e; }
+  .column[data-column="rejected"] .col-icon { background: #ef4444; }
+  .column[data-column="auto-passed"] .col-icon { background: #9ca3af; }
+
+  .column-header .col-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #374151;
+  }
+
+  .column-header .col-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    padding: 0 6px;
+    border-radius: 10px;
+    line-height: 18px;
+  }
+
+  .column-body {
+    flex: 1;
+    padding: 8px 10px 16px;
+    overflow-y: auto;
+  }
+
+  .column[data-column="needs-review"] .column-body { background: #fffdf7; }
+  .column[data-column="approved"] .column-body { background: #f8fdf9; }
+  .column[data-column="rejected"] .column-body { background: #fefafa; }
+  .column[data-column="auto-passed"] .column-body { background: #fafbfc; }
+
+  .column-empty {
+    text-align: center;
+    padding: 40px 16px;
+    color: #9ca3af;
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  /* --- Card --- */
+  .card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease, transform 0.15s ease, opacity 0.3s ease;
+    position: relative;
+  }
+
+  .card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .card.moving-out {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .card.moving-in {
+    animation: cardIn 0.3s ease forwards;
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+
+  .status-dot.fail { background: #ef4444; }
+  .status-dot.flagged { background: #f59e0b; }
+  .status-dot.pass { background: #22c55e; }
+  .status-dot.na { background: #9ca3af; }
+
+  .card-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-id {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 10px;
+    color: #9ca3af;
+    letter-spacing: 0.02em;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 2px 0 6px;
+    line-height: 1.35;
+  }
+
+  .card-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: 3px;
+    line-height: 16px;
+  }
+
+  .badge-clause {
+    background: #f3f4f6;
+    color: #4b5563;
+  }
+
+  .badge-confidence {
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    background: #fff;
+  }
+
+  .badge-confidence.high { color: #059669; border-color: #a7f3d0; background: #ecfdf5; }
+  .badge-confidence.medium { color: #d97706; border-color: #fde68a; background: #fffbeb; }
+  .badge-confidence.low { color: #dc2626; border-color: #fecaca; background: #fef2f2; }
+
+  .card-summary {
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-expand-hint {
+    font-size: 10px;
+    color: #9ca3af;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .card-expand-hint .chevron {
+    transition: transform 0.2s ease;
+    display: inline-block;
+  }
+
+  .card.expanded .card-expand-hint .chevron {
+    transform: rotate(90deg);
+  }
+
+  .card.expanded .card-summary {
+    -webkit-line-clamp: unset;
+  }
+
+  /* --- Card Detail (expanded) --- */
+  .card-detail {
+    display: none;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f3f4f6;
+  }
+
+  .card.expanded .card-detail {
+    display: block;
+    animation: detailIn 0.2s ease;
+  }
+
+  @keyframes detailIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .detail-section {
+    margin-bottom: 10px;
+  }
+
+  .detail-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .detail-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
+    margin-bottom: 3px;
+  }
+
+  .detail-text {
+    font-size: 12px;
+    color: #4b5563;
+    line-height: 1.55;
+  }
+
+  .detail-quote {
+    font-size: 12px;
+    color: #4b5563;
+    line-height: 1.55;
+    border-left: 2px solid #e5e7eb;
+    padding-left: 10px;
+    font-style: italic;
+  }
+
+  /* --- Action buttons --- */
+  .card-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    line-height: 1;
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn-approve {
+    background: #1a1a2e;
+    color: #fff;
+    border-color: #1a1a2e;
+  }
+
+  .btn-approve:hover {
+    background: #2d2d4a;
+  }
+
+  .btn-reject {
+    background: #fff;
+    color: #dc2626;
+    border-color: #fecaca;
+  }
+
+  .btn-reject:hover {
+    background: #fef2f2;
+  }
+
+  .btn-move-review {
+    background: #fff;
+    color: #6b7280;
+    border-color: #e5e7eb;
+  }
+
+  .btn-move-review:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  .btn-challenge {
+    background: #fff;
+    color: #d97706;
+    border-color: #fde68a;
+  }
+
+  .btn-challenge:hover {
+    background: #fffbeb;
+  }
+
+  /* --- Responsive --- */
+  @media (max-width: 1100px) {
+    .board {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .column {
+      border-bottom: 1px solid #e5e7eb;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .board {
+      grid-template-columns: 1fr;
+    }
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <span class="doc-name">Cloud Security Policy v3.2</span>
+    <span class="separator">|</span>
+    <span class="framework">ISO 27001:2022</span>
+    <span class="separator">|</span>
+    <span class="score">Score 73%</span>
+    <span class="separator">|</span>
+    <span class="date">2026-02-27</span>
+  </div>
+  <div class="header-right">
+    <span class="ai-badge"><span class="dot"></span> AI Assessment &mdash; Human verification required</span>
+  </div>
+</div>
+
+<!-- Progress -->
+<div class="progress-section">
+  <div class="progress-label"><strong id="reviewedCount">0</strong> of <strong>15</strong> reviewed</div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-pct" id="progressPct">0%</div>
+</div>
+
+<!-- Board -->
+<div class="board" id="board">
+  <div class="column" data-column="needs-review">
+    <div class="column-header">
+      <span class="col-icon"></span>
+      <span class="col-title">Needs Review</span>
+      <span class="col-count" id="count-needs-review">0</span>
+    </div>
+    <div class="column-body" id="col-needs-review"></div>
+  </div>
+  <div class="column" data-column="approved">
+    <div class="column-header">
+      <span class="col-icon"></span>
+      <span class="col-title">Approved</span>
+      <span class="col-count" id="count-approved">0</span>
+    </div>
+    <div class="column-body" id="col-approved"></div>
+  </div>
+  <div class="column" data-column="rejected">
+    <div class="column-header">
+      <span class="col-icon"></span>
+      <span class="col-title">Rejected</span>
+      <span class="col-count" id="count-rejected">0</span>
+    </div>
+    <div class="column-body" id="col-rejected"></div>
+  </div>
+  <div class="column" data-column="auto-passed">
+    <div class="column-header">
+      <span class="col-icon"></span>
+      <span class="col-title">Auto-Passed</span>
+      <span class="col-count" id="count-auto-passed">0</span>
+    </div>
+    <div class="column-body" id="col-auto-passed"></div>
+  </div>
+</div>
+
+<script>
+// ─── Mock Data ───────────────────────────────────────────────────────────
+const requirements = [
+  // FAILURES (3)
+  {
+    id: 'REQ-6.1.2',
+    title: 'Risk Assessment Process',
+    clause: 'Clause 6.1',
+    confidence: 'Medium',
+    aiStatus: 'fail',
+    summary: 'No formal risk assessment methodology documented. Risk register exists but lacks consistent scoring criteria.',
+    evidence: '"The organization maintains a risk register updated quarterly by department heads." (Section 4.2, p.12)',
+    gap: 'The policy references a risk register but does not define a structured risk assessment methodology with consistent criteria for likelihood and impact scoring. ISO 27001 Clause 6.1.2 requires a defined and repeatable process for information security risk assessment, including criteria for risk acceptance and assessment methodology.',
+    recommendation: 'Document a formal risk assessment methodology that defines: (1) risk identification procedures, (2) likelihood and impact scoring scales, (3) risk evaluation criteria, and (4) risk acceptance thresholds. Reference a standard framework such as ISO 27005 or NIST SP 800-30.',
+    column: 'needs-review'
+  },
+  {
+    id: 'REQ-8.1.1',
+    title: 'Operational Planning & Control',
+    clause: 'Clause 8.1',
+    confidence: 'High',
+    aiStatus: 'fail',
+    summary: 'Operational security procedures lack change management controls for cloud infrastructure.',
+    evidence: '"Cloud infrastructure changes are deployed via CI/CD pipeline with automated testing." (Section 7.1, p.28)',
+    gap: 'While automated deployment exists, the policy lacks formal change management procedures including risk assessment of changes, rollback procedures, and separation of duties between development and production environments. Clause 8.1 requires planned processes for operational control.',
+    recommendation: 'Implement a formal change management procedure that includes: (1) change request and approval workflow, (2) pre-deployment risk assessment, (3) documented rollback procedures, (4) separation of duties enforcement, and (5) post-implementation review process.',
+    column: 'needs-review'
+  },
+  {
+    id: 'REQ-6.2.1',
+    title: 'Security Objectives',
+    clause: 'Clause 6.2',
+    confidence: 'High',
+    aiStatus: 'fail',
+    summary: 'Security objectives are stated but not measurable or time-bound. No KPIs defined.',
+    evidence: '"The organization aims to maintain the highest standards of information security and protect all assets." (Section 2.1, p.3)',
+    gap: 'The security objectives are aspirational rather than measurable. Clause 6.2 requires information security objectives to be measurable, monitored, communicated, updated, and consistent with the information security policy. No specific KPIs, timelines, or responsible parties are designated.',
+    recommendation: 'Redefine security objectives using SMART criteria. For example: "Reduce critical vulnerability remediation time to under 72 hours by Q3 2026" with assigned owners, measurement methods, and review cadence. Establish at least 5-8 measurable objectives aligned with the risk assessment outcomes.',
+    column: 'needs-review'
+  },
+  // FLAGGED (3)
+  {
+    id: 'REQ-7.2.1',
+    title: 'Competence Requirements',
+    clause: 'Clause 7.2',
+    confidence: 'Low',
+    aiStatus: 'flagged',
+    summary: 'Training program exists but competence verification is unclear. Evidence of role-based training is limited.',
+    evidence: '"All employees complete annual security awareness training. Technical staff receive additional specialized training." (Section 5.3, p.19)',
+    gap: 'The policy mentions training programs but does not describe how competence is determined, evaluated, or verified. Clause 7.2 requires the organization to determine necessary competence, ensure persons are competent on the basis of education, training, or experience, and retain documented evidence. The low confidence reflects insufficient detail in the document to make a definitive assessment.',
+    recommendation: 'Define competence requirements for each security-relevant role. Establish competence evaluation methods (certifications, assessments, practical exercises). Maintain a competence matrix mapping roles to required skills and verification status. Document all training records with completion evidence.',
+    column: 'needs-review'
+  },
+  {
+    id: 'REQ-9.1.1',
+    title: 'Monitoring & Measurement',
+    clause: 'Clause 9.1',
+    confidence: 'Medium',
+    aiStatus: 'flagged',
+    summary: 'SIEM deployment noted but monitoring scope and measurement criteria are not fully specified.',
+    evidence: '"Security events are monitored via SIEM platform with 24/7 SOC coverage. Monthly security reports are generated for management." (Section 8.2, p.32)',
+    gap: 'While monitoring tools are in place, the policy does not specify what needs to be monitored and measured, the methods for monitoring, when monitoring shall be performed, who shall analyze results, or when results shall be evaluated. Clause 9.1 requires all of these elements to be determined.',
+    recommendation: 'Create a monitoring and measurement program document that specifies: (1) metrics to be monitored (e.g., incident response times, vulnerability scan results, access review completion), (2) measurement methods and tools, (3) monitoring frequency, (4) responsible analysts, and (5) reporting and evaluation schedule.',
+    column: 'needs-review'
+  },
+  {
+    id: 'REQ-9.3.1',
+    title: 'Management Review',
+    clause: 'Clause 9.3',
+    confidence: 'Medium',
+    aiStatus: 'flagged',
+    summary: 'Management review referenced but required inputs and outputs not fully enumerated.',
+    evidence: '"The Information Security Steering Committee meets quarterly to review the ISMS performance and approve changes." (Section 9.1, p.38)',
+    gap: 'The policy establishes a management review cadence but does not enumerate all required inputs (status of actions, changes in external/internal issues, nonconformities, monitoring results, audit results, fulfillment of objectives) or expected outputs (decisions on improvement opportunities, changes to ISMS) as specified in Clause 9.3.',
+    recommendation: 'Update the management review procedure to include a structured agenda covering all inputs required by Clause 9.3. Create a management review template that captures: all required inputs, decisions made, action items with owners and deadlines, and required outputs including improvement opportunities and resource needs.',
+    column: 'needs-review'
+  },
+  // PASSED (8)
+  {
+    id: 'REQ-5.1.1',
+    title: 'Leadership & Commitment',
+    clause: 'Clause 5.1',
+    confidence: 'High',
+    aiStatus: 'pass',
+    summary: 'Executive sponsorship and ISMS commitment clearly documented with named accountable leadership.',
+    evidence: '"The Chief Information Security Officer (CISO), reporting directly to the CEO, is accountable for the ISMS. The Board of Directors reviews information security strategy annually and has allocated dedicated budget for security initiatives." (Section 1.2, p.2)',
+    gap: '',
+    recommendation: '',
+    column: 'auto-passed'
+  },
+  {
+    id: 'REQ-5.2.1',
+    title: 'Information Security Policy',
+    clause: 'Clause 5.2',
+    confidence: 'High',
+    aiStatus: 'pass',
+    summary: 'Policy is documented, approved by top management, communicated, and available to interested parties.',
+    evidence: '"This Information Security Policy is approved by the CEO and CISO, published on the corporate intranet, and provided to all relevant third parties during onboarding. The policy is reviewed annually or upon significant changes." (Section 1.1, p.1)',
+    gap: '',
+    recommendation: '',
+    column: 'auto-passed'
+  },
+  {
+    id: 'REQ-5.3.1',
+    title: 'Roles & Responsibilities',
+    clause: 'Clause 5.3',
+    confidence: 'High',
+    aiStatus: 'pass',
+    summary: 'Security roles, responsibilities, and authorities are clearly defined with a RACI matrix.',
+    evidence: '"Appendix A contains the RACI matrix for all ISMS processes. Security responsibilities are included in all job descriptions for relevant roles. The Information Security team structure is documented in Section 3.1." (Section 3.1, p.8)',
+    gap: '',
+    recommendation: '',
+    column: 'auto-passed'
+  },
+  {
+    id: 'REQ-7.1.1',
+    title: 'Resources',
+    clause: 'Clause 7.1',
+    confidence: 'High',
+    aiStatus: 'pass',
+    summary: 'Dedicated security team and budget allocation documented with annual planning cycle.',
+    evidence: '"The organization maintains a dedicated information security team of 12 FTEs with an annual budget approved by the Board. Resource requirements are reviewed quarterly and adjusted based on risk assessment outcomes." (Section 5.1, p.17)',
+    gap: '',
+    recommendation: '',
+    column: 'auto-passed'
+  },
+  {
+    id: 'REQ-7.3.1',
+    title: 'Awareness',
+    clause: 'Clause 7.3',
+    confidence: 'High',
+    aiStatus: 'pass',
+    summary: 'Comprehensive security awareness program with phishing simulations and onboarding modules.',
+    evidence: '"All personnel complete security awareness training within 30 days of joining. Quarterly phishing simulations are conducted with results reported to management. Security awareness materials are updated monthly on the intranet portal." (Section 5.4, p.21)',
+    gap: '',
+    recommendation: '',
+    column: 'auto-passed'
+  },
+  {
+    id: 'REQ-7.4.1',
+    title: 'Communication',
+    clause: 'Clause 7.4',
+    confidence: 'High',
+    aiStatus: 'pass',
+    summary: 'Internal and external communication procedures for security matters are well-defined.',
+    evidence: '"The communication plan defines what, when, with whom, and how security information is communicated. Internal communications use the security bulletin board and email. External communications follow the incident disclosure procedure in Appendix C." (Section 5.5, p.23)',
+    gap: '',
+    recommendation: '',
+    column: 'auto-passed'
+  },
+  {
+    id: 'REQ-9.2.1',
+    title: 'Internal Audit',
+    clause: 'Clause 9.2',
+    confidence: 'High',
+    aiStatus: 'pass',
+    summary: 'Internal audit program with annual cycle, qualified auditors, and documented procedures.',
+    evidence: '"Internal audits are conducted annually per the audit schedule in Appendix D. Audits are performed by qualified internal auditors who are independent of the areas being audited. Findings are tracked in the corrective action register with assigned owners and due dates." (Section 9.2, p.36)',
+    gap: '',
+    recommendation: '',
+    column: 'auto-passed'
+  },
+  {
+    id: 'REQ-7.5.1',
+    title: 'Documented Information',
+    clause: 'Clause 7.5',
+    confidence: 'High',
+    aiStatus: 'pass',
+    summary: 'Document control system with versioning, approvals, and retention policies in place.',
+    evidence: '"All ISMS documents are managed in the enterprise document management system with version control, approval workflows, and retention schedules. Document access is controlled based on classification level. A master document register is maintained and reviewed quarterly." (Section 5.6, p.25)',
+    gap: '',
+    recommendation: '',
+    column: 'auto-passed'
+  },
+  // N/A (1)
+  {
+    id: 'REQ-8.2.1',
+    title: 'Risk Treatment Implementation',
+    clause: 'Clause 8.2',
+    confidence: 'High',
+    aiStatus: 'na',
+    summary: 'Not applicable — risk treatment plan is pending completion of the risk assessment process (REQ-6.1.2).',
+    evidence: '"Risk treatment plans will be developed following the completion of the formal risk assessment process currently under development." (Section 7.2, p.30)',
+    gap: 'This requirement cannot be assessed until the risk assessment process (REQ-6.1.2) is established. The risk treatment implementation depends on having a completed risk assessment with identified risks and selected treatment options.',
+    recommendation: 'Address REQ-6.1.2 first, then develop risk treatment plans for all identified risks. Ensure treatment plans include: selected treatment options, justification, responsible parties, timelines, and expected residual risk levels.',
+    column: 'auto-passed'
+  }
+];
+
+// ─── State ───────────────────────────────────────────────────────────────
+// Track current column for each requirement
+const cardState = {};
+requirements.forEach(r => {
+  cardState[r.id] = r.column;
+});
+
+// ─── Rendering ───────────────────────────────────────────────────────────
+function renderBoard() {
+  const columns = {
+    'needs-review': document.getElementById('col-needs-review'),
+    'approved': document.getElementById('col-approved'),
+    'rejected': document.getElementById('col-rejected'),
+    'auto-passed': document.getElementById('col-auto-passed')
+  };
+
+  // Clear all columns
+  Object.values(columns).forEach(col => col.innerHTML = '');
+
+  // Counts
+  const counts = { 'needs-review': 0, 'approved': 0, 'rejected': 0, 'auto-passed': 0 };
+
+  requirements.forEach(r => {
+    const col = cardState[r.id];
+    counts[col]++;
+    const cardEl = createCard(r, col);
+    columns[col].appendChild(cardEl);
+  });
+
+  // Update counts
+  Object.keys(counts).forEach(key => {
+    document.getElementById('count-' + key).textContent = counts[key];
+  });
+
+  // Add empty states
+  Object.keys(columns).forEach(key => {
+    if (counts[key] === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'column-empty';
+      if (key === 'approved') empty.textContent = 'No approved items yet';
+      else if (key === 'rejected') empty.textContent = 'No rejected items yet';
+      else if (key === 'needs-review') empty.textContent = 'All items reviewed';
+      else empty.textContent = 'No auto-passed items';
+      columns[key].appendChild(empty);
+    }
+  });
+
+  updateProgress();
+}
+
+function createCard(req, currentColumn) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.setAttribute('data-id', req.id);
+
+  const statusClass = req.aiStatus; // fail, flagged, pass, na
+  const confClass = req.confidence.toLowerCase();
+
+  let summaryText = req.summary;
+
+  card.innerHTML = `
+    <div class="card-top">
+      <span class="status-dot ${statusClass}"></span>
+      <div class="card-main">
+        <div class="card-id">${req.id}</div>
+        <div class="card-title">${req.title}</div>
+        <div class="card-badges">
+          <span class="badge badge-clause">${req.clause}</span>
+          <span class="badge badge-confidence ${confClass}">${req.confidence} confidence</span>
+        </div>
+        <div class="card-summary">${summaryText}</div>
+        <div class="card-expand-hint"><span class="chevron">&#9654;</span> Click to expand</div>
+        <div class="card-detail">
+          ${req.evidence ? `
+          <div class="detail-section">
+            <div class="detail-label">Evidence</div>
+            <div class="detail-quote">${req.evidence}</div>
+          </div>` : ''}
+          ${req.gap ? `
+          <div class="detail-section">
+            <div class="detail-label">Gap Description</div>
+            <div class="detail-text">${req.gap}</div>
+          </div>` : ''}
+          ${req.recommendation ? `
+          <div class="detail-section">
+            <div class="detail-label">Recommendation</div>
+            <div class="detail-text">${req.recommendation}</div>
+          </div>` : ''}
+          <div class="card-actions">
+            ${getActionButtons(currentColumn)}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Click to expand/collapse
+  card.addEventListener('click', function(e) {
+    // Don't toggle if clicking a button
+    if (e.target.closest('.btn')) return;
+    card.classList.toggle('expanded');
+  });
+
+  // Wire up action buttons
+  const btns = card.querySelectorAll('.btn');
+  btns.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const action = btn.getAttribute('data-action');
+      moveCard(req.id, action, card);
+    });
+  });
+
+  return card;
+}
+
+function getActionButtons(column) {
+  switch(column) {
+    case 'needs-review':
+      return `
+        <button class="btn btn-approve" data-action="approve">Approve</button>
+        <button class="btn btn-reject" data-action="reject">Reject</button>
+      `;
+    case 'approved':
+      return `
+        <button class="btn btn-move-review" data-action="move-to-review">Move to Review</button>
+      `;
+    case 'rejected':
+      return `
+        <button class="btn btn-move-review" data-action="move-to-review">Move to Review</button>
+      `;
+    case 'auto-passed':
+      return `
+        <button class="btn btn-challenge" data-action="challenge">Challenge &mdash; Move to Review</button>
+      `;
+    default:
+      return '';
+  }
+}
+
+function moveCard(reqId, action, cardEl) {
+  let targetColumn;
+  switch(action) {
+    case 'approve':
+      targetColumn = 'approved';
+      break;
+    case 'reject':
+      targetColumn = 'rejected';
+      break;
+    case 'move-to-review':
+      targetColumn = 'needs-review';
+      break;
+    case 'challenge':
+      targetColumn = 'needs-review';
+      break;
+  }
+
+  if (!targetColumn) return;
+
+  // Animate out
+  cardEl.classList.add('moving-out');
+
+  setTimeout(() => {
+    cardState[reqId] = targetColumn;
+    renderBoard();
+
+    // Animate in the moved card
+    const newCard = document.querySelector(`.card[data-id="${reqId}"]`);
+    if (newCard) {
+      newCard.classList.add('moving-in');
+      // Auto-expand the moved card briefly
+      newCard.classList.add('expanded');
+      setTimeout(() => {
+        newCard.classList.remove('moving-in');
+      }, 300);
+    }
+  }, 200);
+}
+
+function updateProgress() {
+  // "reviewed" = items in approved or rejected columns
+  let reviewed = 0;
+  const total = requirements.length;
+
+  requirements.forEach(r => {
+    const col = cardState[r.id];
+    if (col === 'approved' || col === 'rejected') {
+      reviewed++;
+    }
+  });
+
+  document.getElementById('reviewedCount').textContent = reviewed;
+  const pct = Math.round((reviewed / total) * 100);
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────
+renderBoard();
+</script>
+
+</body>
+</html>
