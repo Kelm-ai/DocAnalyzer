@@ -124,7 +124,7 @@ async def generate_executive_summary(
             ],
             response_format={"type": "json_object"},
             temperature=0.3,  # Lower temperature for more consistent output
-            max_tokens=2000
+            max_completion_tokens=2000
         )
 
         content = response.choices[0].message.content
