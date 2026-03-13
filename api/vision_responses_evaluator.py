@@ -1177,6 +1177,10 @@ Vision handling:
             parsed.setdefault("requirement_title", requirement.get("title"))
             parsed.setdefault("requirement_clause", requirement.get("clause"))
             parsed["tokens_used"] = tokens_used
+            doc_names = [file_ref.get("file_name", "")] + [d.get("file_name", "") for d in supporting_docs]
+            snippets, metadata = self._normalize_evidence(parsed.get("evidence") or [], doc_names)
+            parsed["evidence"] = snippets
+            parsed["evidence_metadata"] = metadata
             raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}.txt"
             raw_text = getattr(response, "output_text", None) or json.dumps(parsed, indent=2)
             raw_file.write_text(raw_text, encoding="utf-8")
@@ -1284,6 +1288,10 @@ Vision handling:
             parsed.setdefault("requirement_title", requirement.get("title"))
             parsed.setdefault("requirement_clause", requirement.get("clause"))
             parsed["tokens_used"] = tokens_used
+            doc_names = [file_ref.get("file_name", "")] + [d.get("file_name", "") for d in supporting_docs]
+            snippets, metadata = self._normalize_evidence(parsed.get("evidence") or [], doc_names)
+            parsed["evidence"] = snippets
+            parsed["evidence_metadata"] = metadata
 
             raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}.txt"
             raw_file.write_text(response_text or json.dumps(parsed, indent=2), encoding="utf-8")
@@ -1384,6 +1392,10 @@ Vision handling:
             parsed.setdefault("requirement_title", requirement.get("title"))
             parsed.setdefault("requirement_clause", requirement.get("clause"))
             parsed["tokens_used"] = tokens_used
+            doc_names = [file_ref.get("file_name", "")] + [d.get("file_name", "") for d in supporting_docs]
+            snippets, metadata = self._normalize_evidence(parsed.get("evidence") or [], doc_names)
+            parsed["evidence"] = snippets
+            parsed["evidence_metadata"] = metadata
 
             raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}.txt"
             raw_text = getattr(response, "text", None) or json.dumps(parsed, indent=2)
@@ -1430,11 +1442,13 @@ Vision handling:
             "{\n"
             "  \"status\": \"PASS|FAIL|FLAGGED|NOT_APPLICABLE\",\n"
             "  \"confidence\": \"low|medium|high\",\n"
-            "  \"rationale\": \"Brief 1-2 sentence explanation of the decision with key citations\",\n"
-            "  \"evidence\": [\"Page/Section citation with brief quote\", ...],\n"
+            "  \"rationale\": \"Brief 1-2 sentence explanation citing evidence as [1], [2] etc. in the order they appear in the evidence array.\",\n"
+            "  \"evidence\": [{\"text\": \"brief quote\", \"page\": 5, \"section\": \"4.2.1\", \"document_name\": \"filename.pdf\", \"document_index\": 0}, ...],\n"
             "  \"gaps\": [string],\n"
             "  \"recommendations\": [string]\n"
             "}\n"
+            "IMPORTANT - Evidence format: Each evidence item MUST be a JSON object with a \"text\" field. Include \"page\" (integer), \"section\" (string), \"document_name\" (filename), and \"document_index\" (0-based integer for which document) when known.\n"
+            "In the rationale, cite each evidence item as [1], [2] etc. (1-indexed) in the order they appear in the evidence array.\n"
             "IMPORTANT - Field definitions:\n"
             "- 'gaps': Findings/deficiencies identified in the document.\n"
             "  - For FAIL/FLAGGED: Critical gaps that caused the failure (must be addressed).\n"
@@ -1462,6 +1476,53 @@ Vision handling:
 
         return "\n\n".join(prompt_sections)
 
+    def _normalize_evidence(self, raw_evidence: list, document_names: list = None) -> tuple:
+        """Normalise evidence from LLM response into (snippets, metadata) tuple.
+
+        Accepts a mixed list of strings or dicts (structured evidence objects).
+        Returns:
+            snippets: List[str] for backward-compat evidence_snippets column
+            metadata: List[dict] for evidence_metadata column
+        """
+        snippets = []
+        metadata = []
+        for item in raw_evidence:
+            if isinstance(item, dict):
+                text = item.get("text", "")
+                page = item.get("page")
+                section = item.get("section")
+                doc_name = item.get("document_name")
+                doc_idx = item.get("document_index")
+
+                # Build human-readable snippet string
+                parts = []
+                if doc_name:
+                    parts.append(doc_name)
+                elif document_names and doc_idx is not None and 0 <= doc_idx < len(document_names):
+                    doc_name = document_names[doc_idx]
+                    parts.append(doc_name)
+                if section:
+                    parts.append(f"§{section}")
+                if page is not None:
+                    parts.append(f"p.{page}")
+                prefix = " · ".join(parts)
+                snippet = f"[{prefix}] {text}" if prefix else text
+
+                snippets.append(snippet)
+                metadata.append({
+                    "text": text,
+                    "page": page,
+                    "section": section,
+                    "document_name": doc_name,
+                    "document_index": doc_idx,
+                })
+            else:
+                # Plain string — keep as-is for backward compat
+                text = str(item) if item is not None else ""
+                snippets.append(text)
+                metadata.append({"text": text})
+        return snippets, metadata
+
     def _build_gemini_schema(self):
         if not GENAI_AVAILABLE or genai_types is None:
             return None
@@ -1479,7 +1540,17 @@ Vision handling:
                 "rationale": genai_types.Schema(type=genai_types.Type.STRING),
                 "evidence": genai_types.Schema(
                     type=genai_types.Type.ARRAY,
-                    items=genai_types.Schema(type=genai_types.Type.STRING),
+                    items=genai_types.Schema(
+                        type=genai_types.Type.OBJECT,
+                        properties={
+                            "text": genai_types.Schema(type=genai_types.Type.STRING),
+                            "page": genai_types.Schema(type=genai_types.Type.INTEGER),
+                            "section": genai_types.Schema(type=genai_types.Type.STRING),
+                            "document_name": genai_types.Schema(type=genai_types.Type.STRING),
+                            "document_index": genai_types.Schema(type=genai_types.Type.INTEGER),
+                        },
+                        required=["text"],
+                    ),
                 ),
                 "gaps": genai_types.Schema(
                     type=genai_types.Type.ARRAY,

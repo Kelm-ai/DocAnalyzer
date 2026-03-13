@@ -408,6 +408,7 @@ def persist_vision_results(evaluation_id: str, summary: Dict[str, Any]) -> None:
             'status': status,
             'confidence_level': confidence_level,
             'evidence_snippets': _ensure_list(result.get('evidence')),
+            'evidence_metadata': result.get('evidence_metadata') or None,
             'evaluation_rationale': str(result.get('rationale', '')),
             'gaps_identified': _ensure_list(result.get('gaps')),
             'recommendations': _ensure_list(result.get('recommendations')),
@@ -495,6 +496,7 @@ class RequirementResult(BaseModel):
     confidence_level: Literal["low", "medium", "high"]
     confidence_score: Optional[float] = None  # Derived from confidence_level for backwards compatibility
     evidence_snippets: List[str]
+    evidence_metadata: Optional[List[Dict[str, Any]]] = None
     evaluation_rationale: str
     gaps_identified: List[str]
     recommendations: List[str]
@@ -903,6 +905,30 @@ async def upload_document(
 
         evaluation_id = result.data[0]['id']
 
+        # Upload to Supabase storage and create evaluation_documents record
+        # so the PDF viewer can generate signed URLs later
+        try:
+            import hashlib as _hashlib
+            file_hash = _hashlib.md5(content).hexdigest()[:8]
+            storage_path = f"documents/evaluations/{evaluation_id}/primary/{file_hash}_{processing_filename}"
+            supabase.storage.from_("documents").upload(
+                storage_path, content, file_options={"content-type": "application/pdf"}
+            )
+            doc_record = {
+                'id': str(uuid.uuid4()),
+                'evaluation_id': evaluation_id,
+                'document_role': 'primary',
+                'file_name': original_filename,
+                'file_size_bytes': len(content),
+                'storage_path': storage_path,
+                'display_order': 0,
+                'created_at': datetime.utcnow().isoformat(),
+            }
+            supabase.table('evaluation_documents').insert(doc_record).execute()
+        except Exception as storage_err:
+            # Non-fatal — evaluation continues, PDF viewer just won't work for this upload
+            logger.warning(f"Failed to store document in Supabase for PDF viewer: {storage_err}")
+
         # Add to evaluation queue instead of BackgroundTasks
         if evaluation_queue is None:
             raise HTTPException(status_code=503, detail="Evaluation queue not initialized")
@@ -1238,6 +1264,46 @@ async def get_evaluation_documents(evaluation_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get evaluation documents: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/evaluations/{evaluation_id}/documents/{document_id}/download")
+async def get_document_download_url(evaluation_id: str, document_id: str):
+    """
+    Generate a short-lived signed URL for a document stored in Supabase storage.
+    """
+    try:
+        supabase = get_supabase_client()
+
+        response = supabase.table('evaluation_documents').select('*').eq(
+            'id', document_id
+        ).eq('evaluation_id', evaluation_id).single().execute()
+
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        doc = response.data
+        storage_path = doc['storage_path']
+
+        # storage_path is stored as "documents/..." — strip the bucket prefix
+        bucket_key = storage_path.removeprefix("documents/")
+
+        signed = supabase.storage.from_("documents").create_signed_url(bucket_key, expires_in=300)
+
+        if not signed or not signed.get('signedURL'):
+            raise HTTPException(status_code=500, detail="Failed to generate signed URL")
+
+        return {
+            "url": signed['signedURL'],
+            "expires_in": 300,
+            "file_name": doc['file_name'],
+            "document_role": doc['document_role'],
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate download URL: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1976,11 +2042,12 @@ async def get_evaluation_results(evaluation_id: str):
                 confidence_level=level,
                 confidence_score=score_value,
                 evidence_snippets=row.get('evidence_snippets', []),
+                evidence_metadata=row.get('evidence_metadata'),
                 evaluation_rationale=row.get('evaluation_rationale', ''),
                 gaps_identified=row.get('gaps_identified', []),
                 recommendations=row.get('recommendations', [])
             ))
-        
+
         return {"requirements": requirements}
         
     except Exception as e:
@@ -2038,6 +2105,7 @@ async def get_compliance_report(evaluation_id: str):
                 confidence_level=level,
                 confidence_score=score_value,
                 evidence_snippets=row.get('evidence_snippets', []),
+                evidence_metadata=row.get('evidence_metadata'),
                 evaluation_rationale=row.get('evaluation_rationale', ''),
                 gaps_identified=row.get('gaps_identified', []),
                 recommendations=row.get('recommendations', []),
