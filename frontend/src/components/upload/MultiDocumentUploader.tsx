@@ -191,11 +191,11 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
   const getPhaseDisplay = () => {
     switch (uploadPhase) {
       case "uploading":
-        return { label: "Uploading documents...", color: "bg-sc" }
+        return { label: "Uploading documents...", color: "bg-primary" }
       case "summarizing":
-        return { label: "Generating summaries for supporting documents...", color: "bg-sc-gold" }
+        return { label: "Generating summaries for supporting documents...", color: "bg-status-flagged" }
       case "processing":
-        return { label: "Evaluating document against requirements...", color: "bg-sc" }
+        return { label: "Evaluating document against requirements...", color: "bg-primary" }
       case "complete":
         return { label: "Evaluation complete!", color: "bg-status-pass" }
       case "error":

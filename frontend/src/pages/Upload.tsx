@@ -20,7 +20,7 @@ export function Upload() {
           <h2 className="text-3xl font-bold tracking-tight">Document Upload</h2>
           <button
             onClick={() => setHelpOpen(true)}
-            className="text-muted-foreground hover:text-sc transition-colors"
+            className="text-muted-foreground hover:text-primary transition-colors"
             aria-label="Help"
           >
             <HelpCircle className="h-5 w-5" />

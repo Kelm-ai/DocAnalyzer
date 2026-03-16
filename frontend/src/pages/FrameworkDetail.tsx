@@ -68,7 +68,7 @@ function RequirementRowActions({ requirement, onEdit, onDuplicate, onDelete }: R
       {open && (
         <div
           ref={menuRef}
-          className="absolute right-0 z-20 mt-2 w-40 rounded-md border border-border bg-white py-1 text-sm shadow-lg"
+          className="absolute right-0 z-20 mt-2 w-40 rounded-md border border-border bg-background py-1 text-sm shadow-lg"
           role="menu"
         >
           <button
@@ -374,7 +374,7 @@ export function FrameworkDetail() {
   if (error && !framework) {
     return (
       <div className="space-y-4">
-        <Link to="/frameworks" className="inline-flex items-center gap-2 text-sm text-sc-dark hover:text-sc">
+        <Link to="/frameworks" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-4 w-4" /> Back to Frameworks
         </Link>
         <div className="rounded-md border border-destructive/20 bg-status-fail-bg p-4 text-destructive">{error}</div>
@@ -385,7 +385,7 @@ export function FrameworkDetail() {
   if (!framework) {
     return (
       <div className="space-y-4">
-        <Link to="/frameworks" className="inline-flex items-center gap-2 text-sm text-sc-dark hover:text-sc">
+        <Link to="/frameworks" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-4 w-4" /> Back to Frameworks
         </Link>
         <div className="rounded-md border border-sc-gold/30 bg-sc-gold-light p-4 text-sc-gold-dark">Framework not found</div>
@@ -396,7 +396,7 @@ export function FrameworkDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link to="/frameworks" className="inline-flex items-center gap-2 text-sm text-sc-dark hover:text-sc">
+        <Link to="/frameworks" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-4 w-4" /> Back
         </Link>
       </div>
@@ -416,11 +416,11 @@ export function FrameworkDetail() {
       )}
 
       {successMessage && (
-        <div className="rounded-md border border-sc/20 bg-sc-light p-4 text-sc-dark">{successMessage}</div>
+        <div className="rounded-md border border-status-pass/20 bg-status-pass-bg p-4 text-status-pass">{successMessage}</div>
       )}
 
       {/* System Prompt Section */}
-      <div className="rounded-lg border border-border bg-white">
+      <div className="rounded-lg border border-border bg-background">
         <button
           type="button"
           onClick={() => setPromptExpanded(!promptExpanded)}
@@ -437,7 +437,7 @@ export function FrameworkDetail() {
               readOnly={!ADMIN_MODE}
               className={`w-full min-h-[300px] rounded-md border border-border px-3 py-2 text-sm font-mono shadow-sm transition ${
                 ADMIN_MODE
-                  ? "bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  ? "bg-background focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   : "bg-muted text-foreground cursor-default"
               }`}
               placeholder="Enter the system prompt that will instruct the AI during evaluations..."
@@ -535,7 +535,7 @@ export function FrameworkDetail() {
               value={formState.requirement_text}
               onChange={(e) => handleFieldChange("requirement_text", e.target.value)}
               placeholder="Detailed description of the requirement"
-              className="min-h-[120px] rounded-md border border-border bg-white px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="min-h-[120px] rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
 

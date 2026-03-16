@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react"
 import { FileSearch, Clock, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -335,83 +334,78 @@ export function EvaluationStatus() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Evaluations</CardTitle>
-            <FileSearch className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+        <div className="flex items-center gap-4 rounded-xl border border-border/60 bg-background px-5 py-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <FileSearch className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-foreground">
               {evaluations.filter(e => e.status === "in_progress").length}
-            </div>
-            <p className="text-xs text-muted-foreground">Currently processing</p>
-          </CardContent>
-        </Card>
+            </p>
+            <p className="text-xs text-muted-foreground">Active</p>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Queued</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+        <div className="flex items-center gap-4 rounded-xl border border-border/60 bg-background px-5 py-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-flagged-bg">
+            <Clock className="h-5 w-5 text-status-flagged" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-foreground">
               {evaluations.filter(e => e.status === "pending").length}
-            </div>
-            <p className="text-xs text-muted-foreground">Ready to process</p>
-          </CardContent>
-        </Card>
+            </p>
+            <p className="text-xs text-muted-foreground">Queued</p>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Today</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{getTodayCompleted()}</div>
-            <p className="text-xs text-muted-foreground">Successfully evaluated</p>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-4 rounded-xl border border-border/60 bg-background px-5 py-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-status-pass-bg">
+            <CheckCircle className="h-5 w-5 text-status-pass" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-foreground">{getTodayCompleted()}</p>
+            <p className="text-xs text-muted-foreground">Completed today</p>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Evaluation Queue</CardTitle>
-          <CardDescription>
+      <div>
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold text-foreground">Evaluation Queue</h2>
+          <p className="text-sm text-muted-foreground">
             Real-time status of document evaluations. Click a completed row to view detailed results.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={evaluations}
-            filterPlaceholder="Search evaluations..."
-            initialPageSize={25}
-            toolbarSlot={
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => loadEvaluations({ trackRefresh: true })}
-                disabled={isRefreshing}
-              >
-                {isRefreshing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Refresh
-              </Button>
+          </p>
+        </div>
+        <DataTable
+          columns={columns}
+          data={evaluations}
+          filterPlaceholder="Search evaluations..."
+          initialPageSize={25}
+          toolbarSlot={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => loadEvaluations({ trackRefresh: true })}
+              disabled={isRefreshing}
+            >
+              {isRefreshing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Refresh
+            </Button>
+          }
+          onRowClick={(row: Row<EvaluationStatusType>) => {
+            const evaluation = row.original
+            if (evaluation.status === "completed") {
+              navigate(`/results/${evaluation.id}`)
             }
-            onRowClick={(row: Row<EvaluationStatusType>) => {
-              const evaluation = row.original
-              if (evaluation.status === "completed") {
-                navigate(`/results/${evaluation.id}`)
-              }
-            }}
-            isRowClickable={(row) => row.original.status === "completed"}
-            rowClassName={(row) =>
-              row.original.status === "completed"
-                ? "hover:bg-muted/60"
-                : undefined
-            }
-          />
-        </CardContent>
-      </Card>
+          }}
+          isRowClickable={(row) => row.original.status === "completed"}
+          rowClassName={(row) =>
+            row.original.status === "completed"
+              ? "hover:bg-muted/60"
+              : undefined
+          }
+        />
+      </div>
     </div>
   )
 }

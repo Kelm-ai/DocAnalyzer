@@ -63,7 +63,7 @@ function FrameworkRowActions({ framework, onEdit, onDelete }: FrameworkRowAction
       </button>
       {open && (
         <div
-          className="absolute right-0 z-20 mt-8 w-40 rounded-md border border-border bg-white py-1 text-sm shadow-lg"
+          className="absolute right-0 z-20 mt-8 w-40 rounded-md border border-border bg-background py-1 text-sm shadow-lg"
           role="menu"
         >
           <button
@@ -364,7 +364,7 @@ export function Frameworks() {
       )}
 
       {successMessage && (
-        <div className="rounded-md border border-sc/20 bg-sc-light p-4 text-sc-dark">
+        <div className="rounded-md border border-status-pass/20 bg-status-pass-bg p-4 text-status-pass">
           {successMessage}
         </div>
       )}
@@ -473,7 +473,7 @@ export function Frameworks() {
               value={formState.description}
               onChange={(e) => handleFieldChange("description", e.target.value)}
               placeholder="Brief description of this evaluation framework"
-              className="min-h-[80px] rounded-md border border-border bg-white px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="min-h-[80px] rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -486,7 +486,7 @@ export function Frameworks() {
               value={formState.system_prompt}
               onChange={(e) => handleFieldChange("system_prompt", e.target.value)}
               placeholder="The AI instruction prompt used during document evaluation..."
-              className="min-h-[200px] rounded-md border border-border bg-white px-3 py-2 text-sm font-mono shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="min-h-[200px] rounded-md border border-border bg-background px-3 py-2 text-sm font-mono shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <span className="text-xs text-muted-foreground">
               This prompt instructs the AI how to evaluate documents against this framework's requirements.

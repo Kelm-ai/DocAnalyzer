@@ -313,7 +313,7 @@ export function RequirementsTable() {
 
                                         {req.recommendations && req.recommendations.length > 0 && (
                                           <div>
-                                            <h5 className="font-semibold text-sm mb-1 text-sc">Recommendations</h5>
+                                            <h5 className="font-semibold text-sm mb-1 text-primary">Recommendations</h5>
                                             <ul className="list-disc list-inside space-y-1">
                                               {req.recommendations.map((rec: string, index: number) => (
                                                 <li key={index} className="text-sm text-muted-foreground">{rec}</li>

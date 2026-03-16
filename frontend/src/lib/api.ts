@@ -104,6 +104,7 @@ export interface RequirementResult {
   confidence_level: 'low' | 'medium' | 'high';
   confidence_score?: number | null;
   evidence_snippets: string[];
+  structured_evidence?: RequirementStructuredEvidenceItem[];
   evaluation_rationale: string;
   gaps_identified: string[];
   recommendations: string[];
@@ -112,6 +113,14 @@ export interface RequirementResult {
   evaluation_duration_ms?: number;
   search_results?: Record<string, unknown>[];
   created_at?: string;
+}
+
+export interface RequirementStructuredEvidenceItem {
+  page_number?: number | null;
+  section_title?: string | null;
+  quote: string;
+  supports: string;
+  document_name?: string | null;
 }
 
 export interface RequirementFeedbackRecord {
@@ -145,6 +154,27 @@ export interface RequirementPresentationCitation {
   file_id?: string | null;
   page_number?: number | null;
   section_title?: string | null;
+  document_name?: string | null;
+  supports?: string | null;
+}
+
+export interface RequirementPresentationTextBlock {
+  id?: string | null;
+  text: string;
+  citations?: RequirementPresentationCitation[] | null;
+}
+
+export interface RequirementPresentationEvidenceItem {
+  label: 'Document evidence' | 'Observed limitation' | 'Needs verification';
+  text: string;
+  citations: RequirementPresentationCitation[];
+}
+
+export interface RequirementPresentationEvidenceGroup {
+  claim_id: string;
+  label: 'Document evidence' | 'Observed limitation' | 'Needs verification';
+  text: string;
+  citations: RequirementPresentationCitation[];
 }
 
 export interface RequirementPresentationClaim {
@@ -162,9 +192,15 @@ export interface RequirementPresentationAnalysisBlock {
 export interface RequirementPresentationSummary {
   status: 'PASS' | 'FAIL' | 'FLAGGED' | 'PARTIAL' | 'NOT_APPLICABLE' | 'ERROR';
   confidence_level: 'low' | 'medium' | 'high';
-  inline_claims: RequirementPresentationClaim[];
-  modal_claims: RequirementPresentationClaim[];
-  full_analysis: RequirementPresentationAnalysisBlock[];
+  inline_finding?: RequirementPresentationTextBlock | null;
+  inline_evidence?: RequirementPresentationTextBlock | null;
+  inline_caveat?: RequirementPresentationTextBlock | null;
+  modal_summary?: string | null;
+  modal_evidence?: RequirementPresentationEvidenceItem[] | null;
+  evidence_groups?: RequirementPresentationEvidenceGroup[] | null;
+  inline_claims?: RequirementPresentationClaim[] | null;
+  modal_claims?: RequirementPresentationClaim[] | null;
+  full_analysis?: RequirementPresentationAnalysisBlock[] | null;
   generated_at?: string;
   presentation_version?: string;
 }

@@ -1,34 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  /* Surfaces */
-  --background: hsl(170 10% 94%);
-  --foreground: hsl(283 30% 15%);
+  /* Surfaces — warm cream/off-white */
+  --background: #fffdf9;
+  --page-bg: #F7F5F3;
+  --foreground: #2d2926;
 
-  /* Primary — SC Green */
-  --primary: hsl(177 100% 30%);
+  /* Primary — SC Green (actions, CTAs, active nav) */
+  --primary: #00978F;
   --primary-foreground: hsl(0 0% 100%);
 
-  /* Secondary — Neutral with plum warmth */
-  --secondary: hsl(270 8% 95%);
-  --secondary-foreground: hsl(283 30% 20%);
+  /* Secondary — Warm beige */
+  --secondary: #f5f0e8;
+  --secondary-foreground: #2d2926;
 
   /* Muted — Warm neutral */
-  --muted: hsl(270 5% 95%);
-  --muted-foreground: hsl(220 9% 46%);
+  --muted: #f5f0e8;
+  --muted-foreground: #6b6662;
 
-  /* Accent — Teal highlight */
-  --accent: hsl(177 30% 95%);
-  --accent-foreground: hsl(177 100% 24%);
+  /* Accent — Warm rust tint */
+  --accent: #fef5f0;
+  --accent-foreground: #da7756;
 
   /* Destructive — Standard red */
   --destructive: hsl(0 84% 60%);
   --destructive-foreground: hsl(0 0% 98%);
 
-  /* Borders & Inputs */
-  --border: hsl(210 10% 90%);
-  --input: hsl(210 10% 90%);
-  --ring: hsl(177 100% 30%);
+  /* Borders & Inputs — warm beige */
+  --border: #ebe4da;
+  --input: #ebe4da;
+  --ring: #00978F;
 
   /* SC Brand tokens */
   --sc-green: #00978F;
@@ -109,14 +110,12 @@
 /* Base styles */
 body {
   font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
-  color: var(--sc-purple-dark);
+  color: #2d2926;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ── ResultsV2 scoped utilities ────────────────── */
-.results-v2 {
-  -webkit-font-smoothing: antialiased;
-
-}
+.results-v2 {}
 
 /* Confidence bar — 40px track with colored fill */
 .results-v2 .rv2-confidence-track {
@@ -182,3 +181,145 @@ body {
 .results-v2 .rv2-scroll::-webkit-scrollbar-track { background: transparent; }
 .results-v2 .rv2-scroll::-webkit-scrollbar-thumb { background: hsl(270 5% 82%); border-radius: 3px; }
 .results-v2 .rv2-scroll::-webkit-scrollbar-thumb:hover { background: hsl(270 5% 72%); }
+
+/* ── Citation pill ────────────────────────────── */
+.results-v2 .rv2-citation-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'SF Mono', Menlo, Consolas, ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  font-style: normal;
+  color: #8a6840;
+  background: #f5eddf;
+  border: 1px solid #e4d8c4;
+  border-radius: 12px;
+  padding: 2px 10px 2px 7px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  vertical-align: middle;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.results-v2 .rv2-citation-pill::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #da7756;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.results-v2 .rv2-citation-pill:hover {
+  background: #efe5d2;
+  border-color: #d4c4a8;
+  color: #6a5030;
+  box-shadow: 0 2px 8px rgba(90, 74, 63, 0.12);
+  transform: translateY(-1px);
+}
+.results-v2 .rv2-citation-pill:hover::before { opacity: 1; }
+.results-v2 .rv2-citation-pill:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(90, 74, 63, 0.1);
+}
+.results-v2 .rv2-citation-more { padding: 2px 10px; }
+.results-v2 .rv2-citation-more::before { display: none; }
+
+/* ── Citation tooltip (fixed, JS-positioned) ──── */
+.rv2-cite-tooltip {
+  position: fixed;
+  z-index: 2000;
+  background: #fffdf9;
+  border: 1px solid #e0d6ca;
+  border-radius: 10px;
+  padding: 14px 18px;
+  max-width: 380px;
+  min-width: 240px;
+  box-shadow: 0 8px 32px rgba(90, 74, 63, 0.18), 0 2px 8px rgba(90, 74, 63, 0.08);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.rv2-cite-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.rv2-cite-tooltip-source {
+  font-family: 'SF Mono', Menlo, Consolas, ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: #da7756;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.rv2-cite-tooltip-page {
+  font-size: 10px;
+  color: #b5a99a;
+  font-weight: 500;
+}
+.rv2-cite-tooltip-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13px;
+  color: #2d2926;
+  line-height: 1.65;
+  font-style: italic;
+  border-left: 2px solid #da7756;
+  padding-left: 12px;
+  margin: 0;
+}
+.rv2-cite-tooltip-hint {
+  font-size: 10px;
+  color: #b5a99a;
+  margin-top: 8px;
+  text-align: right;
+}
+
+/* ── Modal citation cards ─────────────────────── */
+.results-v2 .rv2-modal-citations-block {
+  background: #faf7f2;
+  border: 1px solid #ebe4da;
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+.results-v2 .rv2-modal-citations-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.results-v2 .rv2-modal-cite-card {
+  background: #fffdf9;
+  border: 1px solid #e4d8c4;
+  border-radius: 8px;
+  padding: 12px 14px;
+  flex: 1 1 calc(50% - 4px);
+  min-width: 200px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.results-v2 .rv2-modal-cite-card:hover {
+  border-color: #d4c4a8;
+  box-shadow: 0 2px 8px rgba(90, 74, 63, 0.08);
+}
+.results-v2 .rv2-modal-cite-ref {
+  font-family: 'SF Mono', Menlo, Consolas, ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #da7756;
+}
+.results-v2 .rv2-modal-cite-page {
+  font-size: 10px;
+  color: #b5a99a;
+  font-weight: 500;
+}
+.results-v2 .rv2-modal-cite-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 12px;
+  color: #6a5a4f;
+  line-height: 1.6;
+  font-style: italic;
+  border-left: 2px solid #e4d8c4;
+  padding-left: 10px;
+}

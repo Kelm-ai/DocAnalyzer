@@ -2,10 +2,10 @@
 """
 Requirement presentation generator
 
-Creates claim-based requirement presentation data for Results V2.
+Creates finding-centered requirement presentation data for Results V2.
 This is a second-pass synthesis layer that keeps the raw evaluator output intact
-and uses a provider-neutral contract. The first implementation uses OpenAI
-direct PDF input plus structured outputs.
+and uses a provider-neutral contract. The current implementation keeps
+deterministic evidence grouping separate from lightweight LLM text synthesis.
 """
 
 from __future__ import annotations
@@ -20,13 +20,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple
 
+from evidence_utils import normalize_evidence_items
 from openai import OpenAI
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 logger = logging.getLogger(__name__)
 
-PRESENTATION_VERSION = "openai-structured-v1"
-CLAIM_KINDS = {"assessment", "supporting", "gap", "verification", "ofi"}
+PRESENTATION_VERSION = "openai-finding-v3"
+DETAIL_LABEL = Literal["Document evidence", "Observed limitation", "Needs verification"]
 
 
 class CitationPill(BaseModel):
@@ -39,21 +40,38 @@ class CitationPill(BaseModel):
     file_id: Optional[str] = None
     page_number: Optional[int] = None
     section_title: Optional[str] = None
+    document_name: Optional[str] = None
+    supports: Optional[str] = None
+    evidence_id: Optional[str] = None
+    evidence_type: Optional[Literal["direct_quote", "cross_reference", "visual_or_table"]] = None
 
 
-class ClaimItem(BaseModel):
+class StructuredEvidenceItem(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
+    page_number: Optional[int] = None
+    section_title: Optional[str] = None
+    quote: str
+    supports: str
+    document_name: Optional[str] = None
+    evidence_id: Optional[str] = None
+    evidence_type: Optional[Literal["direct_quote", "cross_reference", "visual_or_table"]] = None
+
+
+class PresentationTextBlock(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: str
     text: str
-    kind: Literal["assessment", "supporting", "gap", "verification", "ofi"]
-    citations: List[CitationPill] = Field(default_factory=list)
+    citations: Optional[List[CitationPill]] = None
 
 
-class AnalysisBlock(BaseModel):
+class EvidenceGroup(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    label: str
-    body: str
+    claim_id: str
+    label: DETAIL_LABEL
+    text: str
     citations: List[CitationPill] = Field(default_factory=list)
 
 
@@ -62,67 +80,40 @@ class RequirementPresentationSummary(BaseModel):
 
     status: str
     confidence_level: Literal["low", "medium", "high"]
-    inline_claims: List[ClaimItem] = Field(default_factory=list)
-    modal_claims: List[ClaimItem] = Field(default_factory=list)
-    full_analysis: List[AnalysisBlock] = Field(default_factory=list)
+    inline_finding: PresentationTextBlock
+    inline_caveat: Optional[PresentationTextBlock] = None
+    modal_summary: str
+    evidence_groups: List[EvidenceGroup] = Field(default_factory=list)
     generated_at: str
     presentation_version: str = PRESENTATION_VERSION
 
 
-class _StructuredCitation(BaseModel):
+class _StructuredSynthesisResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    supporting_quote: str
-    page_number: Optional[int] = None
-    section_title: Optional[str] = None
-    supported_claim: Optional[str] = None
-    label: Optional[str] = None
+    inline_finding: str
+    inline_caveat: Optional[str] = None
+    modal_summary: str
 
 
-class _StructuredClaim(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
-    text: str
-    kind: Literal["assessment", "supporting", "gap", "verification", "ofi"]
-    citations: List[_StructuredCitation] = Field(default_factory=list)
-
-
-class _StructuredAnalysisBlock(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
-    label: str
-    body: str
-    citations: List[_StructuredCitation] = Field(default_factory=list)
-
-
-class _StructuredPresentationResponse(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
-    inline_claims: List[_StructuredClaim] = Field(default_factory=list)
-    modal_claims: List[_StructuredClaim] = Field(default_factory=list)
-    full_analysis: List[_StructuredAnalysisBlock] = Field(default_factory=list)
-
-
-PRESENTATION_SYSTEM_PROMPT = """You create claim-based compliance review content from raw requirement evaluation output.
+PRESENTATION_SYSTEM_PROMPT = """You create concise reviewer-facing compliance findings from raw requirement evaluation output.
 
 Rules:
 1. Use only the supplied requirement data and attached PDF. Never invent support, gaps, or citations.
-2. Write claim-first reviewer-facing statements. Do not lead with raw quotes or page references.
-3. Inline claims should be short and scannable. They should communicate the gist of what is present, missing, or uncertain.
-4. Modal claims can be slightly fuller than inline claims but should still be concise.
-5. full_analysis should explain the reasoning in short prose blocks, not raw evidence dumps.
+2. Write plain-language reviewer-facing statements. Do not lead with raw quotes or page references.
+3. Keep the inline finding short and scannable. It should communicate the gist of what is present, missing, or uncertain.
+4. The optional inline caveat should describe the limitation or verification need in neutral language.
+5. The modal summary should explain why the status was assigned in 1-2 concise sentences.
 6. Distinguish FAIL from FLAGGED:
    - FAIL means the requirement is not adequately met.
    - FLAGGED means evidence is incomplete, indirect, or needs human verification.
-7. PASS may include optional opportunities for improvement, but do not turn PASS into a failure.
+7. PASS may include optional limitations or opportunities for improvement, but do not turn PASS into a failure.
 8. No recommendations. No remediation instructions.
-9. Every citation must be directly supported by the attached PDF.
-10. If a claim has no direct support in the PDF, return an empty citations array for that claim.
-11. Keep output compact:
-   - inline claims: 1-2 sentences total across all inline claims
-   - modal claims: one sentence each
-   - full analysis blocks: maximum 2 sentences each
-   - citations: maximum 1 per claim or analysis block
+9. Do not emit citations or evidence groups. Those are generated separately.
+10. Keep output compact:
+   - inline_finding: 1 sentence
+   - inline_caveat: 1 sentence when needed, else omit
+   - modal_summary: 1-2 sentences
 """
 
 
@@ -142,18 +133,6 @@ def _normalize_confidence(value: Any) -> Literal["low", "medium", "high"]:
     if confidence in {"low", "medium", "high"}:
         return confidence  # type: ignore[return-value]
     return "low"
-
-
-def _truncate_items(items: Iterable[str], limit: int) -> List[str]:
-    output: List[str] = []
-    for item in items:
-        value = str(item).strip()
-        if not value:
-            continue
-        output.append(value)
-        if len(output) >= limit:
-            break
-    return output
 
 
 def _fallback_rationale(status: str) -> str:
@@ -193,132 +172,78 @@ def _first_sentence(text: str, limit: int = 220) -> str:
     return _truncate_sentence(parts[0] if parts else cleaned, limit)
 
 
-def _default_presentation(requirement: Dict[str, Any]) -> RequirementPresentationSummary:
-    status = _normalize_status(requirement.get("status"))
-    confidence = _normalize_confidence(requirement.get("confidence", requirement.get("confidence_level")))
-    rationale = str(requirement.get("rationale") or requirement.get("evaluation_rationale") or "").strip()
-    evidence = _truncate_items(requirement.get("evidence") or requirement.get("evidence_snippets") or [], 2)
-    gaps = _truncate_items(requirement.get("gaps") or requirement.get("gaps_identified") or [], 2)
-
-    inline_claims: List[ClaimItem] = []
-    modal_claims: List[ClaimItem] = []
-    full_analysis: List[AnalysisBlock] = []
-
-    assessment_text = _first_sentence(rationale or _fallback_rationale(status))
-    evidence_text = _first_sentence(evidence[0]) if evidence else ""
-
-    if status == "PASS":
-        inline_claims.append(
-            ClaimItem(
-                text=assessment_text or "The requirement appears to be adequately addressed in the document.",
-                kind="assessment",
-                citations=[],
-            )
-        )
-        modal_claims.append(
-            ClaimItem(
-                text=assessment_text or "The requirement appears to be adequately addressed in the document.",
-                kind="assessment",
-                citations=[],
-            )
-        )
-        if evidence_text:
-            modal_claims.append(ClaimItem(text=evidence_text, kind="supporting", citations=[]))
-        for gap in gaps[:1]:
-            claim_text = _first_sentence(gap)
-            inline_claims.append(ClaimItem(text=claim_text, kind="ofi", citations=[]))
-            modal_claims.append(ClaimItem(text=claim_text, kind="ofi", citations=[]))
-    elif status == "FAIL":
-        inline_claims.append(
-            ClaimItem(
-                text=assessment_text or "The document does not adequately satisfy this requirement.",
-                kind="assessment",
-                citations=[],
-            )
-        )
-        modal_claims.append(
-            ClaimItem(
-                text=assessment_text or "The document does not adequately satisfy this requirement.",
-                kind="assessment",
-                citations=[],
-            )
-        )
-        if evidence_text:
-            modal_claims.append(ClaimItem(text=evidence_text, kind="supporting", citations=[]))
-        for gap in gaps[:2]:
-            claim_text = _first_sentence(gap)
-            inline_claims.append(ClaimItem(text=claim_text, kind="gap", citations=[]))
-            modal_claims.append(ClaimItem(text=claim_text, kind="gap", citations=[]))
-    elif status == "FLAGGED":
-        inline_claims.append(
-            ClaimItem(
-                text=assessment_text or "This requirement still needs human verification.",
-                kind="assessment",
-                citations=[],
-            )
-        )
-        modal_claims.append(
-            ClaimItem(
-                text=assessment_text or "This requirement still needs human verification.",
-                kind="assessment",
-                citations=[],
-            )
-        )
-        if evidence_text:
-            modal_claims.append(ClaimItem(text=evidence_text, kind="supporting", citations=[]))
-        for gap in gaps[:2]:
-            claim_text = _first_sentence(gap)
-            inline_claims.append(ClaimItem(text=claim_text, kind="verification", citations=[]))
-            modal_claims.append(ClaimItem(text=claim_text, kind="verification", citations=[]))
-    else:
-        summary_text = rationale or _fallback_rationale(status)
-        clean_summary = _first_sentence(summary_text)
-        inline_claims.append(ClaimItem(text=clean_summary, kind="assessment", citations=[]))
-        modal_claims.append(ClaimItem(text=clean_summary, kind="assessment", citations=[]))
-
-    if rationale:
-        full_analysis.append(
-            AnalysisBlock(label="Assessment summary", body=_truncate_sentence(rationale, 320), citations=[])
-        )
-    if evidence:
-        full_analysis.append(
-            AnalysisBlock(
-                label="Evidence analysis",
-                body=" ".join(_truncate_sentence(item, 180) for item in evidence[:2]),
-                citations=[],
-            )
-        )
-    if gaps:
-        full_analysis.append(
-            AnalysisBlock(
-                label="Opportunity analysis" if status == "PASS" else "Gap analysis",
-                body=" ".join(_truncate_sentence(item, 180) for item in gaps[:2]),
-                citations=[],
-            )
-        )
-
-    return RequirementPresentationSummary(
-        status=status,
-        confidence_level=confidence,
-        inline_claims=inline_claims[:3],
-        modal_claims=(modal_claims or inline_claims)[:5],
-        full_analysis=full_analysis[:3],
-        generated_at=datetime.utcnow().isoformat(),
-    )
+def _collect_items(items: Iterable[str]) -> List[str]:
+    output: List[str] = []
+    seen: set[str] = set()
+    for item in items:
+        cleaned = _strip_source_prefix(str(item or ""))
+        if not cleaned:
+            continue
+        key = cleaned.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        output.append(cleaned)
+    return output
 
 
-def _format_citation_label(label: Optional[str], page_number: Optional[int], section_title: Optional[str]) -> str:
-    if isinstance(label, str) and label.strip():
-        return label.strip()
+def _normalize_structured_evidence(items: Any) -> List[StructuredEvidenceItem]:
+    normalized: List[StructuredEvidenceItem] = []
+    for item in normalize_evidence_items(items):
+        try:
+            normalized.append(StructuredEvidenceItem.model_validate(item))
+        except ValidationError:
+            continue
+    return normalized
+
+
+def _extract_page_number(text: str) -> Optional[int]:
+    page_match = re.search(r"\b[Pp]age\s+(\d+)\b", text)
+    if page_match:
+        return int(page_match.group(1))
+    page_match = re.search(r"\(page\s+(\d+)\)", text, re.IGNORECASE)
+    if page_match:
+        return int(page_match.group(1))
+    return None
+
+
+def _extract_section_title(text: str) -> Optional[str]:
+    prefix = text.split(":", 1)[0].strip()
+    if not prefix or len(prefix) > 120:
+        return None
+    if '"' in prefix or "“" in prefix:
+        return None
+    return prefix
+
+
+def _format_citation_label(
+    page_number: Optional[int],
+    section_title: Optional[str],
+    document_name: Optional[str] = None,
+    evidence_type: Optional[str] = None,
+) -> str:
+    if evidence_type == "cross_reference":
+        return "xref"
     if page_number is not None:
         return f"p.{page_number}"
     if isinstance(section_title, str) and section_title.strip():
         return section_title.strip()[:24]
+    if isinstance(document_name, str) and document_name.strip():
+        return document_name.strip()[:24]
     return "Source"
 
 
-def _format_citation_location(page_number: Optional[int], section_title: Optional[str]) -> str:
+def _format_citation_location(
+    page_number: Optional[int],
+    section_title: Optional[str],
+    document_name: Optional[str] = None,
+    evidence_type: Optional[str] = None,
+) -> str:
     parts: List[str] = []
+    if evidence_type == "cross_reference":
+        parts.append("Cross-reference")
+    if isinstance(document_name, str) and document_name.strip():
+        parts.append(document_name.strip())
     if isinstance(section_title, str) and section_title.strip():
         parts.append(section_title.strip())
     if page_number is not None:
@@ -326,78 +251,331 @@ def _format_citation_location(page_number: Optional[int], section_title: Optiona
     return " • ".join(parts) if parts else "Source"
 
 
-def _normalize_citations(citations: Iterable[_StructuredCitation]) -> List[CitationPill]:
-    normalized: List[CitationPill] = []
-    seen: set[Tuple[str, str, str]] = set()
+def _citation_sort_score(citation: CitationPill) -> int:
+    score = 0
+    if citation.page_number is not None:
+        score += 4
+    if citation.section_title:
+        score += 2
+    if citation.label != "Source":
+        score += 1
+    if citation.location != "Source":
+        score += 1
+    return score
 
-    for citation in citations:
-        excerpt = citation.supporting_quote.strip()
-        if not excerpt:
-            continue
 
-        label = _format_citation_label(citation.label, citation.page_number, citation.section_title)
-        location = _format_citation_location(citation.page_number, citation.section_title)
-        key = (label, location, excerpt)
+def _extract_citations_from_raw_item(text: str) -> List[CitationPill]:
+    cleaned = _strip_source_prefix(text)
+    if not cleaned:
+        return []
+
+    page_number = _extract_page_number(cleaned)
+    section_title = _extract_section_title(cleaned)
+    label = _format_citation_label(page_number, section_title)
+    location = _format_citation_location(page_number, section_title)
+
+    quote_matches = re.findall(r"[\"“](.*?)[\"”]", cleaned)
+    excerpts = [_truncate_sentence(match, 220) for match in quote_matches if _truncate_sentence(match, 220)]
+    if not excerpts:
+        excerpts = [_truncate_sentence(cleaned, 220)]
+
+    citations: List[CitationPill] = []
+    seen: set[Tuple[str, str]] = set()
+    for excerpt in excerpts:
+        key = (location, excerpt)
         if key in seen:
             continue
         seen.add(key)
-
-        normalized.append(
+        citations.append(
             CitationPill(
                 label=label,
                 location=location,
                 excerpt=excerpt,
-                provider="openai",
-                page_number=citation.page_number,
-                section_title=citation.section_title,
+                provider="raw_evaluator",
+                page_number=page_number,
+                section_title=section_title,
             )
         )
 
-    return normalized[:2]
+    citations.sort(key=_citation_sort_score, reverse=True)
+    return citations
 
 
-def _normalize_claims(claims: Iterable[_StructuredClaim], limit: int) -> List[ClaimItem]:
-    normalized: List[ClaimItem] = []
-    for claim in claims:
-        text = claim.text.strip()
-        if not text or claim.kind not in CLAIM_KINDS:
+def _citation_from_structured_evidence(item: StructuredEvidenceItem) -> CitationPill:
+    excerpt_source = item.quote or item.supports
+    return CitationPill(
+        label=_format_citation_label(item.page_number, item.section_title, item.document_name, item.evidence_type),
+        location=_format_citation_location(item.page_number, item.section_title, item.document_name, item.evidence_type),
+        excerpt=_truncate_sentence(excerpt_source, 300),
+        provider="raw_evaluator",
+        page_number=item.page_number,
+        section_title=item.section_title,
+        document_name=item.document_name,
+        supports=item.supports,
+        evidence_id=item.evidence_id,
+        evidence_type=item.evidence_type,
+    )
+
+
+def _text_block(block_id: str, text: str) -> PresentationTextBlock:
+    return PresentationTextBlock(id=block_id, text=text.strip())
+
+
+def _default_document_evidence_text(status: str) -> Optional[str]:
+    if status == "PASS":
+        return "No usable citation was extracted for this result."
+    if status == "FAIL":
+        return "No direct supporting text was identified in the reviewed document for this requirement."
+    if status == "FLAGGED":
+        return "The extracted evidence is not specific enough to resolve this requirement without human review."
+    return None
+
+
+def _make_finding_text(status: str, rationale: str) -> str:
+    summary = _first_sentence(rationale or _fallback_rationale(status), 160)
+    if summary:
+        return summary
+
+    if status == "PASS":
+        return "The document appears to address this requirement."
+    if status == "FAIL":
+        return "The document does not appear to adequately address this requirement."
+    if status == "FLAGGED":
+        return "This requirement still needs human verification."
+    if status == "NOT_APPLICABLE":
+        return "This requirement was marked not applicable."
+    return "This requirement could not be evaluated successfully."
+
+
+def _make_inline_caveat(status: str, gaps: List[str]) -> Optional[PresentationTextBlock]:
+    if status == "PASS" and gaps:
+        return _text_block("caveat", _first_sentence(gaps[0], 160))
+    if status == "FAIL" and gaps:
+        return _text_block("caveat", _first_sentence(gaps[0], 160))
+    if status == "FLAGGED":
+        caveat_text = _first_sentence(gaps[0], 160) if gaps else "Human review is still needed to confirm whether this requirement is met."
+        return _text_block("caveat", caveat_text)
+    return None
+
+
+def _candidate_label(status: str, is_gap: bool) -> Optional[DETAIL_LABEL]:
+    if not is_gap:
+        return "Document evidence"
+    if status == "FLAGGED":
+        return "Needs verification"
+    if status in {"PASS", "FAIL"}:
+        return "Observed limitation"
+    return None
+
+
+def _candidate_claim_id(label: DETAIL_LABEL) -> str:
+    return "finding" if label == "Document evidence" else "caveat"
+
+
+def _label_priority(label: DETAIL_LABEL) -> int:
+    if label == "Document evidence":
+        return 0
+    if label == "Observed limitation":
+        return 1
+    return 2
+
+
+def _build_evidence_groups(
+    status: str,
+    evidence: List[StructuredEvidenceItem],
+    gaps: List[str],
+    max_citations_per_group: int,
+    max_groups_per_requirement: int,
+    max_citations_per_requirement: int,
+) -> List[EvidenceGroup]:
+    raw_groups: List[Tuple[int, EvidenceGroup, List[CitationPill]]] = []
+    group_index = 0
+
+    for item in evidence:
+        label = _candidate_label(status, is_gap=False)
+        if label is None:
             continue
-        normalized.append(
-            ClaimItem(
-                text=text,
-                kind=claim.kind,
-                citations=_normalize_citations(claim.citations),
+        citations = [_citation_from_structured_evidence(item)]
+        raw_groups.append(
+            (
+                group_index,
+                EvidenceGroup(
+                    claim_id=_candidate_claim_id(label),
+                    label=label,
+                    text=_truncate_sentence(item.supports, 320),
+                    citations=[],
+                ),
+                citations,
             )
         )
-        if len(normalized) >= limit:
-            break
-    return normalized
+        group_index += 1
 
-
-def _normalize_analysis(blocks: Iterable[_StructuredAnalysisBlock], limit: int) -> List[AnalysisBlock]:
-    normalized: List[AnalysisBlock] = []
-    for block in blocks:
-        label = block.label.strip()
-        body = block.body.strip()
-        if not label or not body:
+    for item in gaps:
+        label = _candidate_label(status, is_gap=True)
+        if label is None:
             continue
-        normalized.append(
-            AnalysisBlock(
-                label=label,
-                body=body,
-                citations=_normalize_citations(block.citations),
+        citations = _extract_citations_from_raw_item(item)
+        raw_groups.append(
+            (
+                group_index,
+                EvidenceGroup(
+                    claim_id=_candidate_claim_id(label),
+                    label=label,
+                    text=_truncate_sentence(item, 320),
+                    citations=[],
+                ),
+                citations,
             )
         )
-        if len(normalized) >= limit:
+        group_index += 1
+
+    if not evidence:
+        fallback_text = _default_document_evidence_text(status)
+        if fallback_text:
+            raw_groups.append(
+                (
+                    group_index,
+                    EvidenceGroup(
+                        claim_id="finding",
+                        label="Document evidence",
+                        text=fallback_text,
+                        citations=[],
+                    ),
+                    [],
+                )
+            )
+            group_index += 1
+
+    if status == "FLAGGED" and not gaps:
+        raw_groups.append(
+            (
+                group_index,
+                EvidenceGroup(
+                    claim_id="caveat",
+                    label="Needs verification",
+                    text="The available document evidence is incomplete or ambiguous enough that this requirement should be reviewed by a human.",
+                    citations=[],
+                ),
+                [],
+            )
+        )
+
+    raw_groups.sort(
+        key=lambda item: (
+            _label_priority(item[1].label),
+            -max((_citation_sort_score(citation) for citation in item[2]), default=-1),
+            item[0],
+        )
+    )
+
+    built_groups: List[EvidenceGroup] = []
+    seen_citations: set[Tuple[str, str]] = set()
+    total_citations = 0
+    seen_group_keys: set[Tuple[str, str, str]] = set()
+
+    for _, group, citations in raw_groups:
+        if len(built_groups) >= max_groups_per_requirement:
             break
-    return normalized
+
+        group_key = (group.claim_id, group.label, group.text.lower())
+        if group_key in seen_group_keys:
+            continue
+        seen_group_keys.add(group_key)
+
+        allowed_citations: List[CitationPill] = []
+        remaining_citations = max(0, max_citations_per_requirement - total_citations)
+        per_group_limit = min(max_citations_per_group, remaining_citations)
+
+        for citation in citations:
+            if len(allowed_citations) >= per_group_limit:
+                break
+            key = (citation.location, citation.excerpt)
+            if key in seen_citations:
+                continue
+            seen_citations.add(key)
+            allowed_citations.append(citation)
+            total_citations += 1
+
+        built_groups.append(group.model_copy(update={"citations": allowed_citations}))
+
+    return built_groups
+
+
+def _default_presentation(
+    requirement: Dict[str, Any],
+    max_citations_per_group: int,
+    max_groups_per_requirement: int,
+    max_citations_per_requirement: int,
+) -> RequirementPresentationSummary:
+    status = _normalize_status(requirement.get("status"))
+    confidence = _normalize_confidence(requirement.get("confidence", requirement.get("confidence_level")))
+    rationale = str(requirement.get("rationale") or requirement.get("evaluation_rationale") or "").strip()
+    evidence = _normalize_structured_evidence(
+        requirement.get("structured_evidence")
+        or requirement.get("evidence")
+        or requirement.get("evidence_snippets")
+        or []
+    )
+    gaps = _collect_items(requirement.get("gaps") or requirement.get("gaps_identified") or [])
+
+    return RequirementPresentationSummary(
+        status=status,
+        confidence_level=confidence,
+        inline_finding=_text_block("finding", _make_finding_text(status, rationale)),
+        inline_caveat=_make_inline_caveat(status, gaps),
+        modal_summary=_truncate_sentence(rationale or _make_finding_text(status, rationale), 420),
+        evidence_groups=_build_evidence_groups(
+            status=status,
+            evidence=evidence,
+            gaps=gaps,
+            max_citations_per_group=max_citations_per_group,
+            max_groups_per_requirement=max_groups_per_requirement,
+            max_citations_per_requirement=max_citations_per_requirement,
+        ),
+        generated_at=datetime.now(timezone.utc).isoformat(),
+    )
+
+
+def _apply_synthesis(
+    baseline: RequirementPresentationSummary,
+    payload: _StructuredSynthesisResponse,
+) -> RequirementPresentationSummary:
+    summary = baseline.model_copy(deep=True)
+
+    finding_text = _first_sentence(payload.inline_finding, 160)
+    if finding_text:
+        summary.inline_finding.text = finding_text
+
+    caveat_text = _first_sentence(payload.inline_caveat or "", 160)
+    if caveat_text:
+        summary.inline_caveat = _text_block("caveat", caveat_text)
+
+    modal_summary = _truncate_sentence(payload.modal_summary, 420)
+    if modal_summary:
+        summary.modal_summary = modal_summary
+
+    return summary
 
 
 def _build_requirement_prompt(requirement: Dict[str, Any]) -> str:
-    evidence = _truncate_items(requirement.get("evidence") or requirement.get("evidence_snippets") or [], 2)
-    gaps = _truncate_items(requirement.get("gaps") or requirement.get("gaps_identified") or [], 2)
+    evidence = _normalize_structured_evidence(
+        requirement.get("structured_evidence")
+        or requirement.get("evidence")
+        or requirement.get("evidence_snippets")
+        or []
+    )
+    gaps = _collect_items(requirement.get("gaps") or requirement.get("gaps_identified") or [])
 
-    return f"""Create claim-based presentation content for this requirement.
+    evidence_lines = [
+        f'- {item.document_name + " | " if item.document_name else ""}'
+        f'{item.section_title or "Source"}'
+        f'{f" | p.{item.page_number}" if item.page_number is not None else ""}'
+        f' | "{item.quote}"'
+        f' | supports: {item.supports}'
+        for item in evidence
+    ]
+
+    return f"""Create finding-centered reviewer-facing content for this requirement.
 
 Requirement:
 - ID: {requirement.get("requirement_id")}
@@ -410,23 +588,17 @@ Raw rationale:
 {str(requirement.get("rationale") or requirement.get("evaluation_rationale") or "").strip()}
 
 Evidence items:
-{chr(10).join(f"- {item}" for item in evidence) if evidence else "- None provided"}
+{chr(10).join(evidence_lines) if evidence_lines else "- None provided"}
 
 Gaps or OFIs:
 {chr(10).join(f"- {item}" for item in gaps) if gaps else "- None provided"}
 
-Return claim-first JSON for the UI:
-- inline_claims: 1 to 4 short claims that explain the gist
-- modal_claims: 1 to 6 short claims for the detailed modal
-- full_analysis: 1 to 4 short prose blocks
+Return compact JSON for the UI:
+- inline_finding: one short sentence
+- inline_caveat: optional one-sentence limitation or verification note
+- modal_summary: one or two concise sentences
 
-Citations:
-- Attach citations to claims or analysis blocks only when they are directly supported by the attached PDF
-- Each citation must include an exact supporting quote
-- Include page_number when you can identify it
-- Include section_title when visible in the document
-- Do not invent citations for unsupported statements
-- Keep the response compact and within the requested limits
+Do not return citations, evidence blocks, or evidence groups.
 """
 
 
@@ -459,6 +631,13 @@ class OpenAIPdfPresentationGenerator(BaseRequirementPresentationGenerator):
         )
         self.reasoning_effort = os.getenv("OPENAI_PRESENTATION_REASONING_EFFORT", "low")
         self.max_concurrency = max(1, int(os.getenv("OPENAI_PRESENTATION_CONCURRENCY", "2")))
+        self.max_output_tokens = max(512, int(os.getenv("OPENAI_PRESENTATION_MAX_OUTPUT_TOKENS", "4000")))
+        self.max_citations_per_group = max(1, int(os.getenv("OPENAI_PRESENTATION_MAX_CITATIONS_PER_GROUP", "10")))
+        self.max_groups_per_requirement = max(1, int(os.getenv("OPENAI_PRESENTATION_MAX_GROUPS_PER_REQUIREMENT", "12")))
+        self.max_citations_per_requirement = max(
+            self.max_citations_per_group,
+            int(os.getenv("OPENAI_PRESENTATION_MAX_CITATIONS_PER_REQUIREMENT", "40")),
+        )
         self.client = client if client is not None else (OpenAI(api_key=self.api_key) if self.api_key else None)
 
     def is_available(self) -> bool:
@@ -567,12 +746,19 @@ class OpenAIPdfPresentationGenerator(BaseRequirementPresentationGenerator):
             return None
 
         async with semaphore:
+            baseline = _default_presentation(
+                requirement,
+                max_citations_per_group=self.max_citations_per_group,
+                max_groups_per_requirement=self.max_groups_per_requirement,
+                max_citations_per_requirement=self.max_citations_per_requirement,
+            )
+
             try:
                 parsed = await asyncio.to_thread(
                     self.client.responses.parse,  # type: ignore[union-attr]
                     model=self.model,
                     reasoning={"effort": self.reasoning_effort},
-                    max_output_tokens=700,
+                    max_output_tokens=self.max_output_tokens,
                     input=[
                         {
                             "role": "user",
@@ -583,37 +769,23 @@ class OpenAIPdfPresentationGenerator(BaseRequirementPresentationGenerator):
                         }
                     ],
                     instructions=PRESENTATION_SYSTEM_PROMPT,
-                    text_format=_StructuredPresentationResponse,
+                    text_format=_StructuredSynthesisResponse,
                     text={"verbosity": "low"},
                 )
             except Exception as exc:
                 logger.warning("OpenAI presentation parse failed for %s: %s", requirement_id, exc)
-                return requirement_id, _default_presentation(requirement).model_dump()
+                return requirement_id, baseline.model_dump()
 
             payload = getattr(parsed, "output_parsed", None)
             if payload is None:
                 logger.warning("OpenAI presentation parse returned no structured payload for %s", requirement_id)
-                return requirement_id, _default_presentation(requirement).model_dump()
+                return requirement_id, baseline.model_dump()
 
             try:
-                summary = RequirementPresentationSummary(
-                    status=_normalize_status(requirement.get("status")),
-                    confidence_level=_normalize_confidence(
-                        requirement.get("confidence", requirement.get("confidence_level"))
-                    ),
-                    inline_claims=_normalize_claims(payload.inline_claims, 4),
-                    modal_claims=_normalize_claims(payload.modal_claims or payload.inline_claims, 6),
-                    full_analysis=_normalize_analysis(payload.full_analysis, 4),
-                    generated_at=datetime.utcnow().isoformat(),
-                )
+                summary = _apply_synthesis(baseline, payload)
             except ValidationError as exc:
                 logger.warning("Presentation normalization failed for %s: %s", requirement_id, exc)
-                return requirement_id, _default_presentation(requirement).model_dump()
-
-            if not summary.inline_claims:
-                return requirement_id, _default_presentation(requirement).model_dump()
-            if not summary.modal_claims:
-                summary.modal_claims = list(summary.inline_claims)
+                return requirement_id, baseline.model_dump()
 
             return requirement_id, summary.model_dump()
 
@@ -639,7 +811,7 @@ def generate_requirement_presentations_sync(
             supabase_client=supabase_client,
         )
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
         except RuntimeError:
             return asyncio.run(coroutine)
         with concurrent.futures.ThreadPoolExecutor() as executor:

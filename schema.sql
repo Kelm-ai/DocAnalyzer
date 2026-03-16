@@ -53,10 +53,12 @@ CREATE TABLE IF NOT EXISTS requirement_evaluations (
     status TEXT NOT NULL CHECK (status IN ('PASS', 'FAIL', 'FLAGGED', 'PARTIAL', 'NOT_APPLICABLE', 'ERROR')),
     confidence_level TEXT NOT NULL DEFAULT 'low' CHECK (confidence_level IN ('low', 'medium', 'high')),
     evidence_snippets TEXT[],
+    evidence_structured JSONB NOT NULL DEFAULT '[]'::jsonb,
     evaluation_rationale TEXT,
     gaps_identified TEXT[],
     recommendations TEXT[],
     tokens_used INTEGER,
+    metadata JSONB DEFAULT NULL,
     is_helpful BOOLEAN,
     feedback_comment TEXT,
     feedback_updated_at TIMESTAMP WITH TIME ZONE,
@@ -123,6 +125,26 @@ CREATE TABLE IF NOT EXISTS processed_documents (
     status TEXT DEFAULT 'processed'
 );
 
+-- Durable provider upload cache keyed by file hash
+CREATE TABLE IF NOT EXISTS document_files (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    storage_path TEXT NOT NULL,
+    file_hash TEXT NOT NULL UNIQUE,
+    file_name TEXT NOT NULL,
+    mime_type TEXT DEFAULT 'application/pdf',
+    file_size_bytes INTEGER,
+    openai_file_id TEXT,
+    openai_uploaded_at TIMESTAMPTZ,
+    gemini_file_id TEXT,
+    gemini_file_uri TEXT,
+    gemini_uploaded_at TIMESTAMPTZ,
+    gemini_expires_at TIMESTAMPTZ,
+    claude_file_id TEXT,
+    claude_uploaded_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_document_evaluations_status ON document_evaluations(status);
 CREATE INDEX IF NOT EXISTS idx_requirement_evaluations_doc_id ON requirement_evaluations(document_evaluation_id);
@@ -130,6 +152,8 @@ CREATE INDEX IF NOT EXISTS idx_requirement_evaluations_req_id ON requirement_eva
 CREATE INDEX IF NOT EXISTS idx_requirement_evaluations_status ON requirement_evaluations(status);
 CREATE INDEX IF NOT EXISTS idx_compliance_reports_doc_id ON compliance_reports(document_evaluation_id);
 CREATE INDEX IF NOT EXISTS idx_processed_documents_filename ON processed_documents(filename);
+CREATE INDEX IF NOT EXISTS idx_document_files_hash ON document_files(file_hash);
+CREATE INDEX IF NOT EXISTS idx_document_files_storage_path ON document_files(storage_path);
 CREATE INDEX IF NOT EXISTS idx_eval_docs_evaluation_id ON evaluation_documents(evaluation_id);
 CREATE INDEX IF NOT EXISTS idx_eval_docs_role ON evaluation_documents(document_role);
 CREATE INDEX IF NOT EXISTS idx_eval_docs_file_hash ON evaluation_documents(file_hash);
@@ -169,6 +193,7 @@ ALTER TABLE document_evaluations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE requirement_evaluations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE compliance_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE processed_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE document_files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE eval_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE evaluation_documents ENABLE ROW LEVEL SECURITY;
 
@@ -178,5 +203,6 @@ CREATE POLICY "Allow full access to document_evaluations" ON document_evaluation
 CREATE POLICY "Allow full access to requirement_evaluations" ON requirement_evaluations FOR ALL USING (true);
 CREATE POLICY "Allow full access to compliance_reports" ON compliance_reports FOR ALL USING (true);
 CREATE POLICY "Allow full access to processed_documents" ON processed_documents FOR ALL USING (true);
+CREATE POLICY "Allow full access to document_files" ON document_files FOR ALL USING (true);
 CREATE POLICY "Allow full access to eval_results" ON eval_results FOR ALL USING (true);
 CREATE POLICY "Allow full access to evaluation_documents" ON evaluation_documents FOR ALL USING (true);

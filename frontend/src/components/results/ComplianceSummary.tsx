@@ -184,7 +184,7 @@ export function ComplianceSummary() {
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-sc" />
+              <TrendingUp className="h-5 w-5 text-primary" />
               <CardTitle>Key Recommendations</CardTitle>
             </div>
             <CardDescription>

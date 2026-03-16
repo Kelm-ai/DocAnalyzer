@@ -174,7 +174,7 @@ function RequirementRowActions({ requirement, onEdit, onDuplicate, onDelete }: R
       {open ? (
         <div
           ref={menuRef}
-          className="absolute right-0 z-20 mt-2 w-40 rounded-md border border-border bg-white py-1 text-sm shadow-lg"
+          className="absolute right-0 z-20 mt-2 w-40 rounded-md border border-border bg-background py-1 text-sm shadow-lg"
           role="menu"
         >
           <button
@@ -636,7 +636,7 @@ export function Requirements() {
               value={formState.requirement_text}
               onChange={(event) => handleFieldChange("requirement_text", event.target.value)}
               placeholder="Detailed description of the requirement"
-              className="min-h-[120px] rounded-md border border-border bg-white px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="min-h-[120px] rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
 

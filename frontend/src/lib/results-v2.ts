@@ -2,31 +2,39 @@ import type {
   RequirementPresentationAnalysisBlock,
   RequirementPresentationCitation,
   RequirementPresentationClaim,
+  RequirementPresentationEvidenceGroup,
+  RequirementPresentationEvidenceItem,
   RequirementPresentationSummary,
+  RequirementPresentationTextBlock,
   RequirementResult,
 } from "@/lib/api"
 
 export type ResultsV2Status = "PASS" | "FAIL" | "FLAGGED" | "NOT_APPLICABLE" | "ERROR"
 export type ResultsV2ReviewState = "approved" | "rejected" | "pending"
-export type ClaimKind = "assessment" | "supporting" | "gap" | "verification" | "ofi"
 export type ClaimTone = "neutral" | "critical" | "warning" | "success" | "muted"
-
 export type CitationReference = RequirementPresentationCitation
+export type DetailLabel =
+  | "Finding"
+  | "Document evidence"
+  | "Observed limitation"
+  | "Opportunity for improvement"
+  | "Needs verification"
 
-export type PresentationClaim = {
+type LegacyClaimKind = "assessment" | "supporting" | "gap" | "verification" | "ofi"
+
+export type NarrativeItem = {
   id: string
+  label?: DetailLabel
   text: string
-  kind: ClaimKind
   tone: ClaimTone
   citations: CitationReference[]
 }
 
-export type AnalysisBlock = {
+export type SourceGroup = {
   id: string
-  label: string
-  body: string
-  tone: ClaimTone
-  citations: CitationReference[]
+  label: DetailLabel
+  statementId: string
+  sources: CitationReference[]
 }
 
 export type RequirementDetailViewModel = {
@@ -39,9 +47,13 @@ export type RequirementDetailViewModel = {
   reviewState: ResultsV2ReviewState
   reviewLabel: string
   rationale: string
-  inlineClaims: PresentationClaim[]
-  modalClaims: PresentationClaim[]
-  fullAnalysis: AnalysisBlock[]
+  inlineFinding: NarrativeItem
+  inlineEvidence: NarrativeItem | null
+  inlineCaveat: NarrativeItem | null
+  modalSummary: string
+  modalEvidence: NarrativeItem[]
+  sourceGroups: SourceGroup[]
+  totalSources: number
   tableFinding: string
   searchText: string
 }
@@ -74,7 +86,7 @@ export const CONFIDENCE_NOTES: Record<"low" | "medium" | "high", string> = {
   low: "Low confidence: weak or ambiguous evidence found; manual review is recommended.",
 }
 
-function cleanSourceText(value: string, limit = 220): string {
+function cleanSourceText(value: string, limit = 300): string {
   const stripped = value
     .trim()
     .replace(/^\[[^\]]+\]\s*/, "")
@@ -144,34 +156,57 @@ function getFallbackAssessment(status: ResultsV2Status): string {
   }
 }
 
-function getClaimTone(kind: ClaimKind, status: ResultsV2Status): ClaimTone {
-  if (kind === "gap") {
-    return "critical"
+function getFindingTone(status: ResultsV2Status): ClaimTone {
+  switch (status) {
+    case "PASS":
+      return "success"
+    case "FAIL":
+      return "critical"
+    case "FLAGGED":
+      return "warning"
+    case "NOT_APPLICABLE":
+      return "muted"
+    case "ERROR":
+    default:
+      return "critical"
   }
-  if (kind === "verification" || kind === "ofi") {
-    return "warning"
-  }
-  if (status === "PASS" && (kind === "supporting" || kind === "assessment")) {
-    return "success"
-  }
-  if (status === "NOT_APPLICABLE") {
-    return "muted"
-  }
-  return "neutral"
 }
 
-function getAnalysisTone(label: string, status: ResultsV2Status): ClaimTone {
-  const normalized = label.trim().toLowerCase()
-  if (normalized.includes("gap")) {
-    return status === "PASS" ? "warning" : "critical"
+function getEvidenceTone(label: DetailLabel, status: ResultsV2Status): ClaimTone {
+  if (label === "Document evidence") {
+    if (status === "PASS") {
+      return "success"
+    }
+    if (status === "NOT_APPLICABLE") {
+      return "muted"
+    }
+    return "neutral"
   }
-  if (normalized.includes("evidence")) {
-    return status === "PASS" ? "success" : "neutral"
+  if (label === "Needs verification") {
+    return "warning"
   }
-  if (status === "NOT_APPLICABLE") {
-    return "muted"
+  if (status === "FAIL") {
+    return "critical"
   }
-  return "neutral"
+  return "warning"
+}
+
+function normalizeDetailLabel(label: DetailLabel, status: ResultsV2Status): DetailLabel {
+  if (status === "PASS" && label === "Observed limitation") {
+    return "Opportunity for improvement"
+  }
+
+  return label
+}
+
+function getInlineCaveatLabel(status: ResultsV2Status): DetailLabel {
+  if (status === "FLAGGED") {
+    return "Needs verification"
+  }
+  if (status === "PASS") {
+    return "Opportunity for improvement"
+  }
+  return "Observed limitation"
 }
 
 function normalizeCitations(citations?: RequirementPresentationCitation[] | null): CitationReference[] {
@@ -181,18 +216,384 @@ function normalizeCitations(citations?: RequirementPresentationCitation[] | null
   )
 }
 
-function normalizeClaimKind(kind: string | null | undefined, status: ResultsV2Status): ClaimKind {
-  const value = String(kind ?? "").trim().toLowerCase()
-  if (
-    value === "assessment" ||
-    value === "supporting" ||
-    value === "gap" ||
-    value === "verification" ||
-    value === "ofi"
-  ) {
-    return value
+function makeNarrativeItem(
+  id: string,
+  text: string,
+  tone: ClaimTone,
+  citations: CitationReference[] = [],
+  label?: DetailLabel
+): NarrativeItem {
+  return {
+    id,
+    label,
+    text: text.trim(),
+    tone,
+    citations,
+  }
+}
+
+function dedupeSources(sources: CitationReference[]): CitationReference[] {
+  const seen = new Set<string>()
+
+  return sources.filter((source) => {
+    const key = `${source.location}|${source.excerpt}`
+    if (seen.has(key)) {
+      return false
+    }
+    seen.add(key)
+    return true
+  })
+}
+
+function normalizeTextBlock(
+  block: RequirementPresentationTextBlock | null | undefined,
+  id: string,
+  tone: ClaimTone,
+  label?: DetailLabel
+): NarrativeItem | null {
+  if (!block || typeof block.text !== "string" || block.text.trim().length === 0) {
+    return null
   }
 
+  return makeNarrativeItem(id, block.text.trim(), tone, normalizeCitations(block.citations), label)
+}
+
+function normalizeEvidenceItems(
+  items: RequirementPresentationEvidenceItem[] | null | undefined,
+  status: ResultsV2Status,
+  prefix: string,
+  limit?: number
+): NarrativeItem[] {
+  const normalized = (items ?? [])
+    .filter((item) => typeof item.text === "string" && item.text.trim().length > 0)
+    .map((item, index) =>
+      makeNarrativeItem(
+        `${prefix}-${index}`,
+        item.text.trim(),
+        getEvidenceTone(normalizeDetailLabel(item.label, status), status),
+        normalizeCitations(item.citations),
+        normalizeDetailLabel(item.label, status)
+      )
+    )
+
+  return typeof limit === "number" ? normalized.slice(0, limit) : normalized
+}
+
+function defaultDocumentEvidenceText(status: ResultsV2Status): string | null {
+  if (status === "PASS") {
+    return "The document appears to address this requirement, but no specific citations were extracted."
+  }
+  if (status === "FAIL") {
+    return "No direct supporting text was identified in the reviewed document for this requirement."
+  }
+  if (status === "FLAGGED") {
+    return "The extracted evidence is not specific enough to resolve this requirement without human review."
+  }
+  return null
+}
+
+function fallbackInlineEvidence(status: ResultsV2Status, evidence: string[]): NarrativeItem | null {
+  if (evidence[0]) {
+    return makeNarrativeItem(
+      "fallback-inline-evidence",
+      cleanSourceText(evidence[0], 260),
+      getEvidenceTone("Document evidence", status),
+      [],
+      "Document evidence"
+    )
+  }
+
+  const fallbackText = defaultDocumentEvidenceText(status)
+  if (!fallbackText) {
+    return null
+  }
+
+  return makeNarrativeItem(
+    "fallback-inline-evidence",
+    fallbackText,
+    getEvidenceTone("Document evidence", status),
+    [],
+    "Document evidence"
+  )
+}
+
+function fallbackInlineCaveat(status: ResultsV2Status, gaps: string[]): NarrativeItem | null {
+  if (status === "FLAGGED") {
+    const text = gaps[0]
+      ? firstSentence(gaps[0], 220)
+      : "Human review is still needed to confirm whether this requirement is met."
+
+    return makeNarrativeItem(
+      "fallback-inline-caveat",
+      text,
+      getEvidenceTone("Needs verification", status),
+      [],
+      "Needs verification"
+    )
+  }
+
+  if (!gaps[0]) {
+    return null
+  }
+
+  return makeNarrativeItem(
+    "fallback-inline-caveat",
+    firstSentence(gaps[0], 220),
+    getEvidenceTone(getInlineCaveatLabel(status), status),
+    [],
+    getInlineCaveatLabel(status)
+  )
+}
+
+function dedupeNarratives(items: NarrativeItem[]): NarrativeItem[] {
+  const seen = new Set<string>()
+  return items.filter((item) => {
+    const key = `${item.label ?? ""}|${item.text}`
+    if (seen.has(key)) {
+      return false
+    }
+    seen.add(key)
+    return true
+  })
+}
+
+function buildSourceGroups(items: Array<Omit<SourceGroup, "sources"> & { sources: CitationReference[] }>): SourceGroup[] {
+  const merged = new Map<string, SourceGroup>()
+
+  items.forEach((item) => {
+    if (item.sources.length === 0) {
+      return
+    }
+
+    const key = `${item.statementId}|${item.label}`
+    const existing = merged.get(key)
+    if (existing) {
+      existing.sources = dedupeSources([...existing.sources, ...item.sources])
+      return
+    }
+
+    merged.set(key, {
+      id: item.id,
+      label: item.label,
+      statementId: item.statementId,
+      sources: dedupeSources(item.sources),
+    })
+  })
+
+  return Array.from(merged.values())
+}
+
+function countSources(groups: SourceGroup[]): number {
+  return dedupeSources(groups.flatMap((group) => group.sources)).length
+}
+
+function sourcesForStatement(groups: SourceGroup[], statementId: string | null | undefined): CitationReference[] {
+  if (!statementId) {
+    return []
+  }
+
+  return dedupeSources(
+    groups
+      .filter((group) => group.statementId === statementId)
+      .flatMap((group) => group.sources)
+  )
+}
+
+function fallbackModalEvidence(
+  status: ResultsV2Status,
+  evidence: string[],
+  gaps: string[],
+  inlineEvidence: NarrativeItem | null
+): NarrativeItem[] {
+  const items: NarrativeItem[] = []
+
+  if (inlineEvidence) {
+    items.push({ ...inlineEvidence, id: "fallback-modal-evidence-0" })
+  }
+
+  if (!inlineEvidence) {
+    const fallbackText = defaultDocumentEvidenceText(status)
+    if (fallbackText) {
+      items.push(
+        makeNarrativeItem(
+          "fallback-modal-evidence-0",
+          fallbackText,
+          getEvidenceTone("Document evidence", status),
+          [],
+          "Document evidence"
+        )
+      )
+    }
+  }
+
+  const secondaryLabel: DetailLabel | null =
+    status === "FLAGGED" ? "Needs verification" : status === "PASS" || status === "FAIL" ? getInlineCaveatLabel(status) : null
+
+  if (secondaryLabel) {
+    gaps.slice(0, 2).forEach((gap, index) => {
+      items.push(
+        makeNarrativeItem(
+          `fallback-modal-secondary-${index}`,
+          cleanSourceText(gap, 260),
+          getEvidenceTone(secondaryLabel, status),
+          [],
+          secondaryLabel
+        )
+      )
+    })
+  }
+
+  if (status === "FLAGGED" && gaps.length === 0) {
+    items.push(
+      makeNarrativeItem(
+        "fallback-modal-secondary-generic",
+        "The available document evidence is incomplete or ambiguous enough that this requirement should be reviewed by a human.",
+        getEvidenceTone("Needs verification", status),
+        [],
+        "Needs verification"
+      )
+    )
+  }
+
+  return dedupeNarratives(items).slice(0, 4)
+}
+
+function buildFallbackPresentation(
+  status: ResultsV2Status,
+  rationale: string,
+  evidence: string[],
+  gaps: string[]
+): Pick<
+  RequirementDetailViewModel,
+  "inlineFinding" | "inlineEvidence" | "inlineCaveat" | "modalSummary" | "modalEvidence" | "sourceGroups" | "totalSources"
+> {
+  const inlineEvidence = fallbackInlineEvidence(status, evidence)
+  const inlineCaveat = fallbackInlineCaveat(status, gaps)
+  const inlineFinding = makeNarrativeItem(
+    "fallback-inline-finding",
+    firstSentence(rationale || getFallbackAssessment(status), 220),
+    getFindingTone(status),
+    inlineEvidence?.citations ?? [],
+    "Finding"
+  )
+  const modalEvidence = fallbackModalEvidence(status, evidence, gaps, inlineEvidence)
+  const sourceGroups = buildSourceGroups([
+    {
+      id: "fallback-finding-sources",
+      label: "Finding",
+      statementId: inlineFinding.id,
+      sources: inlineFinding.citations,
+    },
+    ...(inlineCaveat
+      ? [
+          {
+            id: "fallback-caveat-sources",
+            label: normalizeDetailLabel(inlineCaveat.label ?? getInlineCaveatLabel(status), status),
+            statementId: inlineCaveat.id,
+            sources: inlineCaveat.citations,
+          },
+        ]
+      : []),
+    ...modalEvidence.map((item) => ({
+      id: `${item.id}-sources`,
+      label: normalizeDetailLabel(item.label ?? "Document evidence", status),
+      statementId:
+        item.label === "Observed limitation" || item.label === "Needs verification"
+          ? inlineCaveat?.id ?? inlineFinding.id
+          : inlineFinding.id,
+      sources: item.citations,
+    })),
+  ])
+
+  return {
+    inlineFinding,
+    inlineEvidence,
+    inlineCaveat,
+    modalSummary: cleanSourceText(rationale || inlineFinding.text, 420),
+    modalEvidence,
+    sourceGroups,
+    totalSources: countSources(sourceGroups),
+  }
+}
+
+function hasFindingPresentationData(presentation?: RequirementPresentationSummary | null): boolean {
+  return Boolean(
+    presentation &&
+      ((presentation.inline_finding?.text?.trim().length ?? 0) > 0 ||
+        (presentation.inline_evidence?.text?.trim().length ?? 0) > 0 ||
+        (presentation.inline_caveat?.text?.trim().length ?? 0) > 0 ||
+        (presentation.modal_summary?.trim().length ?? 0) > 0 ||
+        (presentation.modal_evidence?.length ?? 0) > 0)
+  )
+}
+
+function hasV3PresentationData(presentation?: RequirementPresentationSummary | null): boolean {
+  return Boolean(
+    presentation &&
+      ((presentation.presentation_version === "openai-finding-v3" &&
+        ((presentation.evidence_groups?.length ?? 0) > 0 || (presentation.inline_finding?.text?.trim().length ?? 0) > 0)) ||
+        (presentation.evidence_groups?.length ?? 0) > 0 ||
+        presentation.inline_finding?.id === "finding" ||
+        presentation.inline_caveat?.id === "caveat")
+  )
+}
+
+function hasLegacyPresentationData(presentation?: RequirementPresentationSummary | null): boolean {
+  return Boolean(
+    presentation &&
+      ((presentation.inline_claims?.length ?? 0) > 0 ||
+        (presentation.modal_claims?.length ?? 0) > 0 ||
+        (presentation.full_analysis?.length ?? 0) > 0)
+  )
+}
+
+function normalizeEvidenceGroups(
+  groups: RequirementPresentationEvidenceGroup[] | null | undefined,
+  status: ResultsV2Status,
+  prefix: string
+): Array<NarrativeItem & { claimId: string }> {
+  return (groups ?? [])
+    .filter((group) => typeof group.text === "string" && group.text.trim().length > 0)
+    .map((group, index) => ({
+      ...makeNarrativeItem(
+        `${prefix}-${index}`,
+        group.text.trim(),
+        getEvidenceTone(normalizeDetailLabel(group.label, status), status),
+        normalizeCitations(group.citations),
+        normalizeDetailLabel(group.label, status)
+      ),
+      claimId: String(group.claim_id || ""),
+    }))
+}
+
+function aggregateClaimCitations(
+  groups: Array<NarrativeItem & { claimId: string }>,
+  claimId: string
+): CitationReference[] {
+  const seen = new Set<string>()
+  const citations: CitationReference[] = []
+
+  groups
+    .filter((group) => group.claimId === claimId)
+    .forEach((group) => {
+      group.citations.forEach((citation) => {
+        const key = `${citation.location}|${citation.excerpt}`
+        if (seen.has(key)) {
+          return
+        }
+        seen.add(key)
+        citations.push(citation)
+      })
+    })
+
+  return citations
+}
+
+function normalizeLegacyClaimKind(kind: string | null | undefined, status: ResultsV2Status): LegacyClaimKind {
+  const value = String(kind ?? "").trim().toLowerCase()
+  if (value === "assessment" || value === "supporting" || value === "gap" || value === "verification" || value === "ofi") {
+    return value
+  }
   if (status === "FAIL") {
     return "gap"
   }
@@ -205,194 +606,126 @@ function normalizeClaimKind(kind: string | null | undefined, status: ResultsV2St
   return "assessment"
 }
 
-function mapPresentationClaims(
-  claims: RequirementPresentationClaim[] | undefined,
-  status: ResultsV2Status,
-  prefix: string,
-  limit: number
-): PresentationClaim[] {
+function normalizeLegacyClaims(
+  claims: RequirementPresentationClaim[] | null | undefined,
+  status: ResultsV2Status
+): Array<{ text: string; kind: LegacyClaimKind; citations: CitationReference[] }> {
   return (claims ?? [])
     .filter((claim) => typeof claim.text === "string" && claim.text.trim().length > 0)
-    .slice(0, limit)
-    .map((claim, index) => {
-      const kind = normalizeClaimKind(claim.kind, status)
-      return {
-        id: `${prefix}-${index}`,
-        text: claim.text.trim(),
-        kind,
-        tone: getClaimTone(kind, status),
-        citations: normalizeCitations(claim.citations),
-      }
-    })
-}
-
-function mapAnalysisBlocks(
-  blocks: RequirementPresentationAnalysisBlock[] | undefined,
-  status: ResultsV2Status
-): AnalysisBlock[] {
-  return (blocks ?? [])
-    .filter((block) => typeof block.label === "string" && block.label.trim() && typeof block.body === "string" && block.body.trim())
-    .slice(0, 4)
-    .map((block, index) => ({
-      id: `analysis-${index}`,
-      label: block.label.trim(),
-      body: block.body.trim(),
-      tone: getAnalysisTone(block.label, status),
-      citations: normalizeCitations(block.citations),
+    .map((claim) => ({
+      text: claim.text.trim(),
+      kind: normalizeLegacyClaimKind(claim.kind, status),
+      citations: normalizeCitations(claim.citations),
     }))
 }
 
-function fallbackInlineClaims(
-  status: ResultsV2Status,
-  rationale: string,
-  evidence: string[],
-  gaps: string[]
-): PresentationClaim[] {
-  const claims: Array<Omit<PresentationClaim, "id">> = []
-  const summary = firstSentence(rationale || getFallbackAssessment(status))
-
-  if (status === "PASS") {
-    claims.push({
-      text: summary,
-      kind: "assessment",
-      tone: "success",
-      citations: [],
-    })
-    if (gaps[0]) {
-      claims.push({
-        text: firstSentence(gaps[0]),
-        kind: "ofi",
-        tone: "warning",
-        citations: [],
-      })
-    }
-  } else if (status === "FAIL") {
-    claims.push({
-      text: summary,
-      kind: "assessment",
-      tone: "neutral",
-      citations: [],
-    })
-    if (gaps[0]) {
-      claims.push({
-        text: firstSentence(gaps[0]),
-        kind: "gap",
-        tone: "critical",
-        citations: [],
-      })
-    }
-  } else if (status === "FLAGGED") {
-    claims.push({
-      text: summary,
-      kind: "assessment",
-      tone: "neutral",
-      citations: [],
-    })
-    if (gaps[0]) {
-      claims.push({
-        text: firstSentence(gaps[0]),
-        kind: "verification",
-        tone: "warning",
-        citations: [],
-      })
-    }
-  } else {
-    claims.push({
-      text: summary,
-      kind: "assessment",
-      tone: status === "NOT_APPLICABLE" ? "muted" : "critical",
-      citations: [],
-    })
+function legacyAnalysisLabel(label: string, status: ResultsV2Status): DetailLabel | null {
+  const normalized = label.trim().toLowerCase()
+  if (normalized.includes("evidence") || normalized.includes("support")) {
+    return "Document evidence"
   }
-
-  return claims.slice(0, 3).map((claim, index) => ({
-    ...claim,
-    id: `inline-${index}`,
-  }))
+  if (normalized.includes("verification")) {
+    return "Needs verification"
+  }
+  if (normalized.includes("gap") || normalized.includes("opportunity") || normalized.includes("limitation")) {
+    if (status === "FLAGGED") {
+      return "Needs verification"
+    }
+    if (status === "PASS") {
+      return "Opportunity for improvement"
+    }
+    return "Observed limitation"
+  }
+  return null
 }
 
-function fallbackModalClaims(
-  status: ResultsV2Status,
-  rationale: string,
-  evidence: string[],
-  gaps: string[]
-): PresentationClaim[] {
-  const inline = fallbackInlineClaims(status, rationale, evidence, gaps)
-  const extraClaims: PresentationClaim[] = []
-
-  const makeClaim = (text: string, kind: ClaimKind, index: number): PresentationClaim => ({
-    id: `modal-extra-${kind}-${index}`,
-    text,
-    kind,
-    tone: getClaimTone(kind, status),
-    citations: [],
-  })
-
-  if (status === "FAIL") {
-    gaps.slice(1, 3).forEach((gap, index) => extraClaims.push(makeClaim(firstSentence(gap), "gap", index)))
-  } else if (status === "FLAGGED") {
-    gaps
-      .slice(1, 3)
-      .forEach((gap, index) => extraClaims.push(makeClaim(firstSentence(gap), "verification", index)))
-  } else if (status === "PASS") {
-    gaps.slice(1, 2).forEach((gap, index) => extraClaims.push(makeClaim(firstSentence(gap), "ofi", index)))
-  } else if (status === "NOT_APPLICABLE" && evidence[0]) {
-    extraClaims.push(makeClaim(firstSentence(evidence[0]), "supporting", 0))
-  }
-
-  if ((status === "PASS" || status === "FAIL" || status === "FLAGGED") && evidence[0]) {
-    extraClaims.unshift(makeClaim(firstSentence(evidence[0]), "supporting", 0))
-  }
-
-  return [...inline, ...extraClaims].slice(0, 5)
+function normalizeLegacyAnalysis(
+  blocks: RequirementPresentationAnalysisBlock[] | null | undefined,
+  status: ResultsV2Status
+): NarrativeItem[] {
+  return (blocks ?? [])
+    .filter((block) => typeof block.body === "string" && block.body.trim().length > 0)
+    .map((block, index) => {
+      const label = legacyAnalysisLabel(block.label, status)
+      if (!label) {
+        return null
+      }
+      return makeNarrativeItem(
+        `legacy-analysis-${index}`,
+        block.body.trim(),
+        getEvidenceTone(label, status),
+        normalizeCitations(block.citations),
+        label
+      )
+    })
+    .filter((item): item is NarrativeItem => item !== null)
 }
 
-function fallbackAnalysisBlocks(
+function buildLegacyPresentation(
+  presentation: RequirementPresentationSummary,
   status: ResultsV2Status,
-  rationale: string,
-  evidence: string[],
-  gaps: string[]
-): AnalysisBlock[] {
-  const blocks: AnalysisBlock[] = []
+  rationale: string
+): Partial<Pick<RequirementDetailViewModel, "inlineFinding" | "inlineEvidence" | "inlineCaveat" | "modalSummary" | "modalEvidence">> {
+  const inlineClaims = normalizeLegacyClaims(presentation.inline_claims, status)
+  const modalClaims = normalizeLegacyClaims(presentation.modal_claims, status)
+  const allClaims = [...inlineClaims, ...modalClaims]
 
-  if (rationale) {
-    blocks.push({
-      id: "analysis-summary",
-      label: "Assessment summary",
-      body: cleanSourceText(rationale, 320),
-      tone: getAnalysisTone("Assessment summary", status),
-      citations: [],
-    })
-  }
-  if (evidence.length > 0) {
-    blocks.push({
-      id: "analysis-evidence",
-      label: status === "NOT_APPLICABLE" ? "Supporting context" : "Evidence analysis",
-      body: evidence.slice(0, 2).map((item) => cleanSourceText(item, 180)).join(" "),
-      tone: getAnalysisTone("Evidence analysis", status),
-      citations: [],
-    })
-  }
-  if (gaps.length > 0) {
-    blocks.push({
-      id: "analysis-gaps",
-      label: status === "PASS" ? "Opportunity analysis" : "Gap analysis",
-      body: gaps.slice(0, 2).map((item) => cleanSourceText(item, 180)).join(" "),
-      tone: getAnalysisTone("Gap analysis", status),
-      citations: [],
-    })
-  }
+  const findingClaim = allClaims.find((claim) => claim.kind === "assessment") ?? allClaims[0]
+  const supportingClaims = allClaims.filter((claim) => claim.kind === "supporting")
+  const caveatClaim = allClaims.find((claim) => claim.kind === "gap" || claim.kind === "verification" || claim.kind === "ofi")
 
-  return blocks.slice(0, 4)
-}
+  const inlineFinding = findingClaim
+    ? makeNarrativeItem("legacy-inline-finding", findingClaim.text, getFindingTone(status), findingClaim.citations, "Finding")
+    : null
 
-function hasPresentationData(presentation?: RequirementPresentationSummary | null): boolean {
-  return Boolean(
-    presentation &&
-      ((presentation.inline_claims?.length ?? 0) > 0 ||
-        (presentation.modal_claims?.length ?? 0) > 0 ||
-        (presentation.full_analysis?.length ?? 0) > 0)
-  )
+  const inlineEvidence = supportingClaims[0]
+    ? makeNarrativeItem(
+        "legacy-inline-evidence",
+        supportingClaims[0].text,
+        getEvidenceTone("Document evidence", status),
+        supportingClaims[0].citations,
+        "Document evidence"
+      )
+    : null
+
+  const caveatLabel =
+    caveatClaim?.kind === "verification" ? "Needs verification" : caveatClaim ? getInlineCaveatLabel(status) : undefined
+  const inlineCaveat =
+    caveatClaim && caveatLabel
+      ? makeNarrativeItem(
+          "legacy-inline-caveat",
+          caveatClaim.text,
+          getEvidenceTone(caveatLabel, status),
+          caveatClaim.citations,
+          caveatLabel
+        )
+      : null
+
+  const modalEvidence = dedupeNarratives([
+    ...(inlineEvidence ? [{ ...inlineEvidence, id: "legacy-modal-inline-evidence" }] : []),
+    ...supportingClaims.slice(1, 3).map((claim, index) =>
+      makeNarrativeItem(
+        `legacy-modal-support-${index}`,
+        claim.text,
+        getEvidenceTone("Document evidence", status),
+        claim.citations,
+        "Document evidence"
+      )
+    ),
+    ...normalizeLegacyAnalysis(presentation.full_analysis, status),
+    ...(inlineCaveat ? [{ ...inlineCaveat, id: "legacy-modal-inline-caveat" }] : []),
+  ]).slice(0, 4)
+
+  const analysisSummary =
+    (presentation.full_analysis ?? []).find((block) => block.label.toLowerCase().includes("summary"))?.body?.trim() ?? null
+
+  return {
+    inlineFinding: inlineFinding ?? undefined,
+    inlineEvidence: inlineEvidence ?? undefined,
+    inlineCaveat: inlineCaveat ?? undefined,
+    modalSummary: analysisSummary || findingClaim?.text || rationale,
+    modalEvidence,
+  }
 }
 
 export function mapRequirementToResultsV2ViewModel(
@@ -406,26 +739,209 @@ export function mapRequirementToResultsV2ViewModel(
   const rationale = requirement.evaluation_rationale?.trim() || getFallbackAssessment(status)
   const confidenceLevel = presentation?.confidence_level ?? requirement.confidence_level ?? "low"
 
-  const inlineClaims = hasPresentationData(presentation)
-    ? mapPresentationClaims(presentation?.inline_claims, status, "inline-claim", 4)
-    : fallbackInlineClaims(status, rationale, evidence, gaps)
-  const modalClaims = hasPresentationData(presentation)
-    ? mapPresentationClaims(
-        presentation?.modal_claims?.length ? presentation.modal_claims : presentation?.inline_claims,
-        status,
-        "modal-claim",
-        6
-      )
-    : fallbackModalClaims(status, rationale, evidence, gaps)
-  const fullAnalysis =
-    hasPresentationData(presentation) && (presentation?.full_analysis?.length ?? 0) > 0
-      ? mapAnalysisBlocks(presentation?.full_analysis, status)
-      : fallbackAnalysisBlocks(status, rationale, evidence, gaps)
+  const fallback = buildFallbackPresentation(status, rationale, evidence, gaps)
 
-  const tableFinding =
-    inlineClaims.find((claim) => claim.kind !== "assessment")?.text ??
-    inlineClaims[0]?.text ??
-    rationale
+  let inlineFinding = fallback.inlineFinding
+  let inlineEvidence = fallback.inlineEvidence
+  let inlineCaveat = fallback.inlineCaveat
+  let modalSummary = fallback.modalSummary
+  let modalEvidence = fallback.modalEvidence
+  let sourceGroups = fallback.sourceGroups
+  let totalSources = fallback.totalSources
+
+  if (hasV3PresentationData(presentation)) {
+    const normalizedEvidenceGroups = normalizeEvidenceGroups(presentation?.evidence_groups, status, "v3-group")
+
+    inlineFinding =
+      normalizeTextBlock(presentation?.inline_finding, "v3-inline-finding", getFindingTone(status), "Finding") ??
+      inlineFinding
+
+    inlineCaveat =
+      normalizeTextBlock(
+        presentation?.inline_caveat,
+        "v3-inline-caveat",
+        getEvidenceTone(getInlineCaveatLabel(status), status),
+        getInlineCaveatLabel(status)
+      ) ?? inlineCaveat
+
+    inlineEvidence = null
+
+    if (typeof presentation?.modal_summary === "string" && presentation.modal_summary.trim().length > 0) {
+      modalSummary = presentation.modal_summary.trim()
+    }
+
+    if (normalizedEvidenceGroups.length > 0) {
+      modalEvidence = normalizedEvidenceGroups.map(({ claimId: _claimId, ...item }) => item)
+      sourceGroups = buildSourceGroups(
+        normalizedEvidenceGroups.map((group) => ({
+          id: `${group.id}-sources`,
+          label: normalizeDetailLabel(group.label, status),
+          statementId: group.claimId === "caveat" ? inlineCaveat?.id ?? "v3-inline-caveat" : inlineFinding.id,
+          sources: group.citations,
+        }))
+      )
+      inlineFinding = {
+        ...inlineFinding,
+        citations: aggregateClaimCitations(normalizedEvidenceGroups, "finding"),
+      }
+      if (inlineCaveat) {
+        inlineCaveat = {
+          ...inlineCaveat,
+          citations: aggregateClaimCitations(normalizedEvidenceGroups, "caveat"),
+        }
+      }
+      totalSources = countSources(sourceGroups)
+    }
+  } else if (hasFindingPresentationData(presentation)) {
+    inlineFinding =
+      normalizeTextBlock(presentation?.inline_finding, "v2-inline-finding", getFindingTone(status), "Finding") ??
+      inlineFinding
+    inlineEvidence =
+      normalizeTextBlock(
+        presentation?.inline_evidence,
+        "v2-inline-evidence",
+        getEvidenceTone("Document evidence", status),
+        "Document evidence"
+      ) ?? inlineEvidence
+    inlineCaveat =
+      normalizeTextBlock(
+        presentation?.inline_caveat,
+        "v2-inline-caveat",
+        getEvidenceTone(getInlineCaveatLabel(status), status),
+        getInlineCaveatLabel(status)
+      ) ?? inlineCaveat
+
+    if (typeof presentation?.modal_summary === "string" && presentation.modal_summary.trim().length > 0) {
+      modalSummary = presentation.modal_summary.trim()
+    }
+
+    const normalizedModalEvidence = normalizeEvidenceItems(presentation?.modal_evidence, status, "v2-modal", 4)
+    if (normalizedModalEvidence.length > 0) {
+      modalEvidence = normalizedModalEvidence
+    }
+    if (inlineFinding.citations.length === 0 && inlineEvidence?.citations.length) {
+      inlineFinding = {
+        ...inlineFinding,
+        citations: inlineEvidence.citations,
+      }
+    }
+    sourceGroups = buildSourceGroups([
+      {
+        id: "v2-finding-sources",
+        label: "Finding",
+        statementId: inlineFinding.id,
+        sources: inlineFinding.citations,
+      },
+      ...(inlineEvidence
+        ? [
+            {
+              id: "v2-document-sources",
+              label: "Document evidence" as DetailLabel,
+              statementId: inlineFinding.id,
+              sources: inlineEvidence.citations,
+            },
+          ]
+        : []),
+      ...(inlineCaveat
+        ? [
+            {
+              id: "v2-caveat-sources",
+              label: normalizeDetailLabel(inlineCaveat.label ?? getInlineCaveatLabel(status), status),
+              statementId: inlineCaveat.id,
+              sources: inlineCaveat.citations,
+            },
+          ]
+        : []),
+      ...modalEvidence.map((item) => ({
+        id: `${item.id}-sources`,
+        label: normalizeDetailLabel(item.label ?? "Document evidence", status),
+        statementId:
+          item.label === "Observed limitation" || item.label === "Needs verification"
+            ? inlineCaveat?.id ?? inlineFinding.id
+            : inlineFinding.id,
+        sources: item.citations,
+      })),
+    ])
+    totalSources = countSources(sourceGroups)
+  } else if (hasLegacyPresentationData(presentation)) {
+    const legacy = buildLegacyPresentation(presentation as RequirementPresentationSummary, status, rationale)
+    inlineFinding = legacy.inlineFinding ?? inlineFinding
+    inlineEvidence = legacy.inlineEvidence ?? inlineEvidence
+    inlineCaveat = legacy.inlineCaveat ?? inlineCaveat
+    modalSummary = legacy.modalSummary ?? modalSummary
+    modalEvidence = legacy.modalEvidence?.length ? legacy.modalEvidence : modalEvidence
+    if (inlineFinding.citations.length === 0 && inlineEvidence?.citations.length) {
+      inlineFinding = {
+        ...inlineFinding,
+        citations: inlineEvidence.citations,
+      }
+    }
+    sourceGroups = buildSourceGroups([
+      {
+        id: "legacy-finding-sources",
+        label: "Finding",
+        statementId: inlineFinding.id,
+        sources: inlineFinding.citations,
+      },
+      ...(inlineEvidence
+        ? [
+            {
+              id: "legacy-document-sources",
+              label: "Document evidence" as DetailLabel,
+              statementId: inlineFinding.id,
+              sources: inlineEvidence.citations,
+            },
+          ]
+        : []),
+      ...(inlineCaveat
+        ? [
+            {
+              id: "legacy-caveat-sources",
+              label: normalizeDetailLabel(inlineCaveat.label ?? getInlineCaveatLabel(status), status),
+              statementId: inlineCaveat.id,
+              sources: inlineCaveat.citations,
+            },
+          ]
+        : []),
+      ...modalEvidence.map((item) => ({
+        id: `${item.id}-sources`,
+        label: normalizeDetailLabel(item.label ?? "Document evidence", status),
+        statementId:
+          item.label === "Observed limitation" || item.label === "Needs verification"
+            ? inlineCaveat?.id ?? inlineFinding.id
+            : inlineFinding.id,
+        sources: item.citations,
+      })),
+    ])
+    totalSources = countSources(sourceGroups)
+  }
+
+  if (inlineFinding.citations.length === 0 && inlineEvidence?.citations.length) {
+    inlineFinding = {
+      ...inlineFinding,
+      citations: inlineEvidence.citations,
+    }
+  }
+
+  const findingSources = sourcesForStatement(sourceGroups, inlineFinding.id)
+  if (findingSources.length > 0) {
+    inlineFinding = {
+      ...inlineFinding,
+      citations: findingSources,
+    }
+  }
+
+  if (inlineCaveat) {
+    const caveatSources = sourcesForStatement(sourceGroups, inlineCaveat.id)
+    if (caveatSources.length > 0) {
+      inlineCaveat = {
+        ...inlineCaveat,
+        citations: caveatSources,
+      }
+    }
+  }
+
+  const tableFinding = inlineFinding.text
 
   const searchText = [
     requirement.requirement_id,
@@ -434,9 +950,15 @@ export function mapRequirementToResultsV2ViewModel(
     rationale,
     ...evidence,
     ...gaps,
-    ...inlineClaims.map((claim) => claim.text),
-    ...modalClaims.map((claim) => claim.text),
-    ...fullAnalysis.map((block) => block.body),
+    inlineFinding.text,
+    inlineEvidence?.text,
+    inlineCaveat?.text,
+    modalSummary,
+    ...modalEvidence.map((item) => item.text),
+    ...sourceGroups.flatMap((group) => [
+      group.label,
+      ...group.sources.flatMap((source) => [source.label, source.location, source.excerpt]),
+    ]),
   ]
     .filter(Boolean)
     .join(" ")
@@ -452,9 +974,13 @@ export function mapRequirementToResultsV2ViewModel(
     reviewState,
     reviewLabel: REVIEW_LABELS[reviewState],
     rationale,
-    inlineClaims,
-    modalClaims,
-    fullAnalysis,
+    inlineFinding,
+    inlineEvidence,
+    inlineCaveat,
+    modalSummary,
+    modalEvidence,
+    sourceGroups,
+    totalSources,
     tableFinding,
     searchText,
   }

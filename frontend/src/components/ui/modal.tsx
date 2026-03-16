@@ -56,7 +56,8 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
+      style={{ background: 'rgba(90, 74, 63, 0.35)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -64,7 +65,7 @@ export function Modal({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "w-full rounded-lg bg-white shadow-xl",
+          "w-full rounded-2xl bg-background shadow-[0_20px_60px_rgba(90,74,63,0.15),0_4px_16px_rgba(90,74,63,0.06)]",
           "max-h-[90vh] overflow-y-auto",
           sizeClasses[size]
         )}
@@ -79,7 +80,7 @@ export function Modal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors hover:bg-border hover:text-foreground"
             aria-label="Close"
           >
             <span aria-hidden>&times;</span>

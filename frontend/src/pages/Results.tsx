@@ -894,8 +894,8 @@ export function Results() {
         <CardContent className="space-y-6 p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-1">
-              <h1 className="text-2xl font-semibold text-foreground">Evaluation Results</h1>
-              <p className="text-sm text-muted-foreground">{report.document_name}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{framework?.name ?? 'Compliance Report'}</p>
+              <h1 className="text-2xl font-semibold text-foreground">{report.document_name}</h1>
               {framework && (
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="outline" className="text-xs">
@@ -906,8 +906,6 @@ export function Results() {
                   )}
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">Evaluation ID: {report.evaluation_id}</p>
-              <p className="text-xs text-muted-foreground">Generated on {new Date().toLocaleString()}</p>
             </div>
             <div className="text-right">
               <span className="block text-3xl font-semibold text-foreground">
@@ -1010,11 +1008,11 @@ export function Results() {
       {activeRequirement ? (
         <div className="fixed inset-0 z-50 flex">
           <div
-            className="flex-1 bg-sc-purple-dark/40"
+            className="flex-1 bg-foreground/30"
             aria-hidden="true"
             onClick={closeDrawer}
           />
-          <aside className="relative ml-auto flex h-full w-full max-w-xl flex-col bg-white shadow-xl">
+          <aside className="relative ml-auto flex h-full w-full max-w-xl flex-col bg-background shadow-xl">
             <header className="flex items-start justify-between border-b border-border p-6">
               <div className="space-y-1">
                 <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground">
@@ -1232,7 +1230,7 @@ export function Results() {
 
               {/* Recommendations section - always shown */}
               <section className="space-y-2">
-                <h3 className="text-sm font-semibold text-sc">Recommendations</h3>
+                <h3 className="text-sm font-semibold text-primary">Recommendations</h3>
                 {activeRequirement.recommendations?.filter(Boolean).length ? (
                   <ul className="space-y-2 text-sm text-foreground">
                     {activeRequirement.recommendations
