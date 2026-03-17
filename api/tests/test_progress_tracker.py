@@ -71,6 +71,17 @@ def test_progress_tracker_eta_is_calculated_after_three_completions():
     assert 65 <= eta <= 75
 
 
+def test_progress_tracker_eta_uses_recent_completion_intervals_when_available():
+    tracker = ProgressTracker("eval-ema", _FakeSupabase())
+    tracker._eval_start_time = 0.0
+    tracker._completion_times = [100.0, 102.0, 105.0, 109.0]
+
+    eta = tracker._calculate_eta_locked(4, 10)
+
+    # EMA over [2, 3, 4] with alpha=0.3 = 2.81; remaining=6 -> 16.9s
+    assert eta == 16.9
+
+
 def test_progress_tracker_close_cancels_pending_task_and_is_idempotent():
     async def scenario():
         supabase = _FakeSupabase()

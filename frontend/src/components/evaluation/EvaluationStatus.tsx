@@ -234,7 +234,12 @@ export function EvaluationStatus() {
           }
 
           if (evaluation.status === "pending") {
-            return <span className="text-sm text-muted-foreground">Queued</span>
+            return (
+              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                Queued
+              </span>
+            )
           }
 
           if (evaluation.status === "completed") {

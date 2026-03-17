@@ -25,10 +25,8 @@ interface UploadedFile {
     total: number
     message: string
     etaSeconds?: number
-    batchNumber?: number
-    batchTotal?: number
-    batchSize?: number
   }
+  queuePosition?: number
 }
 
 export function DocumentUploader() {
@@ -123,20 +121,29 @@ export function DocumentUploader() {
 
     try {
       // Update status to uploading
-      setFiles(prev => prev.map(f => 
-        f.id === fileId ? { ...f, status: "uploading", progress: 30 } : f
+      setFiles(prev => prev.map(f =>
+        f.id === fileId ? { ...f, status: "uploading", progress: 0 } : f
       ))
 
-      // Upload to backend with selected framework
-      const result = await api.uploadDocument(fileData.file, selectedFrameworkId)
+      // Upload to backend with real progress tracking
+      const result = await api.uploadDocumentWithProgress(
+        fileData.file,
+        selectedFrameworkId,
+        (percent) => {
+          setFiles(prev => prev.map(f =>
+            f.id === fileId ? { ...f, progress: percent } : f
+          ))
+        }
+      )
 
       // Update with success and evaluation ID
-      setFiles(prev => prev.map(f => 
-        f.id === fileId ? { 
-          ...f, 
-          status: "processing", 
-          progress: 100, 
-          evaluationId: result.evaluation_id 
+      setFiles(prev => prev.map(f =>
+        f.id === fileId ? {
+          ...f,
+          status: "processing",
+          progress: 100,
+          evaluationId: result.evaluation_id,
+          queuePosition: result.queue_position,
         } : f
       ))
 
@@ -160,16 +167,16 @@ export function DocumentUploader() {
               ...f,
               status: computedStatus,
               error: status.error_message,
-                evaluationProgress: nextMetadata ? {
-                  percent: nextMetadata.progress_percent ?? previousProgress?.percent ?? 0,
-                  completed: nextMetadata.completed_requirements ?? previousProgress?.completed ?? 0,
-                  total: nextMetadata.total_requirements ?? previousProgress?.total ?? 38,
-                  message: nextMetadata.status_message || previousProgress?.message || "Processing...",
-                  etaSeconds: nextMetadata.estimated_seconds_remaining ?? previousProgress?.etaSeconds,
-                  batchNumber: nextMetadata.batch_number ?? previousProgress?.batchNumber,
-                  batchTotal: nextMetadata.batch_total ?? previousProgress?.batchTotal,
-                  batchSize: nextMetadata.batch_size ?? previousProgress?.batchSize,
-                } : undefined
+              queuePosition: status.status === "pending" ? f.queuePosition : 0,
+              evaluationProgress: nextMetadata ? {
+                percent: nextMetadata.progress_percent ?? previousProgress?.percent ?? 0,
+                completed: nextMetadata.completed_requirements ?? previousProgress?.completed ?? 0,
+                total: nextMetadata.total_requirements ?? previousProgress?.total ?? 0,
+                message: nextMetadata.status_message
+                  || previousProgress?.message
+                  || (status.status === "in_progress" && !nextMetadata.completed_requirements ? "Starting evaluation..." : "Processing..."),
+                etaSeconds: nextMetadata.estimated_seconds_remaining ?? previousProgress?.etaSeconds,
+              } : undefined
             }
           }))
         },
@@ -182,7 +189,16 @@ export function DocumentUploader() {
 
     } catch (error) {
       console.error("Upload error:", error)
-      const errorMessage = error instanceof APIError ? error.message : "Upload failed"
+      let errorMessage = "Upload failed"
+      if (error instanceof APIError) {
+        if (error.message.includes("polling timeout - no progress")) {
+          errorMessage = "Evaluation appears to have stalled. No progress detected for 10 minutes. Please try again or contact support."
+        } else if (error.message.includes("polling timeout - time limit")) {
+          errorMessage = "Evaluation timed out after 30 minutes. The document may be too complex or the service may be under heavy load."
+        } else {
+          errorMessage = error.message
+        }
+      }
 
       setFiles((prev) => prev.map((f) =>
         f.id === fileId ? {
@@ -358,19 +374,25 @@ export function DocumentUploader() {
                     </div>
                   </div>
                   
+                  {file.status === "processing" && file.queuePosition != null && file.queuePosition > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Queue position: {file.queuePosition}
+                    </p>
+                  )}
+
                   {(file.status === "uploading" || file.status === "processing") && (
                     <div className="space-y-2">
-                      <Progress 
-                        value={file.status === "processing" && file.evaluationProgress 
-                          ? file.evaluationProgress.percent 
-                          : file.progress} 
-                        className="h-2" 
+                      <Progress
+                        value={file.status === "processing" && file.evaluationProgress
+                          ? file.evaluationProgress.percent
+                          : file.progress}
+                        className="h-2"
                       />
                       <div className="flex items-center justify-between text-xs">
                         <div className="text-muted-foreground">
                           <p>
                             {file.status === "uploading"
-                              ? "Uploading to Azure Storage..."
+                              ? "Uploading document..."
                               : file.evaluationProgress?.message || `Evaluating against ${selectedFramework?.name || "framework"} requirements...`}
                           </p>
                           {file.status === "processing" && file.evaluationProgress?.etaSeconds != null && (
@@ -380,9 +402,6 @@ export function DocumentUploader() {
                         {file.status === "processing" && file.evaluationProgress && (
                           <p className="text-muted-foreground font-mono">
                             {file.evaluationProgress.completed}/{file.evaluationProgress.total} ({file.evaluationProgress.percent}%)
-                            {file.evaluationProgress.batchNumber && file.evaluationProgress.batchTotal && (
-                              <> · Batch {file.evaluationProgress.batchNumber}/{file.evaluationProgress.batchTotal}</>
-                            )}
                           </p>
                         )}
                       </div>

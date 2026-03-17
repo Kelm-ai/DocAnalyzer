@@ -57,6 +57,8 @@ export interface EvaluationStatus {
   // Multi-document support fields
   supporting_docs_count?: number;
   summaries_status?: 'pending' | 'generating' | 'completed' | 'failed' | 'not_required';
+  summaries_completed?: number;
+  summaries_total?: number;
   metadata?: {
     phase?: string;
     progress_percent?: number;
@@ -65,10 +67,6 @@ export interface EvaluationStatus {
     status_message?: string;
     estimated_seconds_remaining?: number;
     last_updated?: string;
-    batch_number?: number;
-    batch_total?: number;
-    batch_size?: number;
-    last_requirement_id?: string;
   };
 }
 
@@ -388,6 +386,7 @@ export const api = {
     evaluation_id: string;
     filename: string;
     status: string;
+    queue_position: number;
     message: string;
   }> {
     const formData = new FormData();
@@ -403,6 +402,61 @@ export const api = {
     });
 
     return handleResponse(response);
+  },
+
+  /**
+   * Upload a document with real upload progress tracking via XHR
+   */
+  uploadDocumentWithProgress(
+    file: File,
+    frameworkId: string,
+    onProgress?: (percent: number) => void
+  ): Promise<{
+    evaluation_id: string;
+    filename: string;
+    status: string;
+    queue_position: number;
+    message: string;
+  }> {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const url = new URL(`${API_BASE_URL}/upload`);
+      url.searchParams.set('framework_id', frameworkId);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url.toString());
+
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable && onProgress) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          onProgress(percent);
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(data);
+          } else {
+            reject(new APIError(
+              data.detail || data.message || `HTTP ${xhr.status}`,
+              xhr.status,
+            ));
+          }
+        } catch {
+          reject(new APIError(`HTTP ${xhr.status}: ${xhr.statusText}`, xhr.status));
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new APIError('Network error during upload'));
+      });
+
+      xhr.send(formData);
+    });
   },
 
   /**
@@ -581,6 +635,20 @@ export const api = {
   async deleteEvaluation(evaluationId: string): Promise<{ message: string }> {
     const response = await fetch(`${API_BASE_URL}/evaluations/${evaluationId}`, {
       method: 'DELETE',
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Get queue position for a specific evaluation
+   */
+  async getQueuePosition(evaluationId: string): Promise<{
+    evaluation_id: string;
+    status: string;
+    queue_position: number | null;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/queue/position/${evaluationId}`, {
+      cache: 'no-store',
     });
     return handleResponse(response);
   },

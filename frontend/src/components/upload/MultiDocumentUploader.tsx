@@ -31,8 +31,10 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
     total: number
     message: string
     etaSeconds?: number
-    batchNumber?: number
-    batchTotal?: number
+  } | null>(null)
+  const [summaryProgress, setSummaryProgress] = useState<{
+    completed: number
+    total: number
   } | null>(null)
 
   const navigate = useNavigate()
@@ -123,6 +125,14 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
         (status: EvaluationStatusData) => {
           const meta = status.metadata
 
+          // Track per-document summary progress
+          if (status.summaries_total != null && status.summaries_total > 0) {
+            setSummaryProgress({
+              completed: status.summaries_completed ?? 0,
+              total: status.summaries_total,
+            })
+          }
+
           // Check if summaries are done
           if (status.summaries_status === "completed" || status.summaries_status === "not_required") {
             setSupportingFiles(files => files.map(f =>
@@ -147,10 +157,8 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
               percent: meta.progress_percent ?? 0,
               completed: meta.completed_requirements ?? 0,
               total: meta.total_requirements ?? 0,
-              message: meta.status_message || "Processing...",
+              message: meta.status_message || (status.status === "in_progress" && !meta.completed_requirements ? "Starting evaluation..." : "Processing..."),
               etaSeconds: meta.estimated_seconds_remaining,
-              batchNumber: meta.batch_number,
-              batchTotal: meta.batch_total,
             })
           }
         },
@@ -163,7 +171,17 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
     } catch (error) {
       console.error("Upload error:", error)
       setUploadPhase("error")
-      setUploadError(error instanceof Error ? error.message : "Upload failed")
+      let userMessage = "Upload failed"
+      if (error instanceof Error) {
+        if (error.message.includes("polling timeout - no progress")) {
+          userMessage = "Evaluation appears to have stalled. No progress detected for 10 minutes. Please try again or contact support."
+        } else if (error.message.includes("polling timeout - time limit")) {
+          userMessage = "Evaluation timed out after 30 minutes. The document may be too complex or the service may be under heavy load."
+        } else {
+          userMessage = error.message
+        }
+      }
+      setUploadError(userMessage)
       setPrimaryFiles(files => files.map(f => ({ ...f, status: "error" as FileStatus, error: "Upload failed" })))
       setSupportingFiles(files => files.map(f =>
         f.status === "uploading" || f.status === "summarizing"
@@ -186,6 +204,7 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
     setEvaluationId(null)
     setUploadError(null)
     setEvaluationProgress(null)
+    setSummaryProgress(null)
   }
 
   const getPhaseDisplay = () => {
@@ -193,7 +212,12 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
       case "uploading":
         return { label: "Uploading documents...", color: "bg-primary" }
       case "summarizing":
-        return { label: "Generating summaries for supporting documents...", color: "bg-status-flagged" }
+        return {
+          label: summaryProgress
+            ? `Summarizing documents (${summaryProgress.completed} of ${summaryProgress.total})...`
+            : "Generating summaries for supporting documents...",
+          color: "bg-status-flagged"
+        }
       case "processing":
         return { label: "Evaluating document against requirements...", color: "bg-primary" }
       case "complete":
@@ -329,9 +353,6 @@ export function MultiDocumentUploader({ onUploadComplete }: MultiDocumentUploade
                   {evaluationProgress && uploadPhase === "processing" && (
                     <span className="text-sm text-muted-foreground">
                       {evaluationProgress.completed}/{evaluationProgress.total}
-                      {evaluationProgress.batchNumber && evaluationProgress.batchTotal && (
-                        <> (Batch {evaluationProgress.batchNumber}/{evaluationProgress.batchTotal})</>
-                      )}
                     </span>
                   )}
                 </div>

@@ -31,6 +31,7 @@ class ProgressTracker:
         self._pending_write_task: Optional[asyncio.Task[None]] = None
         self._closed = False
         self._lock = asyncio.Lock()
+        self._completion_times: list[float] = []
 
     async def set_phase(self, phase: str, message: str) -> None:
         async with self._lock:
@@ -63,6 +64,7 @@ class ProgressTracker:
             now = time.monotonic()
             if self._eval_start_time is None:
                 self._eval_start_time = now
+            self._completion_times.append(now)
             elapsed_since_write = now - self._last_db_write
             if elapsed_since_write >= self.debounce_seconds:
                 write_now = True
@@ -140,10 +142,25 @@ class ProgressTracker:
     def _calculate_eta_locked(self, completed: int, total: int) -> Optional[float]:
         if completed < 3 or total <= completed or self._eval_start_time is None:
             return None
+        remaining = total - completed
+
+        # Use windowed EMA over recent completion intervals for smoother estimates
+        times = self._completion_times
+        if len(times) >= 2:
+            # Take at most the last 11 timestamps to get 10 intervals
+            window = times[-min(len(times), 11):]
+            intervals = [window[i + 1] - window[i] for i in range(len(window) - 1)]
+            # Exponential moving average: alpha=0.3 weights recent intervals more
+            alpha = 0.3
+            ema = intervals[0]
+            for interval in intervals[1:]:
+                ema = alpha * interval + (1 - alpha) * ema
+            return round(ema * remaining, 1)
+
+        # Fallback to simple linear extrapolation if not enough completion timestamps
         elapsed = max(0.0, time.monotonic() - self._eval_start_time)
         if elapsed <= 0:
             return None
-        remaining = total - completed
         seconds_per_completion = elapsed / completed
         return round(seconds_per_completion * remaining, 1)
 

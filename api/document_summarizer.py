@@ -238,18 +238,23 @@ async def summarize_all_supporting_docs(
 
     logger.info(f"Summarizing {len(documents)} supporting documents for evaluation {evaluation_id}")
 
-    # Update status to generating
+    # Update status to generating with total count
     try:
         supabase_client.table("document_evaluations").update({
-            "summaries_status": "generating"
+            "summaries_status": "generating",
+            "summaries_total": len(documents),
+            "summaries_completed": 0,
         }).eq("id", evaluation_id).execute()
     except Exception as e:
         logger.warning(f"Failed to update summaries_status: {e}")
 
     results = []
     semaphore = asyncio.Semaphore(max_concurrent)
+    summaries_completed_count = 0
+    summaries_count_lock = asyncio.Lock()
 
     async def summarize_one(doc: Dict[str, Any]) -> Dict[str, Any]:
+        nonlocal summaries_completed_count
         async with semaphore:
             doc_id = doc["id"]
             file_name = doc["file_name"]
@@ -278,7 +283,7 @@ async def summarize_all_supporting_docs(
                     "summary_tokens_used": summary_result["tokens_used"]
                 }).eq("id", doc_id).execute()
 
-                return {
+                result_dict = {
                     "document_id": doc_id,
                     "file_name": file_name,
                     "success": True,
@@ -288,22 +293,35 @@ async def summarize_all_supporting_docs(
 
             except Exception as e:
                 logger.error(f"Failed to summarize {file_name}: {e}")
-                return {
+                result_dict = {
                     "document_id": doc_id,
                     "file_name": file_name,
                     "success": False,
                     "error": str(e)
                 }
 
+            # Update per-document progress counter
+            async with summaries_count_lock:
+                summaries_completed_count += 1
+                try:
+                    supabase_client.table("document_evaluations").update({
+                        "summaries_completed": summaries_completed_count,
+                    }).eq("id", evaluation_id).execute()
+                except Exception as e:
+                    logger.warning(f"Failed to update summaries_completed: {e}")
+
+            return result_dict
+
     # Run all summarizations concurrently
     tasks = [summarize_one(doc) for doc in documents]
     results = await asyncio.gather(*tasks)
 
-    # Update evaluation status
+    # Update evaluation status with final counts
     all_success = all(r["success"] for r in results)
     try:
         supabase_client.table("document_evaluations").update({
-            "summaries_status": "completed" if all_success else "failed"
+            "summaries_status": "completed" if all_success else "failed",
+            "summaries_completed": len(documents),
         }).eq("id", evaluation_id).execute()
     except Exception as e:
         logger.warning(f"Failed to update final summaries_status: {e}")

@@ -624,6 +624,8 @@ class EvaluationStatus(BaseModel):
     total_requirements: Optional[int] = None
     supporting_docs_count: Optional[int] = None
     summaries_status: Optional[str] = None
+    summaries_completed: Optional[int] = None
+    summaries_total: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
 
 class RequirementStructuredEvidenceItem(BaseModel):
@@ -2140,9 +2142,11 @@ async def list_evaluations():
                 total_requirements=row.get('total_requirements'),
                 supporting_docs_count=row.get('supporting_docs_count'),
                 summaries_status=row.get('summaries_status'),
+                summaries_completed=row.get('summaries_completed'),
+                summaries_total=row.get('summaries_total'),
                 metadata=row.get('metadata'),
             ))
-        
+
         return evaluations
         
     except Exception as e:
@@ -2187,9 +2191,11 @@ async def get_evaluation_status(evaluation_id: str):
             total_requirements=row.get('total_requirements'),
             supporting_docs_count=row.get('supporting_docs_count'),
             summaries_status=row.get('summaries_status'),
+            summaries_completed=row.get('summaries_completed'),
+            summaries_total=row.get('summaries_total'),
             metadata=row.get('metadata'),
         )
-        
+
     except Exception as e:
         logger.error(f"Get evaluation error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
