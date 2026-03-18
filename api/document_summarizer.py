@@ -3,7 +3,7 @@
 Document Summarizer Service
 
 Generates summaries of supporting documents for multi-document evaluations.
-Uses OpenAI's gpt-4o-mini for fast, cost-effective summarization.
+Uses OpenAI for fast, cost-effective summarization (model configurable via OPENAI_SUMMARY_MODEL).
 These summaries are injected into the evaluation context so the agent
 is aware of available supporting documentation.
 """
@@ -70,7 +70,7 @@ Keep the entire summary under 800 words. Focus on factual content that would hel
 async def summarize_document(
     file_path: Path,
     file_name: str,
-    model: str = "gpt-4o-mini"
+    model: str = None
 ) -> Dict[str, Any]:
     """
     Generate a summary for a single supporting document.
@@ -86,31 +86,20 @@ async def summarize_document(
     try:
         client = get_openai_client()
 
-        logger.info(f"Summarizing document: {file_name}")
+        resolved_model = model or os.getenv("OPENAI_SUMMARY_MODEL", "gpt-5-mini")
+        logger.info(f"Summarizing document: {file_name} with model {resolved_model}")
 
         # Upload the file to OpenAI for processing
         with open(file_path, "rb") as f:
             file_obj = client.files.create(file=f, purpose="assistants")
 
         try:
-            # Use the assistants API with file search to process the PDF
-            # For simpler approach, we'll use the chat completions with the file
-            # OpenAI's newer models can process PDFs directly via the API
-
-            # Read the file and create a message with the PDF
-            # Note: gpt-4o-mini doesn't support vision, so we need a different approach
-            # We'll use the file as context via the assistants API
-
-            # For PDF summarization, we'll use a simpler approach:
-            # Extract text using a temporary assistant or use vision model
-
-            # Use gpt-5-nano which supports PDFs natively
             with open(file_path, "rb") as f:
                 import base64
                 file_content = base64.standard_b64encode(f.read()).decode("utf-8")
 
             response = client.chat.completions.create(
-                model="gpt-5-nano-2025-08-07",  # Use gpt-5-nano for PDF vision capability
+                model=resolved_model,
                 messages=[
                     {"role": "system", "content": DOCUMENT_SUMMARY_SYSTEM_PROMPT},
                     {
@@ -142,7 +131,7 @@ async def summarize_document(
             return {
                 "summary_text": summary_text,
                 "tokens_used": tokens_used,
-                "model": "gpt-5-nano-2025-08-07",
+                "model": resolved_model,
                 "generated_at": datetime.utcnow().isoformat()
             }
 
@@ -161,7 +150,7 @@ async def summarize_document(
 async def summarize_document_from_bytes(
     file_bytes: bytes,
     file_name: str,
-    model: str = "gpt-5-nano-2025-08-07"
+    model: str = None
 ) -> Dict[str, Any]:
     """
     Generate a summary for a document from bytes.
@@ -178,12 +167,13 @@ async def summarize_document_from_bytes(
         import base64
 
         client = get_openai_client()
-        logger.info(f"Summarizing document from bytes: {file_name}")
+        resolved_model = model or os.getenv("OPENAI_SUMMARY_MODEL", "gpt-5-mini")
+        logger.info(f"Summarizing document from bytes: {file_name} with model {resolved_model}")
 
         file_content = base64.standard_b64encode(file_bytes).decode("utf-8")
 
         response = client.chat.completions.create(
-            model=model,
+            model=resolved_model,
             messages=[
                 {"role": "system", "content": DOCUMENT_SUMMARY_SYSTEM_PROMPT},
                 {
@@ -215,7 +205,7 @@ async def summarize_document_from_bytes(
         return {
             "summary_text": summary_text,
             "tokens_used": tokens_used,
-            "model": model,
+            "model": resolved_model,
             "generated_at": datetime.utcnow().isoformat()
         }
 
@@ -248,18 +238,23 @@ async def summarize_all_supporting_docs(
 
     logger.info(f"Summarizing {len(documents)} supporting documents for evaluation {evaluation_id}")
 
-    # Update status to generating
+    # Update status to generating with total count
     try:
         supabase_client.table("document_evaluations").update({
-            "summaries_status": "generating"
+            "summaries_status": "generating",
+            "summaries_total": len(documents),
+            "summaries_completed": 0,
         }).eq("id", evaluation_id).execute()
     except Exception as e:
         logger.warning(f"Failed to update summaries_status: {e}")
 
     results = []
     semaphore = asyncio.Semaphore(max_concurrent)
+    summaries_completed_count = 0
+    summaries_count_lock = asyncio.Lock()
 
     async def summarize_one(doc: Dict[str, Any]) -> Dict[str, Any]:
+        nonlocal summaries_completed_count
         async with semaphore:
             doc_id = doc["id"]
             file_name = doc["file_name"]
@@ -288,7 +283,7 @@ async def summarize_all_supporting_docs(
                     "summary_tokens_used": summary_result["tokens_used"]
                 }).eq("id", doc_id).execute()
 
-                return {
+                result_dict = {
                     "document_id": doc_id,
                     "file_name": file_name,
                     "success": True,
@@ -298,22 +293,35 @@ async def summarize_all_supporting_docs(
 
             except Exception as e:
                 logger.error(f"Failed to summarize {file_name}: {e}")
-                return {
+                result_dict = {
                     "document_id": doc_id,
                     "file_name": file_name,
                     "success": False,
                     "error": str(e)
                 }
 
+            # Update per-document progress counter
+            async with summaries_count_lock:
+                summaries_completed_count += 1
+                try:
+                    supabase_client.table("document_evaluations").update({
+                        "summaries_completed": summaries_completed_count,
+                    }).eq("id", evaluation_id).execute()
+                except Exception as e:
+                    logger.warning(f"Failed to update summaries_completed: {e}")
+
+            return result_dict
+
     # Run all summarizations concurrently
     tasks = [summarize_one(doc) for doc in documents]
     results = await asyncio.gather(*tasks)
 
-    # Update evaluation status
+    # Update evaluation status with final counts
     all_success = all(r["success"] for r in results)
     try:
         supabase_client.table("document_evaluations").update({
-            "summaries_status": "completed" if all_success else "failed"
+            "summaries_status": "completed" if all_success else "failed",
+            "summaries_completed": len(documents),
         }).eq("id", evaluation_id).execute()
     except Exception as e:
         logger.warning(f"Failed to update final summaries_status: {e}")

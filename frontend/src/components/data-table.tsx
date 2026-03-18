@@ -97,7 +97,7 @@ export function DataTable<TData, TValue>({
         ) : <div />}
         {toolbarSlot ? <div className="sm:ml-auto">{toolbarSlot}</div> : null}
       </div>
-      <div className={cn("rounded-md border", tableContainerClassName)}>
+      <div className={cn("overflow-hidden rounded-xl border border-border", tableContainerClassName)}>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -120,7 +120,7 @@ export function DataTable<TData, TValue>({
                               : undefined
                           }
                         >
-                          <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
                             {flexRender(header.column.columnDef.header, header.getContext())}
                             {header.column.getCanSort() ? (
                               header.column.getIsSorted() === "asc" ? (
@@ -128,7 +128,7 @@ export function DataTable<TData, TValue>({
                               ) : header.column.getIsSorted() === "desc" ? (
                                 <ArrowDown className="h-3 w-3" />
                               ) : (
-                                <ArrowUpDown className="h-3 w-3 text-slate-400" />
+                                <ArrowUpDown className="h-3 w-3 text-muted-foreground/60" />
                               )
                             ) : null}
                           </span>
@@ -149,7 +149,7 @@ export function DataTable<TData, TValue>({
                   style={onRowClick ? { cursor: "pointer" } : undefined}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={cn(
-                    "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+                    "border-b border-border/40 transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
                     rowClassName?.(row)
                   )}
                 >

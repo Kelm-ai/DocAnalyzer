@@ -57,18 +57,18 @@ function FrameworkRowActions({ framework, onEdit, onDelete }: FrameworkRowAction
           e.stopPropagation()
           setOpen((prev) => !prev)
         }}
-        className="rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+        className="rounded-full p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
       >
         <MoreHorizontal className="h-4 w-4" />
       </button>
       {open && (
         <div
-          className="absolute right-0 z-20 mt-8 w-40 rounded-md border border-gray-100 bg-white py-1 text-sm shadow-lg"
+          className="absolute right-0 z-20 mt-8 w-40 rounded-md border border-border bg-background py-1 text-sm shadow-lg"
           role="menu"
         >
           <button
             type="button"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-100"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-foreground hover:bg-accent"
             onClick={(e) => {
               e.stopPropagation()
               setOpen(false)
@@ -80,7 +80,7 @@ function FrameworkRowActions({ framework, onEdit, onDelete }: FrameworkRowAction
           </button>
           <button
             type="button"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-red-600 hover:bg-red-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-destructive hover:bg-status-fail-bg"
             onClick={(e) => {
               e.stopPropagation()
               setOpen(false)
@@ -104,14 +104,14 @@ const columnsFactory = (
     accessorKey: "name",
     header: "Name",
     cell: ({ row }) => (
-      <div className="font-medium text-gray-900">{row.original.name}</div>
+      <div className="font-medium text-foreground">{row.original.name}</div>
     ),
   },
   {
     accessorKey: "standard_reference",
     header: "Standard",
     cell: ({ row }) => (
-      <span className="text-sm text-gray-700">
+      <span className="text-sm text-foreground">
         {row.original.standard_reference || "—"}
       </span>
     ),
@@ -120,7 +120,7 @@ const columnsFactory = (
     accessorKey: "requirements_count",
     header: "Requirements",
     cell: ({ row }) => (
-      <span className="text-sm text-gray-700">
+      <span className="text-sm text-foreground">
         {row.original.requirements_count ?? 0}
       </span>
     ),
@@ -131,8 +131,8 @@ const columnsFactory = (
     cell: ({ row }) => (
       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
         row.original.is_active
-          ? "bg-green-100 text-green-700"
-          : "bg-gray-100 text-gray-600"
+          ? "bg-status-pass-bg text-status-pass"
+          : "bg-status-na-bg text-status-na"
       }`}>
         {row.original.is_active ? (
           <><CheckCircle className="h-3 w-3" /> Active</>
@@ -358,13 +358,13 @@ export function Frameworks() {
       </div>
 
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-700">
+        <div className="rounded-md border border-destructive/20 bg-status-fail-bg p-4 text-destructive">
           {error}
         </div>
       )}
 
       {successMessage && (
-        <div className="rounded-md border border-green-200 bg-green-50 p-4 text-green-700">
+        <div className="rounded-md border border-status-pass/20 bg-status-pass-bg p-4 text-status-pass">
           {successMessage}
         </div>
       )}
@@ -414,7 +414,7 @@ export function Frameworks() {
         <form id="framework-form" onSubmit={handleModalSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-900" htmlFor="name">
+              <label className="text-sm font-medium text-foreground" htmlFor="name">
                 Name *
               </label>
               <Input
@@ -425,7 +425,7 @@ export function Frameworks() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-900" htmlFor="slug">
+              <label className="text-sm font-medium text-foreground" htmlFor="slug">
                 Slug *
               </label>
               <Input
@@ -434,13 +434,13 @@ export function Frameworks() {
                 onChange={(e) => handleFieldChange("slug", e.target.value)}
                 placeholder="e.g. risk-management"
               />
-              <span className="text-xs text-gray-500">URL-friendly identifier (lowercase, hyphens only)</span>
+              <span className="text-xs text-muted-foreground">URL-friendly identifier (lowercase, hyphens only)</span>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-900" htmlFor="standard_reference">
+              <label className="text-sm font-medium text-foreground" htmlFor="standard_reference">
                 Standard Reference
               </label>
               <Input
@@ -451,7 +451,7 @@ export function Frameworks() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-900" htmlFor="display_order">
+              <label className="text-sm font-medium text-foreground" htmlFor="display_order">
                 Display Order
               </label>
               <Input
@@ -465,7 +465,7 @@ export function Frameworks() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-900" htmlFor="description">
+            <label className="text-sm font-medium text-foreground" htmlFor="description">
               Description
             </label>
             <textarea
@@ -473,12 +473,12 @@ export function Frameworks() {
               value={formState.description}
               onChange={(e) => handleFieldChange("description", e.target.value)}
               placeholder="Brief description of this evaluation framework"
-              className="min-h-[80px] rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="min-h-[80px] rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-900" htmlFor="system_prompt">
+            <label className="text-sm font-medium text-foreground" htmlFor="system_prompt">
               System Prompt *
             </label>
             <textarea
@@ -486,9 +486,9 @@ export function Frameworks() {
               value={formState.system_prompt}
               onChange={(e) => handleFieldChange("system_prompt", e.target.value)}
               placeholder="The AI instruction prompt used during document evaluation..."
-              className="min-h-[200px] rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-mono shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="min-h-[200px] rounded-md border border-border bg-background px-3 py-2 text-sm font-mono shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-muted-foreground">
               This prompt instructs the AI how to evaluate documents against this framework's requirements.
             </span>
           </div>
@@ -499,15 +499,15 @@ export function Frameworks() {
               id="is_active"
               checked={formState.is_active}
               onChange={(e) => handleFieldChange("is_active", e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-border"
             />
-            <label className="text-sm font-medium text-gray-900" htmlFor="is_active">
+            <label className="text-sm font-medium text-foreground" htmlFor="is_active">
               Active (available for new evaluations)
             </label>
           </div>
 
           {formError && (
-            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <div className="rounded-md border border-destructive/20 bg-status-fail-bg p-3 text-sm text-destructive">
               {formError}
             </div>
           )}
@@ -531,11 +531,11 @@ export function Frameworks() {
           </>
         }
       >
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-foreground">
           Are you sure you want to delete "{deleteConfirm?.name}"? This action cannot be undone.
         </p>
         {deleteError && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="mt-4 rounded-md border border-destructive/20 bg-status-fail-bg p-3 text-sm text-destructive">
             {deleteError}
           </div>
         )}

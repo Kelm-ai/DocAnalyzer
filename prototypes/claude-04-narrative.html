@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Narrative Report — Compliance Assessment</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    color: #5a4a3f;
+    background: #faf7f2;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Document container */
+  .document {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 40px 120px;
+  }
+
+  /* Title page */
+  .title-page {
+    text-align: center;
+    padding: 48px 0 40px;
+  }
+
+  .title-page h1 {
+    font-family: Georgia, serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #3d2e24;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .title-page .subtitle {
+    font-family: Georgia, serif;
+    font-size: 18px;
+    color: #7a6a5f;
+    font-style: italic;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .title-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 32px;
+  }
+
+  .title-meta-item {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    color: #8a7b70;
+    letter-spacing: 0.02em;
+  }
+
+  .title-meta-item span {
+    color: #5a4a3f;
+    font-weight: 500;
+  }
+
+  .overall-score {
+    display: inline-block;
+    margin: 16px 0 24px;
+  }
+
+  .overall-score .label {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #8a7b70;
+    margin-bottom: 4px;
+  }
+
+  .overall-score .value {
+    font-family: Georgia, serif;
+    font-size: 48px;
+    font-weight: 700;
+    color: #da7756;
+    letter-spacing: -0.02em;
+  }
+
+  .ai-notice {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    color: #a08e82;
+    background: #f3efe8;
+    border: 1px solid #e8e0d6;
+    border-radius: 6px;
+    padding: 12px 20px;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .ai-notice::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: #c4a882;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  /* Horizontal rule */
+  .doc-hr {
+    border: none;
+    border-top: 1px solid #ddd3c8;
+    margin: 40px 0;
+  }
+
+  /* Section headings */
+  .section-heading {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #3d2e24;
+    margin: 48px 0 20px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0d6cc;
+  }
+
+  .section-heading.first {
+    margin-top: 0;
+  }
+
+  /* Bordered sections */
+  .narrative-section {
+    margin: 48px 0;
+  }
+
+  .narrative-section-title {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #3d2e24;
+    margin-bottom: 24px;
+    padding-left: 20px;
+    border-left: 4px solid #ccc;
+  }
+
+  .narrative-section-title.critical {
+    border-left-color: #c0392b;
+  }
+
+  .narrative-section-title.attention {
+    border-left-color: #d4940a;
+  }
+
+  .narrative-section-title.compliant {
+    border-left-color: #27864a;
+  }
+
+  .narrative-section-title.na-title {
+    border-left-color: #a09080;
+  }
+
+  /* Prose paragraphs */
+  p.prose {
+    font-size: 16px;
+    margin-bottom: 16px;
+    text-align: left;
+  }
+
+  p.prose:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Findings */
+  .finding {
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #ece6dd;
+  }
+
+  .finding:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .finding-title {
+    font-family: Georgia, serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: #3d2e24;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .finding p {
+    font-size: 15px;
+    margin-bottom: 12px;
+    line-height: 1.7;
+  }
+
+  .finding p:last-of-type {
+    margin-bottom: 0;
+  }
+
+  /* Inline evidence quotes */
+  .evidence-inline {
+    font-style: italic;
+    color: #7a6a5f;
+  }
+
+  /* Gap / Recommendation labels */
+  .finding-label {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #a08e82;
+    margin-top: 16px;
+    margin-bottom: 4px;
+  }
+
+  .finding-label-text {
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 12px;
+    color: #5a4a3f;
+  }
+
+  /* Confidence badge */
+  .confidence-line {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    color: #8a7b70;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .confidence-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .confidence-dot.high { background: #27864a; }
+  .confidence-dot.medium { background: #d4940a; }
+  .confidence-dot.low { background: #c0392b; }
+
+  .confidence-text {
+    font-weight: 500;
+  }
+
+  /* Action buttons */
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 16px;
+    border-radius: 4px;
+    border: 1px solid #ddd3c8;
+    background: #fff;
+    color: #5a4a3f;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1.4;
+  }
+
+  .btn:hover {
+    border-color: #c4b8ab;
+    background: #f8f4ee;
+  }
+
+  .btn.active-agree {
+    background: #edf7f0;
+    border-color: #8dcea0;
+    color: #1d7a3a;
+  }
+
+  .btn.active-disagree {
+    background: #fdf0ee;
+    border-color: #e8a89c;
+    color: #b83a2a;
+  }
+
+  .btn.active-note {
+    background: #fef8eb;
+    border-color: #e8cf8a;
+    color: #8a6d1a;
+  }
+
+  .reviewed-badge {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 11px;
+    color: #8a7b70;
+    display: none;
+    align-items: center;
+    gap: 4px;
+    margin-left: 4px;
+  }
+
+  .reviewed-badge .check {
+    color: #27864a;
+    font-weight: 600;
+  }
+
+  /* Note area */
+  .note-area {
+    display: none;
+    margin-top: 12px;
+  }
+
+  .note-area.visible {
+    display: block;
+  }
+
+  .note-textarea {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    width: 100%;
+    min-height: 64px;
+    padding: 10px 12px;
+    border: 1px solid #ddd3c8;
+    border-radius: 6px;
+    background: #fff;
+    color: #5a4a3f;
+    resize: vertical;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .note-textarea:focus {
+    border-color: #da7756;
+  }
+
+  .note-textarea::placeholder {
+    color: #b8a99e;
+  }
+
+  .note-save-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .btn-save {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 16px;
+    border-radius: 4px;
+    border: 1px solid #da7756;
+    background: #da7756;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn-save:hover {
+    background: #c4664a;
+    border-color: #c4664a;
+  }
+
+  .btn-cancel {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 16px;
+    border-radius: 4px;
+    border: 1px solid #ddd3c8;
+    background: #fff;
+    color: #8a7b70;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn-cancel:hover {
+    background: #f8f4ee;
+  }
+
+  .saved-note {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #f8f4ee;
+    border-radius: 6px;
+    border-left: 3px solid #da7756;
+  }
+
+  .saved-note-label {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #a08e82;
+    margin-bottom: 4px;
+  }
+
+  .saved-note-text {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    color: #5a4a3f;
+    line-height: 1.5;
+  }
+
+  /* Compact finding (for pass items) */
+  .finding-compact {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #ece6dd;
+  }
+
+  .finding-compact:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .finding-compact p {
+    font-size: 15px;
+    line-height: 1.7;
+    margin-bottom: 0;
+  }
+
+  .finding-compact .actions {
+    margin-top: 10px;
+  }
+
+  /* Summary stats row */
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin: 24px 0 32px;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: #7a6a5f;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .stat-dot.red { background: #c0392b; }
+  .stat-dot.amber { background: #d4940a; }
+  .stat-dot.green { background: #27864a; }
+  .stat-dot.gray { background: #a09080; }
+
+  /* Appendix table */
+  .appendix {
+    margin-top: 48px;
+  }
+
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    margin-top: 20px;
+  }
+
+  .summary-table thead th {
+    text-align: left;
+    font-weight: 600;
+    color: #3d2e24;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 10px 12px;
+    border-bottom: 2px solid #ddd3c8;
+    background: #f3efe8;
+  }
+
+  .summary-table tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid #ece6dd;
+    color: #5a4a3f;
+    vertical-align: middle;
+  }
+
+  .summary-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .summary-table tbody tr:hover {
+    background: #f8f4ee;
+  }
+
+  .table-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .table-status-dot.fail { background: #c0392b; }
+  .table-status-dot.flagged { background: #d4940a; }
+  .table-status-dot.pass { background: #27864a; }
+  .table-status-dot.na { background: #a09080; }
+
+  .table-decision {
+    font-weight: 500;
+    font-size: 12px;
+  }
+
+  .table-decision.pending { color: #a09080; }
+  .table-decision.agreed { color: #1d7a3a; }
+  .table-decision.disagreed { color: #b83a2a; }
+  .table-decision.noted { color: #8a6d1a; }
+
+  .table-note-indicator {
+    font-size: 11px;
+    color: #da7756;
+    margin-left: 4px;
+  }
+
+  /* Export button */
+  .export-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+  }
+
+  .btn-export {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 24px;
+    border-radius: 6px;
+    border: 1px solid #da7756;
+    background: #da7756;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-export:hover {
+    background: #c4664a;
+    border-color: #c4664a;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .document {
+      padding: 32px 20px 80px;
+    }
+    .title-page h1 {
+      font-size: 24px;
+    }
+    .title-page .subtitle {
+      font-size: 16px;
+    }
+    .overall-score .value {
+      font-size: 36px;
+    }
+    .stats-row {
+      gap: 10px;
+    }
+    .summary-table {
+      font-size: 12px;
+    }
+    .summary-table thead th,
+    .summary-table tbody td {
+      padding: 7px 8px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="document">
+
+  <!-- ===== TITLE PAGE ===== -->
+  <div class="title-page">
+    <h1>Compliance Assessment Report</h1>
+    <div class="subtitle">Information Security Management Policy v3.2</div>
+    <div class="title-meta">
+      <span class="title-meta-item">Evaluated against <span>ISO 27001:2022</span></span>
+      <span class="title-meta-item">Assessment date: <span>January 15, 2024</span></span>
+    </div>
+    <div class="overall-score">
+      <div class="label">Overall Compliance</div>
+      <div class="value">73%</div>
+    </div>
+    <div class="stats-row">
+      <span class="stat-item"><span class="stat-dot red"></span>3 Failed</span>
+      <span class="stat-item"><span class="stat-dot amber"></span>3 Flagged</span>
+      <span class="stat-item"><span class="stat-dot green"></span>8 Compliant</span>
+      <span class="stat-item"><span class="stat-dot gray"></span>1 N/A</span>
+    </div>
+    <div class="ai-notice">This is an AI-generated assessment. All findings require human verification by qualified compliance personnel.</div>
+  </div>
+
+  <hr class="doc-hr">
+
+  <!-- ===== EXECUTIVE SUMMARY ===== -->
+  <h2 class="section-heading first">Executive Summary</h2>
+
+  <p class="prose">This assessment evaluated the Information Security Management Policy v3.2 against 15 requirements from ISO 27001:2022. The document demonstrates strong compliance in areas of leadership commitment, policy documentation, and organizational roles. However, significant gaps were identified in risk assessment methodology, operational procedures, and measurable security objectives.</p>
+
+  <p class="prose">Three requirements failed to meet compliance standards, three were flagged for further review, eight were assessed as compliant, and one was not applicable to this evaluation.</p>
+
+  <p class="prose">The most critical deficiency is the absence of a documented risk assessment methodology, which is foundational to the ISO 27001 framework. Additionally, the lack of specific operational procedures and measurable security objectives represent systemic weaknesses that should be addressed as a priority.</p>
+
+  <hr class="doc-hr">
+
+  <!-- ===== SECTION 1: CRITICAL NON-CONFORMITIES ===== -->
+  <div class="narrative-section">
+    <h2 class="narrative-section-title critical">Section 1: Critical Non-Conformities</h2>
+
+    <!-- Finding 1.1 -->
+    <div class="finding" id="finding-1">
+      <div class="finding-title">1.1 Risk Assessment Process (REQ-6.1.2, Clause 6.1)</div>
+      <p>The document does not contain a documented risk assessment methodology. While Section 4.2 states that <span class="evidence-inline">&lsquo;the organization shall ensure information security risks are managed appropriately,&rsquo;</span> this language is too general to satisfy the requirement for a specific, repeatable process for identifying, analyzing, and evaluating information security risks.</p>
+
+      <div class="finding-label">Gap</div>
+      <div class="finding-label-text">No documented risk assessment methodology. The policy references risk management in general terms but lacks a specific, repeatable process for identifying, analyzing, and evaluating information security risks.</div>
+
+      <div class="finding-label">Recommendation</div>
+      <div class="finding-label-text">Develop and document a formal risk assessment methodology including criteria for risk acceptance and assessment frequency.</div>
+
+      <div class="confidence-line">
+        <span class="confidence-dot medium"></span>
+        <span class="confidence-text">AI Confidence: Medium</span>
+        <span>&mdash; partial evidence was found but insufficient for compliance</span>
+      </div>
+
+      <div class="actions" data-req="1">
+        <button class="btn btn-agree" onclick="setDecision(1, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(1, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(1)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-1"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-1">
+        <textarea class="note-textarea" id="note-text-1" placeholder="Add your note or comment about this finding..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(1)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(1)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-1">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-1"></div>
+      </div>
+    </div>
+
+    <!-- Finding 1.2 -->
+    <div class="finding" id="finding-2">
+      <div class="finding-title">1.2 Operational Planning and Control (REQ-8.1.1, Clause 8.1)</div>
+      <p>The policy lacks documented operational procedures for security controls. While Section 7.1 states that <span class="evidence-inline">&lsquo;security controls shall be implemented as deemed necessary by management,&rsquo;</span> this does not satisfy the requirement for specific, documented operational procedures. There are no references to work instructions, process documentation, or control implementation details.</p>
+
+      <div class="finding-label">Gap</div>
+      <div class="finding-label-text">Missing documented operational procedures for security controls. While the policy states controls should be implemented, there are no references to specific operational procedures or work instructions.</div>
+
+      <div class="finding-label">Recommendation</div>
+      <div class="finding-label-text">Create detailed operational procedures for each security control, including responsibilities, frequency, and documentation requirements.</div>
+
+      <div class="confidence-line">
+        <span class="confidence-dot high"></span>
+        <span class="confidence-text">AI Confidence: High</span>
+        <span>&mdash; clear absence of operational procedures in the document</span>
+      </div>
+
+      <div class="actions" data-req="2">
+        <button class="btn btn-agree" onclick="setDecision(2, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(2, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(2)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-2"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-2">
+        <textarea class="note-textarea" id="note-text-2" placeholder="Add your note or comment about this finding..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(2)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(2)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-2">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-2"></div>
+      </div>
+    </div>
+
+    <!-- Finding 1.3 -->
+    <div class="finding" id="finding-3">
+      <div class="finding-title">1.3 Information Security Objectives (REQ-6.2.1, Clause 6.2)</div>
+      <p>No measurable information security objectives are defined in the document. Section 1.3 states that <span class="evidence-inline">&lsquo;the organization is committed to maintaining a high level of information security,&rsquo;</span> but this is aspirational language rather than a specific, measurable objective. The requirement calls for SMART objectives&thinsp;&mdash;&thinsp;specific, measurable, achievable, relevant, and time-bound&thinsp;&mdash;&thinsp;and none are present.</p>
+
+      <div class="finding-label">Gap</div>
+      <div class="finding-label-text">No measurable information security objectives defined. The policy contains aspirational statements but lacks specific, measurable, achievable, relevant, and time-bound (SMART) objectives.</div>
+
+      <div class="finding-label">Recommendation</div>
+      <div class="finding-label-text">Define SMART information security objectives aligned with the overall business objectives and communicate them throughout the organization.</div>
+
+      <div class="confidence-line">
+        <span class="confidence-dot high"></span>
+        <span class="confidence-text">AI Confidence: High</span>
+        <span>&mdash; only aspirational language found; no measurable objectives present</span>
+      </div>
+
+      <div class="actions" data-req="3">
+        <button class="btn btn-agree" onclick="setDecision(3, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(3, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(3)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-3"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-3">
+        <textarea class="note-textarea" id="note-text-3" placeholder="Add your note or comment about this finding..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(3)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(3)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-3">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="doc-hr">
+
+  <!-- ===== SECTION 2: ITEMS REQUIRING ATTENTION ===== -->
+  <div class="narrative-section">
+    <h2 class="narrative-section-title attention">Section 2: Items Requiring Attention</h2>
+
+    <!-- Finding 2.1 -->
+    <div class="finding" id="finding-4">
+      <div class="finding-title">2.1 Competence Requirements (REQ-7.2.1, Clause 7.2)</div>
+      <p>The evidence for this requirement is partial. Section 5.4 establishes that <span class="evidence-inline">&lsquo;staff shall receive appropriate information security training upon joining and annually thereafter,&rsquo;</span> which demonstrates an awareness of competence needs. However, the policy does not address how competence is evaluated, how training effectiveness is measured, or how records of competence are maintained. Implementation evidence cannot be determined from the policy text alone.</p>
+
+      <div class="finding-label">Gap</div>
+      <div class="finding-label-text">Partial competence framework found but missing evidence of implementation. Training requirements are listed but no records of completion or effectiveness evaluation are referenced.</div>
+
+      <div class="finding-label">Recommendation</div>
+      <div class="finding-label-text">Implement a competence tracking system with records of training completion, competency assessments, and periodic reviews.</div>
+
+      <div class="confidence-line">
+        <span class="confidence-dot low"></span>
+        <span class="confidence-text">AI Confidence: Low</span>
+        <span>&mdash; training framework partially present; implementation evidence unclear from policy text alone</span>
+      </div>
+
+      <div class="actions" data-req="4">
+        <button class="btn btn-agree" onclick="setDecision(4, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(4, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(4)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-4"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-4">
+        <textarea class="note-textarea" id="note-text-4" placeholder="Add your note or comment about this finding..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(4)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(4)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-4">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-4"></div>
+      </div>
+    </div>
+
+    <!-- Finding 2.2 -->
+    <div class="finding" id="finding-5">
+      <div class="finding-title">2.2 Monitoring and Measurement (REQ-9.1.1, Clause 9.1)</div>
+      <p>The evidence for this requirement is incomplete. Section 8.2 states that <span class="evidence-inline">&lsquo;information security performance shall be monitored and reported to management,&rsquo;</span> which acknowledges the need for monitoring. However, no specific metrics, key performance indicators (KPIs), measurement methods, or reporting schedules are defined. The requirement demands specificity about what is monitored, how it is measured, and when results are analyzed.</p>
+
+      <div class="finding-label">Gap</div>
+      <div class="finding-label-text">Monitoring requirements mentioned but no specific metrics or KPIs defined. The policy states monitoring should occur but does not specify what, how, or when.</div>
+
+      <div class="finding-label">Recommendation</div>
+      <div class="finding-label-text">Define specific security metrics and KPIs, establish measurement methods, and create a reporting schedule.</div>
+
+      <div class="confidence-line">
+        <span class="confidence-dot medium"></span>
+        <span class="confidence-text">AI Confidence: Medium</span>
+        <span>&mdash; monitoring mentioned but lacks specificity on metrics and methods</span>
+      </div>
+
+      <div class="actions" data-req="5">
+        <button class="btn btn-agree" onclick="setDecision(5, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(5, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(5)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-5"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-5">
+        <textarea class="note-textarea" id="note-text-5" placeholder="Add your note or comment about this finding..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(5)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(5)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-5">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-5"></div>
+      </div>
+    </div>
+
+    <!-- Finding 2.3 -->
+    <div class="finding" id="finding-6">
+      <div class="finding-title">2.3 Management Review Inputs (REQ-9.3.1, Clause 9.3)</div>
+      <p>The management review process exists in principle but the required inputs are incomplete. Section 9.1 establishes that <span class="evidence-inline">&lsquo;management shall review the ISMS at planned intervals to ensure its continuing suitability,&rsquo;</span> which satisfies the process requirement. However, the policy does not enumerate the specific inputs required by ISO 27001, including the status of actions from previous reviews, changes in external and internal issues, feedback on security performance, and opportunities for improvement.</p>
+
+      <div class="finding-label">Gap</div>
+      <div class="finding-label-text">Management review process exists but input requirements are incomplete. Missing several required input items per ISO 27001 including status of previous actions, changes in issues, and improvement opportunities.</div>
+
+      <div class="finding-label">Recommendation</div>
+      <div class="finding-label-text">Update the management review procedure to include all required inputs: status of actions, changes in external/internal issues, feedback, and improvement opportunities.</div>
+
+      <div class="confidence-line">
+        <span class="confidence-dot medium"></span>
+        <span class="confidence-text">AI Confidence: Medium</span>
+        <span>&mdash; review process present but required inputs are only partially addressed</span>
+      </div>
+
+      <div class="actions" data-req="6">
+        <button class="btn btn-agree" onclick="setDecision(6, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(6, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(6)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-6"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-6">
+        <textarea class="note-textarea" id="note-text-6" placeholder="Add your note or comment about this finding..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(6)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(6)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-6">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-6"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="doc-hr">
+
+  <!-- ===== SECTION 3: COMPLIANT REQUIREMENTS ===== -->
+  <div class="narrative-section">
+    <h2 class="narrative-section-title compliant">Section 3: Compliant Requirements</h2>
+
+    <!-- Pass 3.1 -->
+    <div class="finding-compact" id="finding-7">
+      <p><strong>3.1 Leadership Commitment (REQ-5.1.1, Clause 5.1)</strong> &mdash; Compliant. The document clearly establishes leadership commitment through Section 2.1, which states: <span class="evidence-inline">&lsquo;The Board of Directors and Senior Management are committed to supporting information security through adequate resource allocation, policy endorsement, and regular review.&rsquo;</span> <span class="confidence-line" style="display:inline;"><span class="confidence-dot high" style="vertical-align:middle;"></span> <span class="confidence-text">AI Confidence: High.</span></span></p>
+      <div class="actions" data-req="7">
+        <button class="btn btn-agree" onclick="setDecision(7, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(7, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(7)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-7"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-7">
+        <textarea class="note-textarea" id="note-text-7" placeholder="Add your note or comment..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(7)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(7)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-7">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-7"></div>
+      </div>
+    </div>
+
+    <!-- Pass 3.2 -->
+    <div class="finding-compact" id="finding-8">
+      <p><strong>3.2 Information Security Policy (REQ-5.2.1, Clause 5.2)</strong> &mdash; Compliant. The existence of this document itself serves as evidence. Section 1.1 states: <span class="evidence-inline">&lsquo;This Information Security Policy establishes the framework for managing information security risks and demonstrates our commitment to protecting information assets.&rsquo;</span> The policy is appropriately scoped and addresses the required elements. <span class="confidence-line" style="display:inline;"><span class="confidence-dot high" style="vertical-align:middle;"></span> <span class="confidence-text">AI Confidence: High.</span></span></p>
+      <div class="actions" data-req="8">
+        <button class="btn btn-agree" onclick="setDecision(8, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(8, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(8)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-8"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-8">
+        <textarea class="note-textarea" id="note-text-8" placeholder="Add your note or comment..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(8)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(8)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-8">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-8"></div>
+      </div>
+    </div>
+
+    <!-- Pass 3.3 -->
+    <div class="finding-compact" id="finding-9">
+      <p><strong>3.3 Organizational Roles (REQ-5.3.1, Clause 5.3)</strong> &mdash; Compliant. Section 3.1 defines key roles: <span class="evidence-inline">&lsquo;The Chief Information Security Officer (CISO) is responsible for the overall ISMS. Department heads are responsible for implementing security controls within their areas.&rsquo;</span> The role structure is adequate, though granularity of responsibilities could be improved. <span class="confidence-line" style="display:inline;"><span class="confidence-dot medium" style="vertical-align:middle;"></span> <span class="confidence-text">AI Confidence: Medium.</span></span></p>
+      <div class="actions" data-req="9">
+        <button class="btn btn-agree" onclick="setDecision(9, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(9, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(9)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-9"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-9">
+        <textarea class="note-textarea" id="note-text-9" placeholder="Add your note or comment..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(9)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(9)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-9">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-9"></div>
+      </div>
+    </div>
+
+    <!-- Pass 3.4 -->
+    <div class="finding-compact" id="finding-10">
+      <p><strong>3.4 Resources (REQ-7.1.1, Clause 7.1)</strong> &mdash; Compliant. Section 5.1 specifies: <span class="evidence-inline">&lsquo;The organization shall determine and provide the resources needed for the ISMS including budget allocation reviewed annually.&rsquo;</span> The commitment to annual budget review demonstrates an ongoing resource provision cycle. <span class="confidence-line" style="display:inline;"><span class="confidence-dot high" style="vertical-align:middle;"></span> <span class="confidence-text">AI Confidence: High.</span></span></p>
+      <div class="actions" data-req="10">
+        <button class="btn btn-agree" onclick="setDecision(10, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(10, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(10)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-10"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-10">
+        <textarea class="note-textarea" id="note-text-10" placeholder="Add your note or comment..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(10)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(10)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-10">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-10"></div>
+      </div>
+    </div>
+
+    <!-- Pass 3.5 -->
+    <div class="finding-compact" id="finding-11">
+      <p><strong>3.5 Awareness (REQ-7.3.1, Clause 7.3)</strong> &mdash; Compliant. The policy comprehensively addresses awareness requirements. Section 5.5 states: <span class="evidence-inline">&lsquo;All employees shall be made aware of the information security policy, their contribution to the ISMS effectiveness, and implications of non-conformance.&rsquo;</span> This covers all elements required by ISO 27001. <span class="confidence-line" style="display:inline;"><span class="confidence-dot high" style="vertical-align:middle;"></span> <span class="confidence-text">AI Confidence: High.</span></span></p>
+      <div class="actions" data-req="11">
+        <button class="btn btn-agree" onclick="setDecision(11, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(11, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(11)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-11"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-11">
+        <textarea class="note-textarea" id="note-text-11" placeholder="Add your note or comment..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(11)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(11)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-11">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-11"></div>
+      </div>
+    </div>
+
+    <!-- Pass 3.6 -->
+    <div class="finding-compact" id="finding-12">
+      <p><strong>3.6 Communication (REQ-7.4.1, Clause 7.4)</strong> &mdash; Compliant. Section 5.6 establishes a communication framework: <span class="evidence-inline">&lsquo;Internal and external communications regarding information security shall follow the defined communication plan including what to communicate, when, and to whom.&rsquo;</span> The plan is referenced though its detail level could be deeper. <span class="confidence-line" style="display:inline;"><span class="confidence-dot medium" style="vertical-align:middle;"></span> <span class="confidence-text">AI Confidence: Medium.</span></span></p>
+      <div class="actions" data-req="12">
+        <button class="btn btn-agree" onclick="setDecision(12, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(12, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(12)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-12"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-12">
+        <textarea class="note-textarea" id="note-text-12" placeholder="Add your note or comment..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(12)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(12)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-12">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-12"></div>
+      </div>
+    </div>
+
+    <!-- Pass 3.7 -->
+    <div class="finding-compact" id="finding-13">
+      <p><strong>3.7 Internal Audit (REQ-9.2.1, Clause 9.2)</strong> &mdash; Compliant. Section 8.3 provides clear audit requirements: <span class="evidence-inline">&lsquo;Internal audits of the ISMS shall be conducted at planned intervals, at least annually, by qualified auditors independent of the areas being audited.&rsquo;</span> The policy specifies frequency, independence, and qualification criteria. <span class="confidence-line" style="display:inline;"><span class="confidence-dot high" style="vertical-align:middle;"></span> <span class="confidence-text">AI Confidence: High.</span></span></p>
+      <div class="actions" data-req="13">
+        <button class="btn btn-agree" onclick="setDecision(13, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(13, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(13)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-13"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-13">
+        <textarea class="note-textarea" id="note-text-13" placeholder="Add your note or comment..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(13)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(13)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-13">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-13"></div>
+      </div>
+    </div>
+
+    <!-- Pass 3.8 -->
+    <div class="finding-compact" id="finding-14">
+      <p><strong>3.8 Documented Information (REQ-7.5.1, Clause 7.5)</strong> &mdash; Compliant. Section 5.7 establishes comprehensive documentation controls: <span class="evidence-inline">&lsquo;All ISMS documentation shall be controlled, versioned, and maintained in the document management system with appropriate access controls.&rsquo;</span> Versioning, control, and access management are all addressed. <span class="confidence-line" style="display:inline;"><span class="confidence-dot high" style="vertical-align:middle;"></span> <span class="confidence-text">AI Confidence: High.</span></span></p>
+      <div class="actions" data-req="14">
+        <button class="btn btn-agree" onclick="setDecision(14, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(14, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(14)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-14"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-14">
+        <textarea class="note-textarea" id="note-text-14" placeholder="Add your note or comment..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(14)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(14)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-14">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-14"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="doc-hr">
+
+  <!-- ===== SECTION 4: NOT APPLICABLE ===== -->
+  <div class="narrative-section">
+    <h2 class="narrative-section-title na-title">Section 4: Not Applicable</h2>
+
+    <div class="finding-compact" id="finding-15">
+      <p><strong>4.1 Information Security Risk Assessment (REQ-8.2.1, Clause 8.2)</strong> &mdash; Not applicable. This requirement has been assessed under REQ-6.1.2 (Risk Assessment Process). The scope of Clause 8.2 is covered by the evaluation in Section 1.1 of this report, and a separate assessment would be duplicative. <span class="confidence-line" style="display:inline;"><span class="confidence-dot high" style="vertical-align:middle;"></span> <span class="confidence-text">AI Confidence: High</span> <span>&mdash; clear overlap with REQ-6.1.2 assessment.</span></span></p>
+      <div class="actions" data-req="15">
+        <button class="btn btn-agree" onclick="setDecision(15, 'agree')">Agree</button>
+        <button class="btn btn-disagree" onclick="setDecision(15, 'disagree')">Disagree</button>
+        <button class="btn btn-note" onclick="toggleNote(15)">Add Note</button>
+        <span class="reviewed-badge" id="reviewed-15"><span class="check">&#10003;</span> Reviewed</span>
+      </div>
+      <div class="note-area" id="note-area-15">
+        <textarea class="note-textarea" id="note-text-15" placeholder="Add your note or comment..."></textarea>
+        <div class="note-save-row">
+          <button class="btn-cancel" onclick="cancelNote(15)">Cancel</button>
+          <button class="btn-save" onclick="saveNote(15)">Save Note</button>
+        </div>
+      </div>
+      <div class="saved-note" id="saved-note-15">
+        <div class="saved-note-label">Your Note</div>
+        <div class="saved-note-text" id="saved-note-text-15"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="doc-hr">
+
+  <!-- ===== APPENDIX: REVIEW SUMMARY ===== -->
+  <div class="appendix">
+    <h2 class="narrative-section-title na-title">Appendix: Review Summary</h2>
+
+    <table class="summary-table" id="summary-table">
+      <thead>
+        <tr>
+          <th>Req ID</th>
+          <th>Requirement</th>
+          <th>AI Result</th>
+          <th>Your Decision</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody id="summary-tbody">
+        <!-- Populated by JS -->
+      </tbody>
+    </table>
+
+    <div class="export-row">
+      <button class="btn-export" onclick="exportReport()">Export Summary</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Requirement data
+  var requirements = [
+    { id: 1, reqId: 'REQ-6.1.2', name: 'Risk Assessment Process', status: 'fail', clause: '6.1' },
+    { id: 2, reqId: 'REQ-8.1.1', name: 'Operational Planning and Control', status: 'fail', clause: '8.1' },
+    { id: 3, reqId: 'REQ-6.2.1', name: 'Information Security Objectives', status: 'fail', clause: '6.2' },
+    { id: 4, reqId: 'REQ-7.2.1', name: 'Competence Requirements', status: 'flagged', clause: '7.2' },
+    { id: 5, reqId: 'REQ-9.1.1', name: 'Monitoring and Measurement', status: 'flagged', clause: '9.1' },
+    { id: 6, reqId: 'REQ-9.3.1', name: 'Management Review Inputs', status: 'flagged', clause: '9.3' },
+    { id: 7, reqId: 'REQ-5.1.1', name: 'Leadership Commitment', status: 'pass', clause: '5.1' },
+    { id: 8, reqId: 'REQ-5.2.1', name: 'Information Security Policy', status: 'pass', clause: '5.2' },
+    { id: 9, reqId: 'REQ-5.3.1', name: 'Organizational Roles', status: 'pass', clause: '5.3' },
+    { id: 10, reqId: 'REQ-7.1.1', name: 'Resources', status: 'pass', clause: '7.1' },
+    { id: 11, reqId: 'REQ-7.3.1', name: 'Awareness', status: 'pass', clause: '7.3' },
+    { id: 12, reqId: 'REQ-7.4.1', name: 'Communication', status: 'pass', clause: '7.4' },
+    { id: 13, reqId: 'REQ-9.2.1', name: 'Internal Audit', status: 'pass', clause: '9.2' },
+    { id: 14, reqId: 'REQ-7.5.1', name: 'Documented Information', status: 'pass', clause: '7.5' },
+    { id: 15, reqId: 'REQ-8.2.1', name: 'Information Security Risk Assessment', status: 'na', clause: '8.2' }
+  ];
+
+  // State
+  var decisions = {};
+  var notes = {};
+
+  // Status labels
+  var statusLabels = {
+    fail: 'Failed',
+    flagged: 'Flagged',
+    pass: 'Compliant',
+    na: 'N/A'
+  };
+
+  // Initialize summary table
+  function renderSummaryTable() {
+    var tbody = document.getElementById('summary-tbody');
+    var html = '';
+    for (var i = 0; i < requirements.length; i++) {
+      var req = requirements[i];
+      var decision = decisions[req.id];
+      var note = notes[req.id];
+      var decisionLabel = 'Pending';
+      var decisionClass = 'pending';
+
+      if (decision === 'agree') {
+        decisionLabel = 'Agreed';
+        decisionClass = 'agreed';
+      } else if (decision === 'disagree') {
+        decisionLabel = 'Disagreed';
+        decisionClass = 'disagreed';
+      }
+
+      var noteIndicator = '';
+      if (note) {
+        noteIndicator = '<span class="table-note-indicator" title="' + escapeAttr(note) + '">Has note</span>';
+      }
+
+      html += '<tr>';
+      html += '<td>' + req.reqId + '</td>';
+      html += '<td>' + req.name + '</td>';
+      html += '<td><span class="table-status-dot ' + req.status + '"></span>' + statusLabels[req.status] + '</td>';
+      html += '<td><span class="table-decision ' + decisionClass + '">' + decisionLabel + '</span></td>';
+      html += '<td>' + noteIndicator + '</td>';
+      html += '</tr>';
+    }
+    tbody.innerHTML = html;
+  }
+
+  function escapeAttr(str) {
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // Set decision (agree / disagree)
+  function setDecision(id, type) {
+    var actionsDiv = document.querySelector('.actions[data-req="' + id + '"]');
+    var buttons = actionsDiv.querySelectorAll('.btn');
+    var reviewedBadge = document.getElementById('reviewed-' + id);
+    var currentDecision = decisions[id];
+
+    // Toggle off if same
+    if (currentDecision === type) {
+      buttons.forEach(function(btn) {
+        btn.classList.remove('active-agree', 'active-disagree');
+      });
+      reviewedBadge.style.display = 'none';
+      delete decisions[id];
+      renderSummaryTable();
+      return;
+    }
+
+    // Clear all active states on agree/disagree buttons
+    buttons.forEach(function(btn) {
+      if (btn.classList.contains('btn-agree') || btn.classList.contains('btn-disagree')) {
+        btn.classList.remove('active-agree', 'active-disagree');
+      }
+    });
+
+    // Set active
+    if (type === 'agree') {
+      actionsDiv.querySelector('.btn-agree').classList.add('active-agree');
+    } else if (type === 'disagree') {
+      actionsDiv.querySelector('.btn-disagree').classList.add('active-disagree');
+    }
+
+    decisions[id] = type;
+    reviewedBadge.style.display = 'inline-flex';
+
+    renderSummaryTable();
+  }
+
+  // Toggle note area
+  function toggleNote(id) {
+    var noteArea = document.getElementById('note-area-' + id);
+    var isVisible = noteArea.classList.contains('visible');
+
+    if (isVisible) {
+      noteArea.classList.remove('visible');
+    } else {
+      noteArea.classList.add('visible');
+      // Pre-fill with existing note if any
+      var textarea = document.getElementById('note-text-' + id);
+      if (notes[id]) {
+        textarea.value = notes[id];
+      }
+      textarea.focus();
+
+      // Mark the note button as active
+      var actionsDiv = document.querySelector('.actions[data-req="' + id + '"]');
+      actionsDiv.querySelector('.btn-note').classList.add('active-note');
+    }
+  }
+
+  // Cancel note
+  function cancelNote(id) {
+    var noteArea = document.getElementById('note-area-' + id);
+    noteArea.classList.remove('visible');
+
+    // Remove active state from note button if no saved note
+    if (!notes[id]) {
+      var actionsDiv = document.querySelector('.actions[data-req="' + id + '"]');
+      actionsDiv.querySelector('.btn-note').classList.remove('active-note');
+    }
+  }
+
+  // Save note
+  function saveNote(id) {
+    var textarea = document.getElementById('note-text-' + id);
+    var text = textarea.value.trim();
+
+    if (text) {
+      notes[id] = text;
+
+      // Show saved note display
+      var savedNote = document.getElementById('saved-note-' + id);
+      var savedNoteText = document.getElementById('saved-note-text-' + id);
+      savedNoteText.textContent = text;
+      savedNote.style.display = 'block';
+
+      // Keep note button active
+      var actionsDiv = document.querySelector('.actions[data-req="' + id + '"]');
+      actionsDiv.querySelector('.btn-note').classList.add('active-note');
+
+      // Show reviewed badge if not already shown
+      var reviewedBadge = document.getElementById('reviewed-' + id);
+      reviewedBadge.style.display = 'inline-flex';
+    } else {
+      delete notes[id];
+
+      // Hide saved note display
+      var savedNote = document.getElementById('saved-note-' + id);
+      savedNote.style.display = 'none';
+
+      // Remove active note button
+      var actionsDiv = document.querySelector('.actions[data-req="' + id + '"]');
+      actionsDiv.querySelector('.btn-note').classList.remove('active-note');
+
+      // Hide reviewed badge if no decision either
+      if (!decisions[id]) {
+        var reviewedBadge = document.getElementById('reviewed-' + id);
+        reviewedBadge.style.display = 'none';
+      }
+    }
+
+    // Close note area
+    var noteArea = document.getElementById('note-area-' + id);
+    noteArea.classList.remove('visible');
+
+    renderSummaryTable();
+  }
+
+  // Export report
+  function exportReport() {
+    var lines = [];
+    lines.push('COMPLIANCE ASSESSMENT REVIEW SUMMARY');
+    lines.push('Document: Information Security Management Policy v3.2');
+    lines.push('Framework: ISO 27001:2022');
+    lines.push('Assessment Date: January 15, 2024');
+    lines.push('Overall Compliance: 73%');
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+
+    for (var i = 0; i < requirements.length; i++) {
+      var req = requirements[i];
+      var decision = decisions[req.id] || 'Pending';
+      var note = notes[req.id] || '';
+
+      lines.push(req.reqId + ' - ' + req.name + ' (Clause ' + req.clause + ')');
+      lines.push('  AI Result: ' + statusLabels[req.status]);
+      lines.push('  Reviewer Decision: ' + (decision === 'agree' ? 'Agreed' : decision === 'disagree' ? 'Disagreed' : 'Pending'));
+      if (note) {
+        lines.push('  Note: ' + note);
+      }
+      lines.push('');
+    }
+
+    // Count decisions
+    var agreedCount = 0;
+    var disagreedCount = 0;
+    var pendingCount = 0;
+    for (var j = 0; j < requirements.length; j++) {
+      var d = decisions[requirements[j].id];
+      if (d === 'agree') agreedCount++;
+      else if (d === 'disagree') disagreedCount++;
+      else pendingCount++;
+    }
+
+    lines.push('---');
+    lines.push('REVIEW TOTALS');
+    lines.push('  Agreed: ' + agreedCount);
+    lines.push('  Disagreed: ' + disagreedCount);
+    lines.push('  Pending: ' + pendingCount);
+
+    var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'compliance-review-summary.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Initial render
+  renderSummaryTable();
+</script>
+
+</body>
+</html>

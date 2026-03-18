@@ -56,7 +56,8 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
+      style={{ background: 'rgba(90, 74, 63, 0.35)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -64,29 +65,29 @@ export function Modal({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "w-full rounded-lg bg-white shadow-xl",
+          "w-full rounded-2xl bg-background shadow-[0_20px_60px_rgba(90,74,63,0.15),0_4px_16px_rgba(90,74,63,0.06)]",
           "max-h-[90vh] overflow-y-auto",
           sizeClasses[size]
         )}
       >
-        <div className="flex justify-between border-b border-gray-100 px-6 py-4">
+        <div className="flex justify-between border-b border-border px-6 py-4">
           <div>
-            {title ? <h2 className="text-lg font-semibold text-gray-900">{title}</h2> : null}
+            {title ? <h2 className="text-lg font-semibold text-foreground">{title}</h2> : null}
             {description ? (
-              <p className="mt-1 text-sm text-gray-600">{description}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{description}</p>
             ) : null}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors hover:bg-border hover:text-foreground"
             aria-label="Close"
           >
             <span aria-hidden>&times;</span>
           </button>
         </div>
         <div className="px-6 py-4">{children}</div>
-        {footer ? <div className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">{footer}</div> : null}
+        {footer ? <div className="flex justify-end gap-3 border-t border-border px-6 py-4">{footer}</div> : null}
       </div>
     </div>,
     document.body

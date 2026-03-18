@@ -3,11 +3,12 @@
 Executive Summary Generator
 
 Generates an LLM-powered executive summary from evaluation results.
-Uses OpenAI's gpt-4o-mini for fast, cost-effective summarization.
+Uses OpenAI for fast, cost-effective summarization (model configurable via OPENAI_SUMMARY_MODEL).
 """
 
 import json
 import logging
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -116,14 +117,13 @@ async def generate_executive_summary(
         logger.info(f"Generating executive summary for {document_name}")
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=os.getenv("OPENAI_SUMMARY_MODEL", "gpt-5-mini"),
             messages=[
                 {"role": "system", "content": SUMMARY_SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.3,  # Lower temperature for more consistent output
-            max_tokens=2000
+            max_completion_tokens=2000
         )
 
         content = response.choices[0].message.content
@@ -173,21 +173,23 @@ def generate_executive_summary_sync(
     """
     import asyncio
 
+    coroutine = generate_executive_summary(document_name, requirements_results, overall_score)
+
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # If we're already in an async context, create a new task
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    generate_executive_summary(document_name, requirements_results, overall_score)
-                )
-                return future.result()
-        else:
-            return loop.run_until_complete(
-                generate_executive_summary(document_name, requirements_results, overall_score)
-            )
+        asyncio.get_running_loop()
+    except RuntimeError:
+        try:
+            return asyncio.run(coroutine)
+        except Exception as e:
+            logger.error(f"Sync wrapper failed: {e}")
+            return None
+
+    try:
+        # If we're already in an async context, run the coroutine in a worker thread.
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(asyncio.run, coroutine)
+            return future.result()
     except Exception as e:
         logger.error(f"Sync wrapper failed: {e}")
         return None

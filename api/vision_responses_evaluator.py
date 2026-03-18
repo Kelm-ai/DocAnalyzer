@@ -29,6 +29,12 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
 from evaluation_schema import RequirementEvaluationSchema
+from evidence_utils import (
+    assess_evidence_item_quality,
+    evidence_item_to_legacy_snippet,
+    has_usable_pass_evidence,
+    normalize_evidence_items,
+)
 
 import openai
 from openai import OpenAI
@@ -157,12 +163,14 @@ Vision handling:
         system_prompt: Optional[str] = None,
         framework_id: Optional[str] = None,
         evaluation_id: Optional[str] = None,
+        progress_tracker: Optional[Any] = None,
     ) -> None:
         # Allow custom system prompt to override class-level BASE_INSTRUCTION
         if system_prompt:
             self.BASE_INSTRUCTION = system_prompt.strip()
         self.framework_id = framework_id
         self.evaluation_id = evaluation_id
+        self._progress_tracker = progress_tracker
         # Supporting document summaries context (loaded lazily)
         self._supporting_docs_context: Optional[str] = None
         self._supporting_docs_loaded: bool = False
@@ -200,7 +208,7 @@ Vision handling:
                 or os.getenv("GEMINI_VISION_MODEL")
                 or os.getenv("GEMINI_MODEL")
                 or vision_model_override
-                or "gemini-3-pro-preview"
+                or "gemini-3.1-pro"
             )
             self.gemini_client = genai.Client(api_key=api_key)
             self.gemini_response_schema = self._build_gemini_schema()
@@ -217,7 +225,7 @@ Vision handling:
                 or os.getenv("CLAUDE_VISION_MODEL")
                 or os.getenv("CLAUDE_MODEL")
                 or vision_model_override
-                or "claude-opus-4-5-20251101"
+                or "claude-opus-4-6"
             )
             self.claude_client = Anthropic(api_key=api_key)
             self.claude_betas = ["files-api-2025-04-14"]
@@ -232,7 +240,7 @@ Vision handling:
                 or os.getenv("OPENAI_VISION_MODEL")
                 or os.getenv("OPENAI_MODEL")
                 or vision_model_override
-                or "gpt-5"
+                or "gpt-5.4"
             )
             self.openai_client = OpenAI(api_key=api_key)
 
@@ -472,6 +480,13 @@ Vision handling:
         if not requirements:
             raise RuntimeError("No requirements available for evaluation")
 
+        if self._progress_tracker:
+            await self._progress_tracker.set_total_requirements(len(requirements))
+            await self._progress_tracker.set_phase(
+                "evaluating",
+                f"Evaluating requirements (0 of {len(requirements)})...",
+            )
+
         run_id = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         run_responses_dir = self.responses_dir / run_id
         run_responses_dir.mkdir(parents=True, exist_ok=True)
@@ -493,13 +508,17 @@ Vision handling:
         semaphore = asyncio.Semaphore(self.concurrent_requests)
         # Include file_hash in file_ref for retry logic
         file_ref["file_hash"] = file_hash
-        tasks = [
-            self._evaluate_single_requirement(
+
+        async def _tracked_evaluate(requirement: Dict[str, Any]) -> Dict[str, Any]:
+            result = await self._evaluate_single_requirement(
                 file_ref, requirement, semaphore, run_responses_dir,
                 document_path=document_path
             )
-            for requirement in requirements
-        ]
+            if self._progress_tracker:
+                await self._progress_tracker.on_requirement_complete()
+            return result
+
+        tasks = [_tracked_evaluate(requirement) for requirement in requirements]
 
         evaluations = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -924,6 +943,92 @@ Vision handling:
             "tokens_used": tokens_used,
         }
 
+    def _normalize_string_list(self, value: Optional[Any]) -> List[str]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return [str(item).strip() for item in value if str(item).strip()]
+        cleaned = str(value).strip()
+        return [cleaned] if cleaned else []
+
+    def _normalize_evaluation_payload(self, parsed: Dict[str, Any]) -> Dict[str, Any]:
+        normalized = dict(parsed)
+        normalized["evidence"] = normalize_evidence_items(normalized.get("evidence"))
+        normalized["gaps"] = self._normalize_string_list(normalized.get("gaps"))
+        normalized["recommendations"] = self._normalize_string_list(normalized.get("recommendations"))
+        return normalized
+
+    def _build_pass_evidence_gate(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        evidence_items = normalize_evidence_items(result.get("evidence"))
+        usable_items = [
+            item
+            for item in evidence_items
+            if assess_evidence_item_quality(item).get("usable_for_pass", False)
+        ]
+        flags: List[str] = []
+        if not evidence_items:
+            flags.append("missing_evidence")
+        if evidence_items and not usable_items:
+            flags.append("no_usable_evidence")
+        if evidence_items and not any(item.get("page_number") is not None for item in usable_items):
+            flags.append("usable_evidence_missing_page_number")
+        if evidence_items and all(
+            assess_evidence_item_quality(item).get("is_cross_reference", False)
+            for item in usable_items
+        ):
+            flags.append("cross_reference_only")
+
+        return {
+            "usable_evidence_count": len(usable_items),
+            "has_usable_evidence": bool(usable_items),
+            "flags": flags,
+        }
+
+    def _with_citation_gate_metadata(
+        self,
+        result: Dict[str, Any],
+        *,
+        gate_status: str,
+        gate_flags: List[str],
+        usable_evidence_count: int,
+        retried: bool,
+    ) -> Dict[str, Any]:
+        updated = dict(result)
+        metadata = dict(updated.get("metadata") or {})
+        metadata["citation_gate"] = {
+            "status": gate_status,
+            "retried": retried,
+            "flags": gate_flags,
+            "usable_evidence_count": usable_evidence_count,
+        }
+        updated["metadata"] = metadata
+        return updated
+
+    def _downgrade_pass_for_citation_failure(self, result: Dict[str, Any], gate_flags: List[str]) -> Dict[str, Any]:
+        downgraded = dict(result)
+        downgraded["status"] = "FLAGGED"
+        downgraded["confidence"] = "low"
+        rationale = str(downgraded.get("rationale") or "").strip()
+        suffix = "The result was downgraded because the model did not provide usable supporting evidence for a PASS determination."
+        downgraded["rationale"] = f"{rationale} {suffix}".strip() if rationale else suffix
+        gaps = self._normalize_string_list(downgraded.get("gaps"))
+        citation_gap = "Usable supporting evidence was not extracted for a PASS determination."
+        if citation_gap not in gaps:
+            gaps.append(citation_gap)
+        downgraded["gaps"] = gaps
+        recommendations = self._normalize_string_list(downgraded.get("recommendations"))
+        recommendation = "Review the requirement manually or rerun evaluation with stronger citation support."
+        if recommendation not in recommendations:
+            recommendations.append(recommendation)
+        downgraded["recommendations"] = recommendations
+        return self._with_citation_gate_metadata(
+            downgraded,
+            gate_status="downgraded_to_flagged",
+            gate_flags=gate_flags,
+            usable_evidence_count=0,
+            retried=True,
+        )
+
     def _parse_json_response(self, text: str) -> Optional[Dict]:
         """Parse JSON from response text, handling markdown code blocks."""
         if not text:
@@ -967,6 +1072,7 @@ Vision handling:
         requirement: Dict,
         run_responses_dir: Path,
         fallback_provider: str,
+        citation_retry_count: int = 0,
     ) -> Dict:
         """Evaluate using fallback provider (Gemini)."""
         if self._fallback_evaluator is None or self._fallback_evaluator.provider != fallback_provider:
@@ -978,14 +1084,14 @@ Vision handling:
 
         fallback_semaphore = asyncio.Semaphore(PROVIDER_CONCURRENCY.get(fallback_provider, 4))
 
-        if fallback_provider == "gemini":
-            result = await self._fallback_evaluator._evaluate_single_requirement_gemini(
-                file_ref, requirement, fallback_semaphore, run_responses_dir
-            )
-        else:
-            result = await self._fallback_evaluator._evaluate_single_requirement_openai(
-                file_ref, requirement, fallback_semaphore, run_responses_dir
-            )
+        result = await self._fallback_evaluator._evaluate_single_requirement(
+            file_ref,
+            requirement,
+            fallback_semaphore,
+            run_responses_dir,
+            document_path=document_path,
+            citation_retry_count=citation_retry_count,
+        )
 
         result["fallback_provider"] = fallback_provider
         return result
@@ -998,20 +1104,24 @@ Vision handling:
         run_responses_dir: Path,
         document_path: Optional[Path] = None,
         retry_count: int = 0,
+        citation_retry_count: int = 0,
     ) -> Dict:
         """Evaluate with retry and fallback logic."""
         try:
             if self.provider == "claude":
                 result = await self._evaluate_single_requirement_claude(
-                    file_ref, requirement, semaphore, run_responses_dir
+                    file_ref, requirement, semaphore, run_responses_dir,
+                    citation_retry=citation_retry_count > 0,
                 )
             elif self.provider == "gemini":
                 result = await self._evaluate_single_requirement_gemini(
-                    file_ref, requirement, semaphore, run_responses_dir
+                    file_ref, requirement, semaphore, run_responses_dir,
+                    citation_retry=citation_retry_count > 0,
                 )
             else:
                 result = await self._evaluate_single_requirement_openai(
-                    file_ref, requirement, semaphore, run_responses_dir
+                    file_ref, requirement, semaphore, run_responses_dir,
+                    citation_retry=citation_retry_count > 0,
                 )
 
             # Check for retryable errors in result
@@ -1032,7 +1142,8 @@ Vision handling:
                             new_file_ref["file_hash"] = file_hash
                             return await self._evaluate_single_requirement(
                                 new_file_ref, requirement, semaphore, run_responses_dir,
-                                document_path=document_path, retry_count=retry_count + 1
+                                document_path=document_path, retry_count=retry_count + 1,
+                                citation_retry_count=citation_retry_count,
                             )
 
                 # Handle retryable errors (rate limits, overload, server errors)
@@ -1052,7 +1163,8 @@ Vision handling:
                         await asyncio.sleep(delay)
                         return await self._evaluate_single_requirement(
                             file_ref, requirement, semaphore, run_responses_dir,
-                            document_path=document_path, retry_count=retry_count + 1
+                            document_path=document_path, retry_count=retry_count + 1,
+                            citation_retry_count=citation_retry_count,
                         )
 
                     # After retries exhausted, try fallback provider
@@ -1063,10 +1175,47 @@ Vision handling:
                             fallback_provider, requirement["id"], self.provider
                         )
                         return await self._evaluate_with_fallback(
-                            document_path, requirement, run_responses_dir, fallback_provider
+                            document_path,
+                            requirement,
+                            run_responses_dir,
+                            fallback_provider,
+                            citation_retry_count=citation_retry_count,
                         )
 
-            return result
+            if str(result.get("status", "")).upper() != "PASS":
+                return result
+
+            gate = self._build_pass_evidence_gate(result)
+            if gate["has_usable_evidence"]:
+                gate_status = "passed_after_retry" if citation_retry_count > 0 else "passed_first_try"
+                return self._with_citation_gate_metadata(
+                    result,
+                    gate_status=gate_status,
+                    gate_flags=gate["flags"],
+                    usable_evidence_count=gate["usable_evidence_count"],
+                    retried=citation_retry_count > 0,
+                )
+
+            if citation_retry_count < 1:
+                logger.warning(
+                    "PASS result for requirement %s lacked usable evidence; retrying with stricter citation prompt",
+                    requirement["id"],
+                )
+                retried_result = await self._evaluate_single_requirement(
+                    file_ref,
+                    requirement,
+                    semaphore,
+                    run_responses_dir,
+                    document_path=document_path,
+                    retry_count=retry_count,
+                    citation_retry_count=citation_retry_count + 1,
+                )
+                retried_result["tokens_used"] = int(result.get("tokens_used", 0) or 0) + int(
+                    retried_result.get("tokens_used", 0) or 0
+                )
+                return retried_result
+
+            return self._downgrade_pass_for_citation_failure(result, gate["flags"])
 
         except Exception as exc:
             error_str = str(exc)
@@ -1088,7 +1237,8 @@ Vision handling:
                     await asyncio.sleep(delay)
                     return await self._evaluate_single_requirement(
                         file_ref, requirement, semaphore, run_responses_dir,
-                        document_path=document_path, retry_count=retry_count + 1
+                        document_path=document_path, retry_count=retry_count + 1,
+                        citation_retry_count=citation_retry_count,
                     )
 
                 # Try fallback provider
@@ -1099,7 +1249,11 @@ Vision handling:
                         fallback_provider, requirement["id"]
                     )
                     return await self._evaluate_with_fallback(
-                        document_path, requirement, run_responses_dir, fallback_provider
+                        document_path,
+                        requirement,
+                        run_responses_dir,
+                        fallback_provider,
+                        citation_retry_count=citation_retry_count,
                     )
 
             return self._error_result(requirement, error_str, f"{self.provider} evaluation failed")
@@ -1110,30 +1264,20 @@ Vision handling:
         requirement: Dict,
         semaphore: asyncio.Semaphore,
         run_responses_dir: Path,
+        citation_retry: bool = False,
     ) -> Dict:
         async with semaphore:
-            prompt = self._build_prompt(requirement)
-            file_id = file_ref.get("file_id", "")
-            supporting_docs = file_ref.get("supporting_docs", [])
-
-            # Build content array with primary document and supporting docs
-            content_items = [
-                {"type": "input_text", "text": prompt},
-                {"type": "input_file", "file_id": file_id},
-            ]
-
-            # Add supporting documents for full vision access
-            for supporting_doc in supporting_docs:
-                if supporting_doc.get("file_id"):
-                    content_items.append({
-                        "type": "input_file",
-                        "file_id": supporting_doc["file_id"],
-                    })
+            content_items, prompt_cache_key = self._build_openai_content_items(
+                file_ref,
+                requirement,
+                citation_retry=citation_retry,
+            )
 
             try:
                 response = await asyncio.to_thread(
                     self.openai_client.responses.parse,  # type: ignore[union-attr]
                     model=self.model,
+                    prompt_cache_key=prompt_cache_key,
                     reasoning={"effort": self.reasoning_effort},
                     input=[
                         {
@@ -1158,6 +1302,10 @@ Vision handling:
 
             usage = getattr(response, "usage", None)
             tokens_used = getattr(usage, "total_tokens", 0) if usage else 0
+            input_tokens = getattr(usage, "input_tokens", 0) if usage else 0
+            cached_input_tokens = 0
+            if usage and getattr(usage, "input_tokens_details", None):
+                cached_input_tokens = getattr(usage.input_tokens_details, "cached_tokens", 0) or 0
 
             parsed_model = getattr(response, "output_parsed", None)
             if parsed_model is None:
@@ -1172,12 +1320,20 @@ Vision handling:
                     "tokens_used": tokens_used,
                 }
 
-            parsed = parsed_model.model_dump()
+            parsed = self._normalize_evaluation_payload(parsed_model.model_dump())
             parsed.setdefault("requirement_id", requirement["id"])
             parsed.setdefault("requirement_title", requirement.get("title"))
             parsed.setdefault("requirement_clause", requirement.get("clause"))
             parsed["tokens_used"] = tokens_used
-            raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}.txt"
+            metadata = dict(parsed.get("metadata") or {})
+            metadata["openai_usage"] = {
+                "input_tokens": input_tokens,
+                "cached_input_tokens": cached_input_tokens,
+                "prompt_cache_key": prompt_cache_key,
+            }
+            parsed["metadata"] = metadata
+            suffix = "_citation_retry" if citation_retry else ""
+            raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}{suffix}.txt"
             raw_text = getattr(response, "output_text", None) or json.dumps(parsed, indent=2)
             raw_file.write_text(raw_text, encoding="utf-8")
             return parsed
@@ -1188,37 +1344,23 @@ Vision handling:
         requirement: Dict,
         semaphore: asyncio.Semaphore,
         run_responses_dir: Path,
+        citation_retry: bool = False,
     ) -> Dict:
         """Evaluate a single requirement using Claude's vision API with rate limiting."""
         async with semaphore:
-            prompt = self._build_prompt(requirement)
-            file_id = file_ref.get("file_id")
-            supporting_docs = file_ref.get("supporting_docs", [])
+            content_items = self._build_claude_content_items(
+                file_ref,
+                requirement,
+                citation_retry=citation_retry,
+            )
 
-            if not file_id:
+            if not content_items:
                 return self._error_result(requirement, "Missing file_id for Claude evaluation", "File reference missing")
-
-            # Build content array with primary document and supporting docs
-            content_items = [
-                {
-                    "type": "document",
-                    "source": {"type": "file", "file_id": file_id}
-                },
-            ]
-
-            # Add supporting documents for full vision access
-            for supporting_doc in supporting_docs:
-                if supporting_doc.get("file_id"):
-                    content_items.append({
-                        "type": "document",
-                        "source": {"type": "file", "file_id": supporting_doc["file_id"]}
-                    })
-
-            # Add the prompt text at the end
-            content_items.append({"type": "text", "text": prompt})
 
             # Estimate tokens for this request (prompt + file reference overhead)
             # Add overhead for each supporting document
+            supporting_docs = file_ref.get("supporting_docs", [])
+            prompt = self._build_prompt(requirement, citation_retry=citation_retry)
             estimated_tokens = self._estimate_tokens(prompt) + 4000 + (len(supporting_docs) * 4000)
 
             # Acquire rate limit permission (model-specific)
@@ -1263,8 +1405,12 @@ Vision handling:
             # Extract token usage
             usage = getattr(response, "usage", None)
             tokens_used = 0
+            cache_creation_input_tokens = 0
+            cache_read_input_tokens = 0
             if usage:
                 tokens_used = getattr(usage, "input_tokens", 0) + getattr(usage, "output_tokens", 0)
+                cache_creation_input_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0
+                cache_read_input_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0
 
             # Update rate limiter with actual usage
             await rate_limiter.record_actual_usage(estimated_tokens, tokens_used)
@@ -1276,16 +1422,25 @@ Vision handling:
 
             parsed = self._parse_json_response(response_text)
             if parsed is None:
-                raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}.txt"
+                suffix = "_citation_retry" if citation_retry else ""
+                raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}{suffix}.txt"
                 raw_file.write_text(response_text or "", encoding="utf-8")
                 return self._error_result(requirement, "Structured output missing from Claude response", "Parse JSON response failed", tokens_used)
 
+            parsed = self._normalize_evaluation_payload(parsed)
             parsed.setdefault("requirement_id", requirement["id"])
             parsed.setdefault("requirement_title", requirement.get("title"))
             parsed.setdefault("requirement_clause", requirement.get("clause"))
             parsed["tokens_used"] = tokens_used
+            metadata = dict(parsed.get("metadata") or {})
+            metadata["claude_usage"] = {
+                "cache_creation_input_tokens": cache_creation_input_tokens,
+                "cache_read_input_tokens": cache_read_input_tokens,
+            }
+            parsed["metadata"] = metadata
 
-            raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}.txt"
+            suffix = "_citation_retry" if citation_retry else ""
+            raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}{suffix}.txt"
             raw_file.write_text(response_text or json.dumps(parsed, indent=2), encoding="utf-8")
             return parsed
 
@@ -1295,9 +1450,10 @@ Vision handling:
         requirement: Dict,
         semaphore: asyncio.Semaphore,
         run_responses_dir: Path,
+        citation_retry: bool = False,
     ) -> Dict:
         async with semaphore:
-            prompt = self._build_prompt(requirement)
+            prompt = self._build_prompt(requirement, citation_retry=citation_retry)
             file_uri = file_ref.get("file_uri") or file_ref.get("file_id")
             mime_type = file_ref.get("mime_type") or "application/pdf"
             supporting_docs = file_ref.get("supporting_docs", [])
@@ -1367,7 +1523,8 @@ Vision handling:
                         parsed = None
 
             if parsed is None:
-                raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}.txt"
+                suffix = "_citation_retry" if citation_retry else ""
+                raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}{suffix}.txt"
                 raw_file.write_text(getattr(response, "text", "") or "", encoding="utf-8")
                 return {
                     "requirement_id": requirement["id"],
@@ -1380,17 +1537,31 @@ Vision handling:
                     "tokens_used": tokens_used,
                 }
 
+            parsed = self._normalize_evaluation_payload(parsed)
             parsed.setdefault("requirement_id", requirement["id"])
             parsed.setdefault("requirement_title", requirement.get("title"))
             parsed.setdefault("requirement_clause", requirement.get("clause"))
             parsed["tokens_used"] = tokens_used
 
-            raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}.txt"
+            suffix = "_citation_retry" if citation_retry else ""
+            raw_file = run_responses_dir / f"response_{requirement['id'].replace('-', '_')}{suffix}.txt"
             raw_text = getattr(response, "text", None) or json.dumps(parsed, indent=2)
             raw_file.write_text(raw_text, encoding="utf-8")
             return parsed
 
-    def _build_prompt(self, requirement: Dict) -> str:
+    def _build_prompt(self, requirement: Dict, *, citation_retry: bool = False) -> str:
+        shared_prompt, requirement_prompt = self._build_prompt_sections(
+            requirement,
+            citation_retry=citation_retry,
+        )
+        return "\n\n".join([shared_prompt, requirement_prompt])
+
+    def _build_prompt_sections(
+        self,
+        requirement: Dict,
+        *,
+        citation_retry: bool = False,
+    ) -> Tuple[str, str]:
         description = requirement.get("title") or requirement.get("requirement_text") or ""
         requirement_details = "\n".join(
             [
@@ -1418,8 +1589,16 @@ Vision handling:
         else:
             document_hierarchy_instruction = ""
 
+        citation_retry_instruction = (
+            "CITATION RETRY:\n"
+            "Your previous answer did not provide usable evidence for a PASS determination.\n"
+            "Return PASS only if you can provide reviewer-usable evidence in this response.\n"
+            "If you cannot provide usable evidence, return FLAGGED instead of PASS.\n"
+        ) if citation_retry else ""
+
         instruction_block = (
             document_hierarchy_instruction +
+            citation_retry_instruction +
             "MANDATORY METHOD:\n"
             "1. Review the PRIMARY document (first attached PDF) for visuals (tables, charts, signatures) whenever the text layer is insufficient.\n"
             "2. Evaluate ONLY the requested clause; cite page or section references for evidence. Treat clear cross-references to other SOPs/records as evidence that those processes/records exist.\n"
@@ -1430,8 +1609,18 @@ Vision handling:
             "{\n"
             "  \"status\": \"PASS|FAIL|FLAGGED|NOT_APPLICABLE\",\n"
             "  \"confidence\": \"low|medium|high\",\n"
-            "  \"rationale\": \"Brief 1-2 sentence explanation of the decision with key citations\",\n"
-            "  \"evidence\": [\"Page/Section citation with brief quote\", ...],\n"
+            "  \"rationale\": \"First sentence: short verdict (under 30 words). Reference only evidence IDs you returned (for example: [E1], [E2]). Second sentence (optional): key supporting detail anchored to those IDs.\",\n"
+            "  \"evidence\": [\n"
+            "    {\n"
+            "      \"evidence_id\": \"E1\",\n"
+            "      \"evidence_type\": \"direct_quote|cross_reference|visual_or_table\",\n"
+            "      \"page_number\": 12,\n"
+            "      \"section_title\": \"7.2 Management Review\",\n"
+            "      \"quote\": \"Verbatim excerpt from the document (1-3 sentences)\",\n"
+            "      \"supports\": \"One short sentence explaining why this evidence matters\",\n"
+            "      \"document_name\": \"Quality Manual.pdf\"\n"
+            "    }\n"
+            "  ],\n"
             "  \"gaps\": [string],\n"
             "  \"recommendations\": [string]\n"
             "}\n"
@@ -1440,10 +1629,28 @@ Vision handling:
             "  - For FAIL/FLAGGED: Critical gaps that caused the failure (must be addressed).\n"
             "  - For PASS: Minor opportunities for improvement (OFI) - optional enhancements. Leave empty [] if fully satisfied.\n"
             "- 'recommendations': Actionable suggestions on HOW to address the gaps/OFIs. Always provide if gaps exist.\n"
-            "Keep responses concise. Avoid lengthy explanations.\n"
+            "- 'evidence': Document citations that support or inform the status decision.\n"
+            "  - REQUIRED for PASS: You MUST provide at least one evidence item showing WHERE in the document the requirement is satisfied. A PASS without evidence is incomplete.\n"
+            "  - REQUIRED for PASS: Do not return PASS with evidence: []. Do not invent quotes.\n"
+            "  - REQUIRED for FAIL: Cite the section(s) where the gap was expected but not found, or quote contradicting text.\n"
+            "  - REQUIRED for FLAGGED: Cite the partial or ambiguous evidence that triggered the flag.\n"
+            "  - For NOT_APPLICABLE: Evidence is optional but helpful if the document explains why the clause does not apply.\n"
+            "  - Provide multiple evidence items when the requirement is addressed in more than one place in the document. Two to four items is typical for a thorough evaluation.\n"
+            "  - Every evidence item MUST include an 'evidence_id' like E1, E2, E3.\n"
+            "  - Every evidence item MUST include 'evidence_type':\n"
+            "    * 'direct_quote' for verbatim text directly satisfying the requirement.\n"
+            "    * 'cross_reference' when the document points to another controlled artifact instead of showing the underlying record itself.\n"
+            "    * 'visual_or_table' when the key support comes from a figure, table, chart, or signature block.\n"
+            "  - 'quote' should be a verbatim excerpt long enough to be meaningful in context (typically 1-3 sentences, not fragments).\n"
+            "  - If the evidence is only a cross-reference, set evidence_type='cross_reference' and quote the cross-reference statement itself. Do not present it like direct underlying evidence.\n"
+            "  - 'supports' must be one reviewer-facing sentence explaining why this quote matters for the requirement.\n"
+            "  - Preserve page/section references whenever available.\n"
+            "  - For PASS, provide reviewer-usable evidence. When page numbers are visible, include them.\n"
+            "  - Include 'document_name' only when it matters for multi-document evaluation.\n"
+            "  - Do not bundle multiple unrelated findings into one evidence object.\n"
             "Confidence level guidelines:\n"
-            "- Use \"high\" when evidence is explicit, comprehensive, and directly addresses all criteria\n"
-            "- Use \"medium\" when evidence is present but incomplete, requires some inference, or has minor gaps\n"
+            "- Use \"high\" when evidence is explicit, specific, and directly addresses all criteria, even if one strong citation is sufficient\n"
+            "- Use \"medium\" when evidence is present but incomplete, requires some inference, or depends mainly on cross-references\n"
             "- Use \"low\" when evidence is sparse, ambiguous, uncertain, or requires significant assumptions\n"
         )
 
@@ -1455,12 +1662,98 @@ Vision handling:
         if self._supporting_docs_context:
             prompt_sections.append(self._supporting_docs_context)
 
-        prompt_sections.extend([
-            "".join(instruction_block),
-            "Requirement:\n" + requirement_details,
-        ])
+        prompt_sections.append("".join(instruction_block))
 
-        return "\n\n".join(prompt_sections)
+        return "\n\n".join(prompt_sections), "Requirement:\n" + requirement_details
+
+    def _build_openai_prompt_cache_key(self, file_ref: Dict[str, Any], *, citation_retry: bool) -> str:
+        cache_scope = (
+            self.evaluation_id
+            or file_ref.get("file_hash")
+            or file_ref.get("file_id")
+            or "ad_hoc_eval"
+        )
+        cache_mode = "retry" if citation_retry else "std"
+        scope_text = str(cache_scope).replace("-", "")[:12] or "adhoc"
+        raw_key = f"{self.provider}|{self.model}|{cache_scope}|{cache_mode}"
+        digest = hashlib.sha1(raw_key.encode("utf-8")).hexdigest()[:16]
+        return f"vision:{self.provider}:{cache_mode}:{scope_text}:{digest}"
+
+    def _build_openai_content_items(
+        self,
+        file_ref: Dict[str, Any],
+        requirement: Dict[str, Any],
+        *,
+        citation_retry: bool = False,
+    ) -> Tuple[List[Dict[str, str]], str]:
+        shared_prompt, requirement_prompt = self._build_prompt_sections(
+            requirement,
+            citation_retry=citation_retry,
+        )
+        file_id = file_ref.get("file_id", "")
+        supporting_docs = file_ref.get("supporting_docs", [])
+
+        # Keep all shared context ahead of the requirement-specific prompt so
+        # prompt caching can reuse the repeated prefix across requirement calls.
+        content_items: List[Dict[str, str]] = [
+            {"type": "input_text", "text": shared_prompt},
+            {"type": "input_file", "file_id": file_id},
+        ]
+
+        for supporting_doc in supporting_docs:
+            if supporting_doc.get("file_id"):
+                content_items.append({
+                    "type": "input_file",
+                    "file_id": supporting_doc["file_id"],
+                })
+
+        content_items.append({"type": "input_text", "text": requirement_prompt})
+        return content_items, self._build_openai_prompt_cache_key(
+            file_ref,
+            citation_retry=citation_retry,
+        )
+
+    def _build_claude_content_items(
+        self,
+        file_ref: Dict[str, Any],
+        requirement: Dict[str, Any],
+        *,
+        citation_retry: bool = False,
+    ) -> List[Dict[str, Any]]:
+        shared_prompt, requirement_prompt = self._build_prompt_sections(
+            requirement,
+            citation_retry=citation_retry,
+        )
+        file_id = file_ref.get("file_id")
+        supporting_docs = file_ref.get("supporting_docs", [])
+
+        if not file_id:
+            return []
+
+        content_items: List[Dict[str, Any]] = [
+            {
+                "type": "document",
+                "source": {"type": "file", "file_id": file_id},
+            },
+        ]
+
+        for supporting_doc in supporting_docs:
+            if supporting_doc.get("file_id"):
+                content_items.append({
+                    "type": "document",
+                    "source": {"type": "file", "file_id": supporting_doc["file_id"]},
+                })
+
+        # Mark the shared prompt block as the cache breakpoint so Claude can
+        # reuse the full static prefix (documents + instructions) across
+        # requirement-level calls within the cache TTL window.
+        content_items.append({
+            "type": "text",
+            "text": shared_prompt,
+            "cache_control": {"type": "ephemeral"},
+        })
+        content_items.append({"type": "text", "text": requirement_prompt})
+        return content_items
 
     def _build_gemini_schema(self):
         if not GENAI_AVAILABLE or genai_types is None:
@@ -1479,7 +1772,22 @@ Vision handling:
                 "rationale": genai_types.Schema(type=genai_types.Type.STRING),
                 "evidence": genai_types.Schema(
                     type=genai_types.Type.ARRAY,
-                    items=genai_types.Schema(type=genai_types.Type.STRING),
+                    items=genai_types.Schema(
+                        type=genai_types.Type.OBJECT,
+                        properties={
+                            "evidence_id": genai_types.Schema(type=genai_types.Type.STRING),
+                            "evidence_type": genai_types.Schema(
+                                type=genai_types.Type.STRING,
+                                enum=["direct_quote", "cross_reference", "visual_or_table"],
+                            ),
+                            "page_number": genai_types.Schema(type=genai_types.Type.INTEGER),
+                            "section_title": genai_types.Schema(type=genai_types.Type.STRING),
+                            "quote": genai_types.Schema(type=genai_types.Type.STRING),
+                            "supports": genai_types.Schema(type=genai_types.Type.STRING),
+                            "document_name": genai_types.Schema(type=genai_types.Type.STRING),
+                        },
+                        required=["quote", "supports"],
+                    ),
                 ),
                 "gaps": genai_types.Schema(
                     type=genai_types.Type.ARRAY,
@@ -1537,10 +1845,19 @@ Vision handling:
     def _generate_summary(self, document_stats: Dict, results: List[Dict]) -> Dict:
         status_counts: Dict[str, int] = {"PASS": 0, "FAIL": 0, "FLAGGED": 0, "NOT_APPLICABLE": 0, "ERROR": 0}
         total_tokens = 0
+        total_cached_input_tokens = 0
+        total_claude_cache_read_input_tokens = 0
+        total_claude_cache_creation_input_tokens = 0
         for result in results:
             status = result.get("status", "ERROR")
             status_counts[status] = status_counts.get(status, 0) + 1
             total_tokens += result.get("tokens_used", 0)
+            metadata = result.get("metadata") or {}
+            openai_usage = metadata.get("openai_usage") or {}
+            claude_usage = metadata.get("claude_usage") or {}
+            total_cached_input_tokens += int(openai_usage.get("cached_input_tokens", 0) or 0)
+            total_claude_cache_read_input_tokens += int(claude_usage.get("cache_read_input_tokens", 0) or 0)
+            total_claude_cache_creation_input_tokens += int(claude_usage.get("cache_creation_input_tokens", 0) or 0)
 
         scored = len(results) - status_counts.get("ERROR", 0)
         compliance_score = (status_counts.get("PASS", 0) / scored * 100) if scored else 0
@@ -1552,6 +1869,9 @@ Vision handling:
                 "compliance_score": round(compliance_score, 1),
                 "status_counts": status_counts,
                 "total_tokens_used": total_tokens,
+                "total_cached_input_tokens": total_cached_input_tokens,
+                "total_claude_cache_read_input_tokens": total_claude_cache_read_input_tokens,
+                "total_claude_cache_creation_input_tokens": total_claude_cache_creation_input_tokens,
                 "estimated_cost_usd": round((total_tokens / 1_000_000) * 5, 4),
             },
             "requirements_results": results,
@@ -1616,7 +1936,10 @@ Vision handling:
                 record.get("status"),
                 confidence_label,
                 record.get("rationale", ""),
-                "\n".join(record.get("evidence", [])),
+                "\n".join(
+                    evidence_item_to_legacy_snippet(item)
+                    for item in normalize_evidence_items(record.get("evidence"))
+                ),
                 "\n".join(record.get("gaps", [])),
                 "\n".join(record.get("recommendations", [])),
                 record.get("tokens_used", 0),
@@ -1721,16 +2044,19 @@ class DualVisionComparator:
         system_prompt: Optional[str] = None,
         framework_id: Optional[str] = None,
         evaluation_id: Optional[str] = None,
+        progress_tracker: Optional[Any] = None,
     ) -> None:
         self.provider = "dual"
         self.system_prompt = system_prompt
         self.framework_id = framework_id
         self.evaluation_id = evaluation_id
+        self._progress_tracker = progress_tracker
         self.primary = VisionResponsesEvaluator(
             provider="claude",
             system_prompt=system_prompt,
             framework_id=framework_id,
             evaluation_id=evaluation_id,
+            progress_tracker=progress_tracker,
         )
         self.secondary = VisionResponsesEvaluator(
             provider="openai",
@@ -1787,6 +2113,9 @@ class DualVisionComparator:
 
         if claude_all_errors and openai_all_errors:
             logger.error("Both Claude and OpenAI failed for all requirements")
+
+        if self._progress_tracker:
+            await self._progress_tracker.set_phase("evaluating", "Merging dual-provider results...")
 
         combined_results, agreement_map, total_tokens = self._combine_results(
             claude_summary.get("requirements_results", []),

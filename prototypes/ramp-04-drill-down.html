@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drill-Down Report — Ramp 04</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #fff;
+    color: #1a1a2e;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ── */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+  }
+
+  /* ── Breadcrumbs ── */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .breadcrumb-item {
+    cursor: pointer;
+    color: #6b7280;
+    text-decoration: none;
+    background: none;
+    border: none;
+    font: inherit;
+    padding: 0;
+    transition: color 0.15s;
+  }
+  .breadcrumb-item:hover {
+    color: #1a1a2e;
+  }
+  .breadcrumb-sep {
+    color: #d1d5db;
+    user-select: none;
+  }
+  .breadcrumb-current {
+    color: #1a1a2e;
+    font-weight: 600;
+  }
+
+  /* ── Header ── */
+  .report-header {
+    margin-bottom: 28px;
+  }
+  .report-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .report-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .report-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* ── AI Badge ── */
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #92400e;
+    background: #fefce8;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+  }
+  .ai-badge-icon {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #f59e0b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  /* ── Overall Score ── */
+  .overall-score {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+  .score-ring {
+    width: 56px;
+    height: 56px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .score-ring svg {
+    width: 56px;
+    height: 56px;
+    transform: rotate(-90deg);
+  }
+  .score-ring-bg {
+    fill: none;
+    stroke: #e5e7eb;
+    stroke-width: 5;
+  }
+  .score-ring-fill {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s ease;
+  }
+  .score-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .score-label {
+    font-size: 13px;
+    color: #6b7280;
+  }
+  .score-label strong {
+    display: block;
+    font-size: 15px;
+    color: #1a1a2e;
+    font-weight: 600;
+  }
+
+  /* ── Stats Row ── */
+  .stats-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 32px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .stat-item {
+    flex: 1;
+    text-align: center;
+    padding: 14px 8px;
+    border-right: 1px solid #e5e7eb;
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+  .stat-fail .stat-num { color: #dc2626; }
+  .stat-flagged .stat-num { color: #f59e0b; }
+  .stat-pass .stat-num { color: #16a34a; }
+  .stat-na .stat-num { color: #9ca3af; }
+
+  /* ── Section Labels ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #9ca3af;
+    margin-bottom: 12px;
+  }
+
+  /* ── Clause Cards (Level 1) ── */
+  .clause-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .clause-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    border-left: 4px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #fff;
+  }
+  .clause-card:hover {
+    border-color: #d1d5db;
+    background: #f9fafb;
+  }
+  .clause-card.status-pass   { border-left-color: #16a34a; }
+  .clause-card.status-fail   { border-left-color: #dc2626; }
+  .clause-card.status-flagged { border-left-color: #f59e0b; }
+  .clause-card.status-na     { border-left-color: #9ca3af; }
+
+  .clause-card-main {
+    flex: 1;
+    min-width: 0;
+  }
+  .clause-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+  .clause-card-summary {
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  .clause-card-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .clause-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .clause-progress-bar {
+    width: 64px;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .clause-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+  .clause-progress-fill.all-pass { background: #16a34a; }
+  .clause-progress-fill.some-pass { background: #f59e0b; }
+  .clause-progress-fill.none-pass { background: #dc2626; }
+  .clause-progress-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+    white-space: nowrap;
+  }
+
+  .clause-status-dots {
+    display: flex;
+    gap: 4px;
+  }
+  .mini-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .mini-dot.pass    { background: #16a34a; }
+  .mini-dot.fail    { background: #dc2626; }
+  .mini-dot.flagged { background: #f59e0b; }
+  .mini-dot.na      { background: #d1d5db; }
+
+  .clause-arrow {
+    color: #d1d5db;
+    font-size: 16px;
+    transition: color 0.15s;
+  }
+  .clause-card:hover .clause-arrow { color: #9ca3af; }
+
+  /* ── Level 2: Clause Detail ── */
+  .clause-detail-header {
+    margin-bottom: 24px;
+  }
+  .clause-detail-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .clause-detail-desc {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.6;
+  }
+
+  .requirements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .requirement-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #fff;
+  }
+  .requirement-row:hover {
+    border-color: #d1d5db;
+    background: #f9fafb;
+  }
+
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  .status-dot.pass    { background: #16a34a; }
+  .status-dot.fail    { background: #dc2626; }
+  .status-dot.flagged { background: #f59e0b; }
+  .status-dot.na      { background: #d1d5db; }
+
+  .req-main {
+    flex: 1;
+    min-width: 0;
+  }
+  .req-id-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+    flex-wrap: wrap;
+  }
+  .req-id {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a2e;
+    font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  .req-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a2e;
+  }
+  .req-summary {
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+
+  .req-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* ── Confidence Badge ── */
+  .confidence-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .confidence-badge.high {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+  .confidence-badge.medium {
+    background: #fefce8;
+    color: #a16207;
+    border: 1px solid #fde68a;
+  }
+  .confidence-badge.low {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+
+  .row-arrow {
+    color: #d1d5db;
+    font-size: 14px;
+  }
+  .requirement-row:hover .row-arrow { color: #9ca3af; }
+
+  /* ── Level 3: Requirement Detail ── */
+  .req-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .req-detail-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .req-detail-id {
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .status-badge.pass {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+  .status-badge.fail {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+  .status-badge.flagged {
+    background: #fefce8;
+    color: #a16207;
+    border: 1px solid #fde68a;
+  }
+  .status-badge.na {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+  }
+  .status-badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .status-badge.pass .status-badge-dot    { background: #16a34a; }
+  .status-badge.fail .status-badge-dot    { background: #dc2626; }
+  .status-badge.flagged .status-badge-dot { background: #f59e0b; }
+  .status-badge.na .status-badge-dot      { background: #9ca3af; }
+
+  /* ── Detail Sections ── */
+  .detail-section {
+    margin-bottom: 24px;
+  }
+  .detail-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #9ca3af;
+    margin-bottom: 8px;
+  }
+
+  .confidence-detail {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+  .confidence-meter {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .confidence-bar {
+    width: 4px;
+    height: 18px;
+    border-radius: 2px;
+    background: #e5e7eb;
+  }
+  .confidence-bar.active.high   { background: #16a34a; }
+  .confidence-bar.active.medium { background: #f59e0b; }
+  .confidence-bar.active.low    { background: #dc2626; }
+  .confidence-text {
+    font-size: 13px;
+    color: #6b7280;
+  }
+  .confidence-text strong {
+    color: #1a1a2e;
+  }
+
+  .evidence-block {
+    padding: 14px 16px;
+    border-left: 3px solid #e5e7eb;
+    background: #f9fafb;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 8px;
+  }
+  .evidence-text {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.6;
+    font-style: italic;
+  }
+  .evidence-ref {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-top: 6px;
+    font-style: normal;
+  }
+
+  .gap-list, .rec-list {
+    list-style: none;
+  }
+  .gap-list li, .rec-list li {
+    position: relative;
+    padding: 8px 0 8px 20px;
+    font-size: 14px;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+    line-height: 1.5;
+  }
+  .gap-list li:last-child, .rec-list li:last-child {
+    border-bottom: none;
+  }
+  .gap-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fecaca;
+    border: 2px solid #dc2626;
+  }
+  .rec-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: #dbeafe;
+    border: 2px solid #3b82f6;
+  }
+
+  /* ── Review Actions ── */
+  .review-actions {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    background: #f9fafb;
+  }
+  .review-actions-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .review-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .review-btn {
+    padding: 8px 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: #fff;
+    color: #1a1a2e;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .review-btn:hover {
+    border-color: #d1d5db;
+    background: #f3f4f6;
+  }
+  .review-btn.approve {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #15803d;
+  }
+  .review-btn.approve:hover {
+    background: #dcfce7;
+  }
+  .review-btn.reject {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #dc2626;
+  }
+  .review-btn.reject:hover {
+    background: #fee2e2;
+  }
+  .review-btn.flag {
+    background: #fefce8;
+    border-color: #fde68a;
+    color: #a16207;
+  }
+  .review-btn.flag:hover {
+    background: #fef9c3;
+  }
+  .review-btn.active {
+    box-shadow: 0 0 0 2px rgba(26, 26, 46, 0.15);
+    font-weight: 600;
+  }
+
+  .review-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    resize: vertical;
+    color: #1a1a2e;
+    line-height: 1.5;
+  }
+  .review-textarea::placeholder {
+    color: #9ca3af;
+  }
+  .review-textarea:focus {
+    outline: none;
+    border-color: #9ca3af;
+    box-shadow: 0 0 0 2px rgba(26, 26, 46, 0.08);
+  }
+
+  /* ── Navigation Buttons ── */
+  .nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+  }
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: #fff;
+    color: #1a1a2e;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .nav-btn:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+  .nav-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .nav-btn:disabled:hover {
+    background: #fff;
+    border-color: #e5e7eb;
+  }
+
+  /* ── View Transitions ── */
+  .view {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .view.active {
+    display: block;
+  }
+  .view.visible {
+    opacity: 1;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 24px 0;
+  }
+
+  /* ── Back link ── */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #6b7280;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+    padding: 4px 0;
+    margin-bottom: 16px;
+    transition: color 0.15s;
+  }
+  .back-link:hover {
+    color: #1a1a2e;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .clause-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .clause-card-right {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .stats-row {
+      flex-wrap: wrap;
+    }
+    .stat-item {
+      flex: 1 1 50%;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .stat-item:nth-child(2) { border-right: none; }
+    .stat-item:nth-last-child(-n+2) { border-bottom: none; }
+    .req-detail-header {
+      flex-direction: column;
+    }
+    .nav-buttons {
+      flex-direction: column;
+      gap: 8px;
+    }
+    .nav-btn { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- ═══════════════════════════════════════════════════
+       LEVEL 1: SUMMARY VIEW
+       ═══════════════════════════════════════════════════ -->
+  <div id="level1" class="view active visible">
+    <nav class="breadcrumb">
+      <span class="breadcrumb-current">Report</span>
+    </nav>
+
+    <div class="report-header">
+      <div class="report-title">ISO 27001 Compliance Evaluation</div>
+      <div class="report-meta">
+        <span>Information_Security_Policy_v3.1.pdf</span>
+        <span>ISO 27001:2022</span>
+        <span>Nov 9, 2024</span>
+      </div>
+      <div class="ai-badge">
+        <span class="ai-badge-icon">!</span>
+        AI Assessment &mdash; Human verification required
+      </div>
+    </div>
+
+    <div class="overall-score">
+      <div class="score-ring">
+        <svg viewBox="0 0 56 56">
+          <circle class="score-ring-bg" cx="28" cy="28" r="23"></circle>
+          <circle class="score-ring-fill" cx="28" cy="28" r="23"
+                  stroke="#f59e0b"
+                  stroke-dasharray="144.51"
+                  stroke-dashoffset="67.5"></circle>
+        </svg>
+        <div class="score-ring-text">53%</div>
+      </div>
+      <div class="score-label">
+        <strong>8 of 15 requirements passed</strong>
+        Overall compliance score across 5 clauses
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-item stat-fail">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Failures</div>
+      </div>
+      <div class="stat-item stat-flagged">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Flagged</div>
+      </div>
+      <div class="stat-item stat-pass">
+        <div class="stat-num">8</div>
+        <div class="stat-label">Passed</div>
+      </div>
+      <div class="stat-item stat-na">
+        <div class="stat-num">1</div>
+        <div class="stat-label">N/A</div>
+      </div>
+    </div>
+
+    <div class="section-label">Clauses</div>
+    <div class="clause-cards" id="clauseCards">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       LEVEL 2: CLAUSE DETAIL VIEW
+       ═══════════════════════════════════════════════════ -->
+  <div id="level2" class="view">
+    <nav class="breadcrumb">
+      <button class="breadcrumb-item" onclick="navigateTo(1)">Report</button>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current" id="l2BreadcrumbCurrent"></span>
+    </nav>
+
+    <div class="clause-detail-header">
+      <div class="clause-detail-title" id="l2Title"></div>
+      <div class="clause-detail-desc" id="l2Desc"></div>
+    </div>
+
+    <div class="section-label">Requirements</div>
+    <div class="requirements-list" id="requirementsList">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       LEVEL 3: REQUIREMENT DETAIL VIEW
+       ═══════════════════════════════════════════════════ -->
+  <div id="level3" class="view">
+    <nav class="breadcrumb">
+      <button class="breadcrumb-item" onclick="navigateTo(1)">Report</button>
+      <span class="breadcrumb-sep">/</span>
+      <button class="breadcrumb-item" id="l3BreadcrumbClause" onclick="navigateBackToClause()"></button>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current" id="l3BreadcrumbCurrent"></span>
+    </nav>
+
+    <div id="l3Content">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" id="prevReqBtn" onclick="navigateReq(-1)">
+        <span>&larr;</span> Previous Requirement
+      </button>
+      <button class="nav-btn" id="nextReqBtn" onclick="navigateReq(1)">
+        Next Requirement <span>&rarr;</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ────────────────────────────────────────────────
+// MOCK DATA
+// ────────────────────────────────────────────────
+
+const clauses = [
+  {
+    id: 'clause5',
+    num: 5,
+    name: 'Leadership',
+    description: 'Top management shall demonstrate leadership and commitment with respect to the information security management system. This includes establishing policy, assigning roles, and ensuring integration of ISMS requirements into business processes.',
+    requirements: [
+      {
+        id: 'REQ-5.1.1',
+        title: 'Management commitment to information security',
+        status: 'pass',
+        confidence: 'high',
+        confidenceScore: 92,
+        summary: 'Board-level commitment documented with signed policy and quarterly review schedule.',
+        evidence: [
+          {
+            text: 'The Board of Directors has approved the Information Security Policy (ISP-001, Rev 3.1) on 2024-01-15, with quarterly review cadence documented in the governance charter.',
+            ref: 'Section 2.1 — Governance Framework, page 4'
+          },
+          {
+            text: 'Meeting minutes from Q1-Q3 2024 confirm executive review of security metrics and resource allocation decisions.',
+            ref: 'Appendix B — Board Meeting Minutes'
+          }
+        ],
+        gaps: [],
+        recommendations: [],
+        rationale: 'Clear evidence of top management commitment through signed policy, governance structure, and regular review cadence. All elements of Clause 5.1 leadership requirements are satisfied.'
+      },
+      {
+        id: 'REQ-5.2.1',
+        title: 'Information security policy established',
+        status: 'pass',
+        confidence: 'high',
+        confidenceScore: 95,
+        summary: 'Comprehensive IS policy documented, approved, and communicated to all employees.',
+        evidence: [
+          {
+            text: 'Information Security Policy (ISP-001, Rev 3.1) is a 24-page document covering scope, objectives, principles, roles, acceptable use, incident management, and compliance obligations.',
+            ref: 'Section 1 — Policy Overview, pages 1-3'
+          },
+          {
+            text: 'Policy distribution records show 100% acknowledgment rate across 342 employees as of 2024-09-30.',
+            ref: 'Section 8.2 — Awareness and Communication, page 18'
+          }
+        ],
+        gaps: [],
+        recommendations: [],
+        rationale: 'The policy is comprehensive, approved by top management, communicated to all personnel, and available as documented information. Fully meets requirements.'
+      },
+      {
+        id: 'REQ-5.3.1',
+        title: 'Organizational roles and responsibilities assigned',
+        status: 'pass',
+        confidence: 'high',
+        confidenceScore: 88,
+        summary: 'RACI matrix defines clear security responsibilities across all organizational levels.',
+        evidence: [
+          {
+            text: 'A RACI matrix (Responsible, Accountable, Consulted, Informed) is maintained for all ISMS processes, with the CISO accountable for overall security posture and department heads responsible for implementation.',
+            ref: 'Section 3.2 — Roles and Responsibilities, page 8'
+          }
+        ],
+        gaps: [],
+        recommendations: [],
+        rationale: 'Roles, responsibilities, and authorities are clearly defined and communicated through a structured RACI framework covering all ISMS processes.'
+      }
+    ]
+  },
+  {
+    id: 'clause6',
+    num: 6,
+    name: 'Planning',
+    description: 'The organization shall plan actions to address risks and opportunities, establish information security objectives, and plan how to achieve them. This ensures the ISMS can achieve its intended outcomes and prevent undesired effects.',
+    requirements: [
+      {
+        id: 'REQ-6.1.2',
+        title: 'Information security risk assessment process',
+        status: 'fail',
+        confidence: 'high',
+        confidenceScore: 91,
+        summary: 'No formal risk assessment methodology documented. Ad-hoc risk identification only.',
+        evidence: [
+          {
+            text: 'The document references "periodic risk reviews" but does not define a structured methodology, frequency, or criteria for risk assessment.',
+            ref: 'Section 4.1 — Risk Management, page 10'
+          }
+        ],
+        gaps: [
+          'No formal risk assessment methodology is defined (e.g., ISO 27005, NIST SP 800-30, OCTAVE)',
+          'Risk acceptance criteria not established — no documented thresholds for risk tolerance',
+          'No evidence of a consistent, repeatable risk assessment process that produces comparable results',
+          'Risk register referenced but not provided as part of the ISMS documentation'
+        ],
+        recommendations: [
+          'Adopt and document a formal risk assessment methodology aligned with ISO 27005 or equivalent',
+          'Define explicit risk acceptance criteria with quantitative or qualitative thresholds approved by management',
+          'Establish a risk register template and populate it with identified risks, owners, and treatment plans',
+          'Schedule and conduct a comprehensive risk assessment covering all ISMS scope areas'
+        ],
+        rationale: 'The document lacks a defined risk assessment process. While risks are mentioned informally, there is no structured methodology, no risk acceptance criteria, and no repeatable process. This is a critical gap for ISO 27001 compliance.'
+      },
+      {
+        id: 'REQ-6.2.1',
+        title: 'Information security objectives and planning',
+        status: 'fail',
+        confidence: 'medium',
+        confidenceScore: 72,
+        summary: 'Security objectives are vague and lack measurable targets or timelines.',
+        evidence: [
+          {
+            text: 'Section 5 states "The organization aims to maintain a high level of information security" but does not define specific, measurable objectives with assigned responsibilities or timeframes.',
+            ref: 'Section 5 — Security Objectives, page 12'
+          }
+        ],
+        gaps: [
+          'Information security objectives are not specific or measurable — stated as aspirational goals only',
+          'No monitoring or measurement criteria defined for objectives',
+          'Objectives not broken down by relevant function or level within the organization',
+          'No documented plans for how objectives will be achieved (resources, responsibilities, timelines)'
+        ],
+        recommendations: [
+          'Rewrite security objectives using SMART criteria (Specific, Measurable, Achievable, Relevant, Time-bound)',
+          'Assign objective owners at appropriate organizational levels with clear accountability',
+          'Define KPIs and measurement methods for each objective (e.g., "reduce incident response time to < 4 hours by Q2 2025")',
+          'Create an objectives achievement plan with milestones, resource requirements, and review dates'
+        ],
+        rationale: 'The current objectives are too vague to be actionable. ISO 27001 requires objectives that are measurable, monitored, communicated, and updated. The current documentation falls significantly short of these requirements.'
+      }
+    ]
+  },
+  {
+    id: 'clause7',
+    num: 7,
+    name: 'Support',
+    description: 'The organization shall determine and provide resources, ensure competence, maintain awareness, establish communications, and control documented information needed for the ISMS.',
+    requirements: [
+      {
+        id: 'REQ-7.1.1',
+        title: 'Resources for ISMS',
+        status: 'pass',
+        confidence: 'high',
+        confidenceScore: 87,
+        summary: 'Budget allocation and staffing plan documented for ISMS operations.',
+        evidence: [
+          {
+            text: 'Annual ISMS budget of $2.4M approved for FY2024, with dedicated security team of 8 FTEs and planned expansion to 11 FTEs by Q2 2025.',
+            ref: 'Section 6.1 — Resource Allocation, page 14'
+          },
+          {
+            text: 'Technology investment plan includes SIEM, endpoint protection, and IAM platform renewals with allocated funding.',
+            ref: 'Appendix C — Technology Roadmap'
+          }
+        ],
+        gaps: [],
+        recommendations: [],
+        rationale: 'Adequate resources are documented with specific budget allocation, staffing plan, and technology investments. Resource provisioning meets ISO 27001 requirements.'
+      },
+      {
+        id: 'REQ-7.2.1',
+        title: 'Competence of personnel',
+        status: 'flagged',
+        confidence: 'medium',
+        confidenceScore: 64,
+        summary: 'Training program exists but competency verification records are incomplete.',
+        evidence: [
+          {
+            text: 'A mandatory security awareness training program is documented with annual completion requirements. Training completion tracking shows 89% completion rate.',
+            ref: 'Section 6.2 — Competence and Training, page 15'
+          }
+        ],
+        gaps: [
+          'Competency assessment records are not available for specialized security roles (e.g., SOC analysts, incident responders)',
+          'No formal competency framework mapping required skills to specific ISMS roles',
+          '11% of employees have not completed mandatory training — no documented remediation plan'
+        ],
+        recommendations: [
+          'Develop a competency framework mapping required technical and procedural skills to each ISMS role',
+          'Implement competency assessments (e.g., practical exercises, certifications) for specialized security personnel',
+          'Address the training completion gap with a remediation plan and escalation process for non-compliance'
+        ],
+        rationale: 'While a training program exists, the evidence of competency verification is insufficient. ISO 27001 requires not just training delivery but demonstration that personnel are competent. The gaps in completion tracking and role-specific competency assessment need attention.'
+      },
+      {
+        id: 'REQ-7.3.1',
+        title: 'Security awareness program',
+        status: 'pass',
+        confidence: 'high',
+        confidenceScore: 90,
+        summary: 'Comprehensive awareness program with phishing simulations and regular communications.',
+        evidence: [
+          {
+            text: 'Monthly security awareness newsletters, quarterly phishing simulations (average click rate reduced from 23% to 8%), and annual Security Awareness Week events documented.',
+            ref: 'Section 6.3 — Awareness Program, page 16'
+          }
+        ],
+        gaps: [],
+        recommendations: [],
+        rationale: 'The awareness program is well-documented with measurable outcomes showing improvement over time. Multiple channels and regular cadence satisfy ISO 27001 awareness requirements.'
+      },
+      {
+        id: 'REQ-7.4.1',
+        title: 'Communication processes',
+        status: 'pass',
+        confidence: 'high',
+        confidenceScore: 85,
+        summary: 'Internal and external communication procedures documented for security matters.',
+        evidence: [
+          {
+            text: 'Communication matrix defines what to communicate, when, with whom, and through which channels for all ISMS-related matters including incidents, changes, and audit results.',
+            ref: 'Section 6.4 — Communication Plan, page 17'
+          }
+        ],
+        gaps: [],
+        recommendations: [],
+        rationale: 'Communication procedures are clearly defined covering internal and external stakeholders, topics, frequency, and channels. Meets ISO 27001 communication requirements.'
+      },
+      {
+        id: 'REQ-7.5.1',
+        title: 'Documented information control',
+        status: 'pass',
+        confidence: 'high',
+        confidenceScore: 93,
+        summary: 'Document management system with version control, approval workflows, and access controls.',
+        evidence: [
+          {
+            text: 'SharePoint-based document management system with automated version control, approval workflows (requiring CISO sign-off for policy changes), and role-based access controls. Document retention schedule aligned with legal requirements.',
+            ref: 'Section 6.5 — Document Control, page 19'
+          },
+          {
+            text: 'Documented information register lists 47 controlled documents with owners, review dates, and classification levels.',
+            ref: 'Appendix A — Document Register'
+          }
+        ],
+        gaps: [],
+        recommendations: [],
+        rationale: 'Document control procedures are robust with automated workflows, version control, access management, and a comprehensive document register. Fully satisfies documented information requirements.'
+      }
+    ]
+  },
+  {
+    id: 'clause8',
+    num: 8,
+    name: 'Operation',
+    description: 'The organization shall plan, implement, and control the processes needed to meet information security requirements and implement the actions determined in planning.',
+    requirements: [
+      {
+        id: 'REQ-8.1.1',
+        title: 'Operational planning and control',
+        status: 'fail',
+        confidence: 'medium',
+        confidenceScore: 68,
+        summary: 'Change management process for security controls not defined. Outsourced processes uncontrolled.',
+        evidence: [
+          {
+            text: 'The document mentions "operational procedures will be maintained" but no specific operational planning documentation, change management process for security controls, or criteria for outsourced process management was found.',
+            ref: 'Section 7 — Operations, page 20'
+          }
+        ],
+        gaps: [
+          'No documented change management process for security-relevant changes (e.g., firewall rules, access policies)',
+          'Outsourced security processes (SOC monitoring, penetration testing) lack formal control criteria and SLAs',
+          'No documented criteria for evaluating whether operational processes meet security requirements',
+          'Operational procedures referenced but not provided as part of the documentation set'
+        ],
+        recommendations: [
+          'Establish a formal change management process for all security-relevant operational changes with approval gates',
+          'Define SLAs, control criteria, and monitoring procedures for outsourced security services',
+          'Document operational procedures for key security processes (access provisioning, incident handling, backup/recovery)',
+          'Implement regular operational effectiveness reviews with documented outcomes'
+        ],
+        rationale: 'Operational controls are insufficiently documented. The lack of change management, outsourced process controls, and operational procedures represents a significant gap in meeting Clause 8 requirements.'
+      },
+      {
+        id: 'REQ-8.2.1',
+        title: 'Information security risk assessment execution',
+        status: 'na',
+        confidence: 'high',
+        confidenceScore: 94,
+        summary: 'Dependent on risk assessment process (REQ-6.1.2) which has not been established.',
+        evidence: [
+          {
+            text: 'Since no formal risk assessment methodology has been defined (see Clause 6.1), the execution of risk assessments at planned intervals cannot be evaluated at this time.',
+            ref: 'Cross-reference: REQ-6.1.2 (Fail)'
+          }
+        ],
+        gaps: [],
+        recommendations: [],
+        rationale: 'This requirement is dependent on the establishment of a risk assessment process under Clause 6.1, which was found to be non-conformant. Assessment of risk assessment execution is therefore not applicable until the prerequisite process is established.'
+      }
+    ]
+  },
+  {
+    id: 'clause9',
+    num: 9,
+    name: 'Performance Evaluation',
+    description: 'The organization shall evaluate the information security performance and the effectiveness of the ISMS through monitoring, measurement, analysis, evaluation, internal audit, and management review.',
+    requirements: [
+      {
+        id: 'REQ-9.1.1',
+        title: 'Monitoring and measurement',
+        status: 'flagged',
+        confidence: 'medium',
+        confidenceScore: 58,
+        summary: 'Some security metrics tracked but measurement framework is incomplete.',
+        evidence: [
+          {
+            text: 'Monthly security dashboard tracks 6 KPIs (incident count, mean time to detect, mean time to respond, patch compliance %, training completion %, vulnerability scan results). However, measurement methodology and evaluation criteria are not formally documented.',
+            ref: 'Section 8.1 — Monitoring and Measurement, page 21'
+          }
+        ],
+        gaps: [
+          'Measurement methodology not formally documented — unclear how metrics are collected and validated',
+          'No defined evaluation criteria for determining acceptable vs. unacceptable performance levels',
+          'Limited coverage — only 6 KPIs tracked against a broad ISMS scope with 47 controlled processes'
+        ],
+        recommendations: [
+          'Formalize the measurement methodology documenting data sources, collection methods, and validation processes',
+          'Define performance thresholds and evaluation criteria for each metric (green/amber/red boundaries)',
+          'Expand KPI coverage to include additional ISMS processes, particularly access control effectiveness and business continuity readiness'
+        ],
+        rationale: 'While some monitoring is in place, the measurement framework lacks the formality and breadth required by ISO 27001. The methodology is undocumented and coverage is limited relative to the ISMS scope.'
+      },
+      {
+        id: 'REQ-9.2.1',
+        title: 'Internal audit programme',
+        status: 'pass',
+        confidence: 'high',
+        confidenceScore: 86,
+        summary: 'Internal audit programme established with annual cycle and documented results.',
+        evidence: [
+          {
+            text: 'Internal audit programme (IAP-001) defines annual audit cycle covering all ISMS clauses over a 3-year rotation. Audit conducted by certified internal auditors (ISO 27001 Lead Auditor certified). Last audit completed September 2024 with 4 minor non-conformities identified and tracked to closure.',
+            ref: 'Section 8.2 — Internal Audit, page 22'
+          }
+        ],
+        gaps: [],
+        recommendations: [],
+        rationale: 'The internal audit programme is well-established with certified auditors, a defined rotation cycle, and documented results including non-conformity tracking. Meets ISO 27001 audit requirements.'
+      },
+      {
+        id: 'REQ-9.3.1',
+        title: 'Management review completeness',
+        status: 'flagged',
+        confidence: 'low',
+        confidenceScore: 52,
+        summary: 'Management reviews occur but do not cover all required inputs specified in ISO 27001.',
+        evidence: [
+          {
+            text: 'Quarterly management review meetings are documented with agendas and minutes. However, review of meeting records shows that several required inputs per ISO 27001 Clause 9.3 are not consistently addressed: changes in external/internal issues, feedback on security performance, and results of risk assessment are frequently missing from agendas.',
+            ref: 'Section 8.3 — Management Review, page 23'
+          }
+        ],
+        gaps: [
+          'Management review inputs do not consistently cover all items required by ISO 27001:2022 Clause 9.3.2',
+          'Changes to external and internal issues relevant to the ISMS not systematically reviewed',
+          'Risk assessment results not presented as a standing agenda item despite being a mandatory input',
+          'Review outputs lack documented decisions on continual improvement opportunities'
+        ],
+        recommendations: [
+          'Create a standardized management review agenda template aligned with all ISO 27001:2022 Clause 9.3.2 required inputs',
+          'Ensure risk assessment results are a standing agenda item for every management review',
+          'Document management review outputs explicitly, including decisions on improvement opportunities and resource changes',
+          'Implement a management review action tracker with assigned owners and due dates'
+        ],
+        rationale: 'Management reviews are occurring but are not comprehensive enough. Multiple required inputs per ISO 27001 are missing from the review process, which could result in audit non-conformities. The low confidence reflects uncertainty about whether some items were discussed but not documented vs. genuinely omitted.'
+      }
+    ]
+  }
+];
+
+// Flatten all requirements with clause references for navigation
+const allRequirements = [];
+clauses.forEach(clause => {
+  clause.requirements.forEach(req => {
+    allRequirements.push({ ...req, clauseId: clause.id, clauseNum: clause.num, clauseName: clause.name });
+  });
+});
+
+// ────────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────────
+let currentLevel = 1;
+let currentClauseId = null;
+let currentReqIndex = 0; // index into allRequirements
+
+// ────────────────────────────────────────────────
+// NAVIGATION
+// ────────────────────────────────────────────────
+function navigateTo(level, data) {
+  const views = document.querySelectorAll('.view');
+
+  // Fade out current view
+  views.forEach(v => {
+    if (v.classList.contains('active')) {
+      v.classList.remove('visible');
+    }
+  });
+
+  setTimeout(() => {
+    views.forEach(v => v.classList.remove('active'));
+
+    if (level === 1) {
+      currentLevel = 1;
+      currentClauseId = null;
+      document.getElementById('level1').classList.add('active');
+    } else if (level === 2) {
+      currentLevel = 2;
+      currentClauseId = data;
+      renderClauseDetail(data);
+      document.getElementById('level2').classList.add('active');
+    } else if (level === 3) {
+      currentLevel = 3;
+      currentReqIndex = data;
+      renderRequirementDetail(data);
+      document.getElementById('level3').classList.add('active');
+    }
+
+    // Fade in after a tick
+    requestAnimationFrame(() => {
+      document.querySelector('.view.active').classList.add('visible');
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 150);
+}
+
+function navigateBackToClause() {
+  const req = allRequirements[currentReqIndex];
+  navigateTo(2, req.clauseId);
+}
+
+function navigateReq(direction) {
+  const newIndex = currentReqIndex + direction;
+  if (newIndex >= 0 && newIndex < allRequirements.length) {
+    navigateTo(3, newIndex);
+  }
+}
+
+// ────────────────────────────────────────────────
+// RENDER: Level 1 — Clause Cards
+// ────────────────────────────────────────────────
+function renderClauseCards() {
+  const container = document.getElementById('clauseCards');
+  container.innerHTML = '';
+
+  clauses.forEach(clause => {
+    const passCount = clause.requirements.filter(r => r.status === 'pass').length;
+    const failCount = clause.requirements.filter(r => r.status === 'fail').length;
+    const flaggedCount = clause.requirements.filter(r => r.status === 'flagged').length;
+    const naCount = clause.requirements.filter(r => r.status === 'na').length;
+    const total = clause.requirements.length;
+    const evalTotal = total - naCount;
+
+    // Worst status determines border color
+    let worstStatus = 'pass';
+    if (failCount > 0) worstStatus = 'fail';
+    else if (flaggedCount > 0) worstStatus = 'flagged';
+    else if (naCount === total) worstStatus = 'na';
+
+    // Progress
+    const progressPct = evalTotal > 0 ? (passCount / evalTotal) * 100 : 0;
+    let progressClass = 'all-pass';
+    if (progressPct === 0 && evalTotal > 0) progressClass = 'none-pass';
+    else if (progressPct < 100) progressClass = 'some-pass';
+
+    // Summary text
+    const parts = [];
+    if (failCount > 0) parts.push(failCount + ' fail');
+    if (flaggedCount > 0) parts.push(flaggedCount + ' flagged');
+    if (passCount > 0) parts.push(passCount + ' pass');
+    if (naCount > 0) parts.push(naCount + ' N/A');
+
+    const card = document.createElement('div');
+    card.className = 'clause-card status-' + worstStatus;
+    card.onclick = () => navigateTo(2, clause.id);
+
+    card.innerHTML = `
+      <div class="clause-card-main">
+        <div class="clause-card-title">Clause ${clause.num}: ${clause.name}</div>
+        <div class="clause-card-summary">${parts.join(' &middot; ')}</div>
+      </div>
+      <div class="clause-card-right">
+        <div class="clause-progress">
+          <div class="clause-progress-bar">
+            <div class="clause-progress-fill ${progressClass}" style="width: ${progressPct}%"></div>
+          </div>
+          <span class="clause-progress-text">${passCount}/${evalTotal > 0 ? evalTotal : total} passed</span>
+        </div>
+        <div class="clause-status-dots">
+          ${clause.requirements.map(r => '<span class="mini-dot ' + r.status + '"></span>').join('')}
+        </div>
+        <span class="clause-arrow">&rsaquo;</span>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+// ────────────────────────────────────────────────
+// RENDER: Level 2 — Clause Detail
+// ────────────────────────────────────────────────
+function renderClauseDetail(clauseId) {
+  const clause = clauses.find(c => c.id === clauseId);
+  if (!clause) return;
+
+  document.getElementById('l2BreadcrumbCurrent').textContent = 'Clause ' + clause.num + ': ' + clause.name;
+  document.getElementById('l2Title').textContent = 'Clause ' + clause.num + ': ' + clause.name;
+  document.getElementById('l2Desc').textContent = clause.description;
+
+  const list = document.getElementById('requirementsList');
+  list.innerHTML = '';
+
+  clause.requirements.forEach(req => {
+    const globalIndex = allRequirements.findIndex(r => r.id === req.id);
+
+    const statusLabels = { pass: 'Pass', fail: 'Fail', flagged: 'Flagged', na: 'N/A' };
+    const confidenceLabels = { high: 'High', medium: 'Medium', low: 'Low' };
+
+    const row = document.createElement('div');
+    row.className = 'requirement-row';
+    row.onclick = () => navigateTo(3, globalIndex);
+
+    row.innerHTML = `
+      <span class="status-dot ${req.status}"></span>
+      <div class="req-main">
+        <div class="req-id-title">
+          <span class="req-id">${req.id}</span>
+          <span class="req-title">${req.title}</span>
+        </div>
+        <div class="req-summary">${req.summary}</div>
+      </div>
+      <div class="req-right">
+        <span class="confidence-badge ${req.confidence}">${confidenceLabels[req.confidence]} confidence</span>
+        <span class="row-arrow">&rsaquo;</span>
+      </div>
+    `;
+
+    list.appendChild(row);
+  });
+}
+
+// ────────────────────────────────────────────────
+// RENDER: Level 3 — Requirement Detail
+// ────────────────────────────────────────────────
+function renderRequirementDetail(index) {
+  const req = allRequirements[index];
+  if (!req) return;
+
+  // Breadcrumbs
+  document.getElementById('l3BreadcrumbClause').textContent = 'Clause ' + req.clauseNum + ': ' + req.clauseName;
+  document.getElementById('l3BreadcrumbCurrent').textContent = req.id;
+
+  const statusLabels = { pass: 'Passed', fail: 'Failed', flagged: 'Flagged for Review', na: 'Not Applicable' };
+  const confidenceLabels = { high: 'High', medium: 'Medium', low: 'Low' };
+  const confidenceExplanations = {
+    high: 'Strong evidence found in document. Assessment is based on explicit statements and verifiable documentation.',
+    medium: 'Partial evidence found. Some aspects are clearly documented but others require additional verification or clarification.',
+    low: 'Limited evidence available. Assessment is based on indirect references or incomplete documentation. Human review is strongly recommended.'
+  };
+
+  // Confidence bars
+  const barCount = 5;
+  const activeBars = req.confidence === 'high' ? 5 : req.confidence === 'medium' ? 3 : 1;
+
+  let confidenceBarsHTML = '';
+  for (let i = 0; i < barCount; i++) {
+    confidenceBarsHTML += `<div class="confidence-bar ${i < activeBars ? 'active ' + req.confidence : ''}"></div>`;
+  }
+
+  // Evidence blocks
+  let evidenceHTML = '';
+  req.evidence.forEach(ev => {
+    evidenceHTML += `
+      <div class="evidence-block">
+        <div class="evidence-text">"${ev.text}"</div>
+        <div class="evidence-ref">${ev.ref}</div>
+      </div>
+    `;
+  });
+
+  // Gaps
+  let gapsHTML = '';
+  if (req.gaps.length > 0) {
+    gapsHTML = `
+      <div class="detail-section">
+        <div class="detail-section-title">Gap Analysis</div>
+        <ul class="gap-list">
+          ${req.gaps.map(g => '<li>' + g + '</li>').join('')}
+        </ul>
+      </div>
+    `;
+  }
+
+  // Recommendations
+  let recsHTML = '';
+  if (req.recommendations.length > 0) {
+    recsHTML = `
+      <div class="detail-section">
+        <div class="detail-section-title">Recommendations</div>
+        <ul class="rec-list">
+          ${req.recommendations.map(r => '<li>' + r + '</li>').join('')}
+        </ul>
+      </div>
+    `;
+  }
+
+  // Nav buttons
+  document.getElementById('prevReqBtn').disabled = (index <= 0);
+  document.getElementById('nextReqBtn').disabled = (index >= allRequirements.length - 1);
+
+  const content = document.getElementById('l3Content');
+  content.innerHTML = `
+    <div class="req-detail-header">
+      <div>
+        <div class="req-detail-id">${req.id}</div>
+        <div class="req-detail-title">${req.title}</div>
+      </div>
+      <div class="status-badge ${req.status}">
+        <span class="status-badge-dot"></span>
+        ${statusLabels[req.status]}
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">AI Rationale</div>
+      <p style="font-size: 14px; color: #374151; line-height: 1.6;">${req.rationale}</p>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Confidence Level</div>
+      <div class="confidence-detail">
+        <div class="confidence-meter">
+          ${confidenceBarsHTML}
+        </div>
+        <div class="confidence-text">
+          <strong>${confidenceLabels[req.confidence]} (${req.confidenceScore}%)</strong><br>
+          ${confidenceExplanations[req.confidence]}
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Evidence</div>
+      ${evidenceHTML}
+    </div>
+
+    ${gapsHTML}
+    ${recsHTML}
+
+    <div class="divider"></div>
+
+    <div class="review-actions">
+      <div class="review-actions-title">Reviewer Actions</div>
+      <div class="review-buttons">
+        <button class="review-btn approve" onclick="selectReviewAction(this, 'approve')">Approve</button>
+        <button class="review-btn reject" onclick="selectReviewAction(this, 'reject')">Reject</button>
+        <button class="review-btn flag" onclick="selectReviewAction(this, 'flag')">Flag for Review</button>
+      </div>
+      <textarea class="review-textarea" placeholder="Add a comment or note for this requirement..."></textarea>
+    </div>
+  `;
+}
+
+// ────────────────────────────────────────────────
+// REVIEW ACTION BUTTONS
+// ────────────────────────────────────────────────
+function selectReviewAction(btn, action) {
+  const buttons = btn.parentElement.querySelectorAll('.review-btn');
+  buttons.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ────────────────────────────────────────────────
+// INIT
+// ────────────────────────────────────────────────
+renderClauseCards();
+</script>
+
+</body>
+</html>

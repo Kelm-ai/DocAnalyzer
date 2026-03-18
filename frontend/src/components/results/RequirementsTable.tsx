@@ -16,9 +16,9 @@ const CONFIDENCE_LABELS: Record<ConfidenceLevel, string> = {
 }
 
 const CONFIDENCE_BADGE_CLASSES: Record<ConfidenceLevel, string> = {
-  low: "bg-slate-100 text-slate-600 border border-slate-200",
-  medium: "bg-amber-50 text-amber-700 border border-amber-200",
-  high: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  low: "bg-status-na-bg text-status-na border border-border",
+  medium: "bg-status-flagged-bg text-status-flagged border border-border",
+  high: "bg-status-pass-bg text-status-pass border border-border",
 }
 
 const getConfidenceLabel = (level?: RequirementEvaluation["confidence_level"]) => {
@@ -30,7 +30,7 @@ const getConfidenceLabel = (level?: RequirementEvaluation["confidence_level"]) =
 
 const getConfidenceBadgeClass = (level?: RequirementEvaluation["confidence_level"]) => {
   if (!level) {
-    return "bg-slate-100 text-slate-600 border border-slate-200"
+    return "bg-status-na-bg text-status-na border border-border"
   }
   return CONFIDENCE_BADGE_CLASSES[level]
 }
@@ -302,7 +302,7 @@ export function RequirementsTable() {
 
                                         {req.gaps && req.gaps.length > 0 && (
                                           <div>
-                                            <h5 className="font-semibold text-sm mb-1 text-red-600">Gaps Identified</h5>
+                                            <h5 className="font-semibold text-sm mb-1 text-status-fail">Gaps Identified</h5>
                                             <ul className="list-disc list-inside space-y-1">
                                               {req.gaps.map((gap: string, index: number) => (
                                                 <li key={index} className="text-sm text-muted-foreground">{gap}</li>
@@ -313,7 +313,7 @@ export function RequirementsTable() {
 
                                         {req.recommendations && req.recommendations.length > 0 && (
                                           <div>
-                                            <h5 className="font-semibold text-sm mb-1 text-blue-600">Recommendations</h5>
+                                            <h5 className="font-semibold text-sm mb-1 text-primary">Recommendations</h5>
                                             <ul className="list-disc list-inside space-y-1">
                                               {req.recommendations.map((rec: string, index: number) => (
                                                 <li key={index} className="text-sm text-muted-foreground">{rec}</li>

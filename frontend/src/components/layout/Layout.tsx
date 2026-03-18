@@ -9,13 +9,22 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="border-b border-gray-200">
+    <div className="min-h-screen" style={{ background: 'var(--page-bg)' }}>
+      <div className="h-0.5 bg-sc-gold" />
+      <div className="border-b border-border bg-background">
         <div className="container mx-auto px-4 flex items-center justify-between h-14">
-          <Navigation />
+          <div className="flex items-center gap-6">
+            <Link to="/" className="flex items-center gap-2">
+              <img src="/sc-logo.png" alt="Suttons Creek" className="h-8 w-8 rounded" />
+              <span className="text-lg font-light tracking-wide text-sc">
+                Suttons Creek Compliance
+              </span>
+            </Link>
+            <Navigation />
+          </div>
           <Link
             to="/docs"
-            className="flex items-center space-x-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+            className="flex items-center space-x-1 text-sm text-muted-foreground hover:text-primary transition-colors"
           >
             <BookOpen className="h-4 w-4" />
             <span>Work Instruction</span>

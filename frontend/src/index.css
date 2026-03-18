@@ -1,40 +1,67 @@
 @import "tailwindcss";
 
-/* Base tokens for light & dark */
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(240 10% 3.9%);
-  --primary: hsl(240 5.9% 10%);
-  --primary-foreground: hsl(0 0% 98%);
-  --secondary: hsl(240 4.8% 95.9%);
-  --secondary-foreground: hsl(240 5.9% 10%);
-  --muted: hsl(240 4.8% 95.9%);
-  --muted-foreground: hsl(240 3.8% 45%);
-  --accent: hsl(240 4.8% 95.9%);
-  --accent-foreground: hsl(240 5.9% 10%);
-  --destructive: hsl(0 72% 51%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 5.9% 90%);
-  --input: hsl(240 5.9% 90%);
-  --ring: hsl(240 5.9% 10%);
-}
+  /* Surfaces — warm cream/off-white */
+  --background: #fffdf9;
+  --page-bg: #F7F5F3;
+  --foreground: #2d2926;
 
-.dark {
-  --background: hsl(240 10% 3.9%);
-  --foreground: hsl(0 0% 98%);
-  --primary: hsl(0 0% 98%);
-  --primary-foreground: hsl(240 5.9% 10%);
-  --secondary: hsl(240 3.7% 15.9%);
-  --secondary-foreground: hsl(0 0% 98%);
-  --muted: hsl(240 3.7% 15.9%);
-  --muted-foreground: hsl(240 5% 64.9%);
-  --accent: hsl(240 3.7% 15.9%);
-  --accent-foreground: hsl(0 0% 98%);
-  --destructive: hsl(0 62.8% 30.6%);
+  /* Primary — SC Green (actions, CTAs, active nav) */
+  --primary: #00978F;
+  --primary-foreground: hsl(0 0% 100%);
+
+  /* Secondary — Warm beige */
+  --secondary: #f5f0e8;
+  --secondary-foreground: #2d2926;
+
+  /* Muted — Warm neutral */
+  --muted: #f5f0e8;
+  --muted-foreground: #6b6662;
+
+  /* Accent — Warm rust tint */
+  --accent: #fef5f0;
+  --accent-foreground: #da7756;
+
+  /* Destructive — Standard red */
+  --destructive: hsl(0 84% 60%);
   --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 3.7% 15.9%);
-  --input: hsl(240 3.7% 15.9%);
-  --ring: hsl(240 4.9% 83.9%);
+
+  /* Borders & Inputs — warm beige */
+  --border: #ebe4da;
+  --input: #ebe4da;
+  --ring: #00978F;
+
+  /* SC Brand tokens */
+  --sc-green: #00978F;
+  --sc-green-dark: #007A73;
+  --sc-green-deep: #005C57;
+  --sc-green-light: #E8F5F4;
+  --sc-purple: #52315B;
+  --sc-purple-dark: #2D1A33;
+  --sc-purple-light: #F4F0F5;
+  --sc-yellow: #FFC000;
+  --sc-yellow-light: #FFF8E1;
+  --sc-yellow-dark: #946000;
+
+  /* Status tokens */
+  --status-pass: #0D7A6F;
+  --status-pass-bg: #E6F5F3;
+  --status-pass-dot: #0D9488;
+  --status-fail: #DC2626;
+  --status-fail-bg: #FEF2F2;
+  --status-flagged: #946000;
+  --status-flagged-bg: #FFF8E1;
+  --status-flagged-dot: #D4A017;
+  --status-na: #6B7280;
+  --status-na-bg: #F3F4F6;
+
+  /* Confidence tokens */
+  --confidence-high: #0D7A6F;
+  --confidence-high-bg: #E6F5F3;
+  --confidence-medium: #946000;
+  --confidence-medium-bg: #FFF8E1;
+  --confidence-low: #6B7280;
+  --confidence-low-bg: #F3F4F6;
 }
 
 /* Map tokens to Tailwind color utilities */
@@ -54,4 +81,245 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* SC Brand color utilities */
+  --color-sc: var(--sc-green);
+  --color-sc-dark: var(--sc-green-dark);
+  --color-sc-deep: var(--sc-green-deep);
+  --color-sc-light: var(--sc-green-light);
+  --color-sc-purple: var(--sc-purple);
+  --color-sc-purple-dark: var(--sc-purple-dark);
+  --color-sc-purple-light: var(--sc-purple-light);
+  --color-sc-gold: var(--sc-yellow);
+  --color-sc-gold-light: var(--sc-yellow-light);
+  --color-sc-gold-dark: var(--sc-yellow-dark);
+
+  /* Status color utilities */
+  --color-status-pass: var(--status-pass);
+  --color-status-pass-bg: var(--status-pass-bg);
+  --color-status-fail: var(--status-fail);
+  --color-status-fail-bg: var(--status-fail-bg);
+  --color-status-flagged: var(--status-flagged);
+  --color-status-flagged-bg: var(--status-flagged-bg);
+  --color-status-na: var(--status-na);
+  --color-status-na-bg: var(--status-na-bg);
+
+  --font-sans: 'Lato', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Base styles */
+body {
+  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
+  color: #2d2926;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── ResultsV2 scoped utilities ────────────────── */
+.results-v2 {}
+
+/* Confidence bar — 40px track with colored fill */
+.results-v2 .rv2-confidence-track {
+  width: 40px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.results-v2 .rv2-confidence-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* Status dot — 7px circle */
+.results-v2 .rv2-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Evidence serif typography */
+.results-v2 .rv2-evidence {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* Inline expansion left accent border */
+.results-v2 .rv2-expansion {
+  border-left: 3px solid var(--sc-yellow-dark);
+  border-radius: 0 8px 8px 0;
+}
+
+/* Review badge — smaller, quieter */
+.results-v2 .rv2-review-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+/* Modal overlay with brand tint */
+.results-v2 .rv2-modal-overlay {
+  background: rgba(45, 26, 51, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Modal card refined shadow */
+.results-v2 .rv2-modal-card {
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(45, 26, 51, 0.15), 0 4px 16px rgba(45, 26, 51, 0.06);
+}
+
+/* Custom scrollbar for modal */
+.results-v2 .rv2-scroll::-webkit-scrollbar { width: 6px; }
+.results-v2 .rv2-scroll::-webkit-scrollbar-track { background: transparent; }
+.results-v2 .rv2-scroll::-webkit-scrollbar-thumb { background: hsl(270 5% 82%); border-radius: 3px; }
+.results-v2 .rv2-scroll::-webkit-scrollbar-thumb:hover { background: hsl(270 5% 72%); }
+
+/* ── Citation pill ────────────────────────────── */
+.results-v2 .rv2-citation-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'SF Mono', Menlo, Consolas, ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  font-style: normal;
+  color: #8a6840;
+  background: #f5eddf;
+  border: 1px solid #e4d8c4;
+  border-radius: 12px;
+  padding: 2px 10px 2px 7px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  vertical-align: middle;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.results-v2 .rv2-citation-pill::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #da7756;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.results-v2 .rv2-citation-pill:hover {
+  background: #efe5d2;
+  border-color: #d4c4a8;
+  color: #6a5030;
+  box-shadow: 0 2px 8px rgba(90, 74, 63, 0.12);
+  transform: translateY(-1px);
+}
+.results-v2 .rv2-citation-pill:hover::before { opacity: 1; }
+.results-v2 .rv2-citation-pill:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(90, 74, 63, 0.1);
+}
+.results-v2 .rv2-citation-more { padding: 2px 10px; }
+.results-v2 .rv2-citation-more::before { display: none; }
+
+/* ── Citation tooltip (fixed, JS-positioned) ──── */
+.rv2-cite-tooltip {
+  position: fixed;
+  z-index: 2000;
+  background: #fffdf9;
+  border: 1px solid #e0d6ca;
+  border-radius: 10px;
+  padding: 14px 18px;
+  max-width: 380px;
+  min-width: 240px;
+  box-shadow: 0 8px 32px rgba(90, 74, 63, 0.18), 0 2px 8px rgba(90, 74, 63, 0.08);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.rv2-cite-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.rv2-cite-tooltip-source {
+  font-family: 'SF Mono', Menlo, Consolas, ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: #da7756;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.rv2-cite-tooltip-page {
+  font-size: 10px;
+  color: #b5a99a;
+  font-weight: 500;
+}
+.rv2-cite-tooltip-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13px;
+  color: #2d2926;
+  line-height: 1.65;
+  font-style: italic;
+  border-left: 2px solid #da7756;
+  padding-left: 12px;
+  margin: 0;
+}
+.rv2-cite-tooltip-hint {
+  font-size: 10px;
+  color: #b5a99a;
+  margin-top: 8px;
+  text-align: right;
+}
+
+/* ── Modal citation cards ─────────────────────── */
+.results-v2 .rv2-modal-citations-block {
+  background: #faf7f2;
+  border: 1px solid #ebe4da;
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+.results-v2 .rv2-modal-citations-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.results-v2 .rv2-modal-cite-card {
+  background: #fffdf9;
+  border: 1px solid #e4d8c4;
+  border-radius: 8px;
+  padding: 12px 14px;
+  flex: 1 1 calc(50% - 4px);
+  min-width: 200px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.results-v2 .rv2-modal-cite-card:hover {
+  border-color: #d4c4a8;
+  box-shadow: 0 2px 8px rgba(90, 74, 63, 0.08);
+}
+.results-v2 .rv2-modal-cite-ref {
+  font-family: 'SF Mono', Menlo, Consolas, ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #da7756;
+}
+.results-v2 .rv2-modal-cite-page {
+  font-size: 10px;
+  color: #b5a99a;
+  font-weight: 500;
+}
+.results-v2 .rv2-modal-cite-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 12px;
+  color: #6a5a4f;
+  line-height: 1.6;
+  font-style: italic;
+  border-left: 2px solid #e4d8c4;
+  padding-left: 10px;
 }

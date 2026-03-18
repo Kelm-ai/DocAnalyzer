@@ -116,7 +116,7 @@ Vision handling:
                 or os.getenv("GEMINI_VISION_MODEL")
                 or os.getenv("GEMINI_MODEL")
                 or vision_model_override
-                or "gemini-3-pro-preview"
+                or "gemini-3.1-pro"
             )
             self.gemini_client = genai.Client(api_key=api_key)
             self.gemini_response_schema = self._build_gemini_schema()
@@ -131,7 +131,7 @@ Vision handling:
                 or os.getenv("OPENAI_VISION_MODEL")
                 or os.getenv("OPENAI_MODEL")
                 or vision_model_override
-                or "gpt-5"
+                or "gpt-5.4"
             )
             self.openai_client = OpenAI(api_key=api_key)
 

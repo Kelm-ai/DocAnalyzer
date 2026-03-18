@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Command Palette — Compliance Report</title>
+<style>
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, system-ui, 'Segoe UI', sans-serif;
+    color: #000;
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Header */
+  .header {
+    padding: 32px 24px 0;
+    text-align: center;
+  }
+
+  .header-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.3;
+  }
+
+  .header-meta {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #888;
+    line-height: 1.5;
+  }
+
+  .header-notice {
+    margin-top: 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #aaa;
+  }
+
+  /* Command bar area */
+  .command-area {
+    max-width: 720px;
+    margin: 28px auto 0;
+    padding: 0 24px;
+  }
+
+  .search-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: #888;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .search-input {
+    width: 100%;
+    height: 48px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 0 100px 0 44px;
+    font-family: inherit;
+    font-size: 15px;
+    color: #000;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .search-input::placeholder {
+    color: #bbb;
+  }
+
+  .search-input:focus {
+    border-color: #000;
+  }
+
+  .search-count {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #888;
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  /* Chip rows */
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .chip-row + .chip-row {
+    margin-top: 6px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 12px;
+    color: #555;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.12s;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .chip:hover {
+    border-color: #999;
+    color: #000;
+  }
+
+  .chip.active {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+  }
+
+  .chip .chip-count {
+    margin-left: 4px;
+    opacity: 0.7;
+  }
+
+  /* Results list */
+  .results-area {
+    max-width: 720px;
+    margin: 20px auto 0;
+    padding: 0 24px;
+  }
+
+  .results-meta {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+
+  .results-list {
+    border-top: 1px solid #eee;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 4px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.1s;
+    gap: 10px;
+  }
+
+  .result-row:hover {
+    background: #fafafa;
+  }
+
+  .result-row.selected {
+    background: #f5f5f5;
+  }
+
+  .result-status {
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .result-status.fail { color: #000; }
+  .result-status.flagged { color: #888; }
+  .result-status.pass { color: #bbb; }
+  .result-status.na { color: #ddd; }
+
+  .result-id {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: #888;
+    flex-shrink: 0;
+    min-width: 72px;
+  }
+
+  .result-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #000;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .result-clause {
+    font-size: 12px;
+    color: #888;
+    flex-shrink: 0;
+    min-width: 60px;
+    text-align: right;
+  }
+
+  .result-confidence {
+    font-size: 11px;
+    color: #aaa;
+    flex-shrink: 0;
+    min-width: 50px;
+    text-align: right;
+  }
+
+  .result-review-badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    min-width: 56px;
+    text-align: center;
+  }
+
+  .result-review-badge.pending {
+    color: #999;
+    background: #f5f5f5;
+    border: 1px solid #eee;
+  }
+
+  .result-review-badge.approved {
+    color: #000;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    font-weight: 600;
+  }
+
+  .result-review-badge.rejected {
+    color: #666;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    font-weight: 600;
+    text-decoration: line-through;
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 48px 0;
+    color: #aaa;
+    font-size: 14px;
+  }
+
+  /* Detail panel */
+  .panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.08);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 100;
+  }
+
+  .panel-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .detail-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 420px;
+    max-width: 100vw;
+    background: #fff;
+    border-left: 1px solid #eee;
+    transform: translateX(100%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 101;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .detail-panel.open {
+    transform: translateX(0);
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0;
+  }
+
+  .panel-close {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #888;
+    transition: all 0.12s;
+    flex-shrink: 0;
+  }
+
+  .panel-close:hover {
+    border-color: #000;
+    color: #000;
+  }
+
+  .panel-id {
+    font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: #888;
+  }
+
+  .panel-body {
+    padding: 24px;
+    flex: 1;
+  }
+
+  .panel-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    line-height: 1.3;
+    margin-bottom: 16px;
+  }
+
+  .panel-meta-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .panel-meta-item {
+    font-size: 12px;
+    color: #888;
+  }
+
+  .panel-meta-item strong {
+    color: #000;
+    font-weight: 600;
+  }
+
+  .panel-status-badge {
+    display: inline-block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+
+  .panel-status-badge.fail {
+    color: #000;
+    background: #f0f0f0;
+    font-weight: 700;
+  }
+
+  .panel-status-badge.flagged {
+    color: #666;
+    background: #f5f5f5;
+  }
+
+  .panel-status-badge.pass {
+    color: #999;
+    background: #fafafa;
+    border: 1px solid #eee;
+  }
+
+  .panel-status-badge.na {
+    color: #aaa;
+    background: #fafafa;
+    border: 1px solid #eee;
+  }
+
+  .panel-section {
+    margin-top: 20px;
+  }
+
+  .panel-section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .panel-evidence {
+    border-left: 2px solid #ddd;
+    padding-left: 14px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #444;
+    font-style: italic;
+  }
+
+  .panel-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #333;
+  }
+
+  .panel-confidence-note {
+    font-size: 13px;
+    color: #888;
+    line-height: 1.6;
+  }
+
+  .panel-divider {
+    border: none;
+    border-top: 1px solid #f0f0f0;
+    margin: 24px 0 0;
+  }
+
+  .panel-review {
+    padding: 20px 24px 24px;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
+  }
+
+  .panel-review-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .panel-review-btns {
+    display: flex;
+    gap: 8px;
+  }
+
+  .panel-review-btn {
+    flex: 1;
+    height: 36px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .panel-review-btn:hover {
+    border-color: #000;
+    color: #000;
+  }
+
+  .panel-review-btn.selected-approve {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+  }
+
+  .panel-review-btn.selected-reject {
+    background: #fff;
+    color: #000;
+    border-color: #000;
+    font-weight: 600;
+  }
+
+  /* Footer */
+  .footer {
+    max-width: 720px;
+    margin: 32px auto 0;
+    padding: 16px 24px 48px;
+    border-top: 1px solid #eee;
+    font-size: 13px;
+    color: #888;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .export-link {
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 13px;
+    color: #888;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.15s;
+  }
+
+  .export-link:hover {
+    color: #000;
+  }
+
+  /* Keyboard hint */
+  .kbd-hint {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    font-size: 11px;
+    color: #ccc;
+    z-index: 50;
+  }
+
+  .kbd-hint kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 11px;
+    background: #fafafa;
+  }
+
+  @media (max-width: 540px) {
+    .detail-panel {
+      width: 100vw;
+    }
+    .result-clause,
+    .result-confidence {
+      display: none;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-title">Compliance Report</div>
+  <div class="header-meta">Information Security Management Policy v3.2 &middot; ISO 27001:2022 &middot; 73%</div>
+  <div class="header-notice">ai assessment &mdash; human verification required</div>
+</div>
+
+<!-- Command bar -->
+<div class="command-area">
+  <div class="search-wrapper">
+    <span class="search-icon">&times;</span>
+    <input type="text" class="search-input" id="searchInput" placeholder="Search requirements... (e.g., 'risk', 'clause 6', 'failed')" autocomplete="off" spellcheck="false">
+    <span class="search-count" id="searchCount">15 results</span>
+  </div>
+
+  <!-- Filter chips: status -->
+  <div class="chip-row" id="statusChips">
+    <button class="chip" data-filter="status" data-value="fail">failed <span class="chip-count">(3)</span></button>
+    <button class="chip" data-filter="status" data-value="flagged">flagged <span class="chip-count">(3)</span></button>
+    <button class="chip" data-filter="status" data-value="pass">passed <span class="chip-count">(8)</span></button>
+    <button class="chip" data-filter="status" data-value="na">n/a <span class="chip-count">(1)</span></button>
+  </div>
+
+  <!-- Filter chips: clauses -->
+  <div class="chip-row" id="clauseChips">
+    <button class="chip" data-filter="clause" data-value="5">clause 5</button>
+    <button class="chip" data-filter="clause" data-value="6">clause 6</button>
+    <button class="chip" data-filter="clause" data-value="7">clause 7</button>
+    <button class="chip" data-filter="clause" data-value="8">clause 8</button>
+    <button class="chip" data-filter="clause" data-value="9">clause 9</button>
+  </div>
+
+  <!-- Filter chips: confidence -->
+  <div class="chip-row" id="confChips">
+    <button class="chip" data-filter="confidence" data-value="high">high confidence</button>
+    <button class="chip" data-filter="confidence" data-value="medium">medium</button>
+    <button class="chip" data-filter="confidence" data-value="low">low</button>
+  </div>
+</div>
+
+<!-- Results -->
+<div class="results-area">
+  <div class="results-meta" id="resultsMeta">15 results</div>
+  <div class="results-list" id="resultsList"></div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span id="footerText">0 of 15 reviewed</span>
+  <button class="export-link" id="exportBtn">export</button>
+</div>
+
+<!-- Detail panel overlay -->
+<div class="panel-overlay" id="panelOverlay"></div>
+
+<!-- Detail panel -->
+<div class="detail-panel" id="detailPanel">
+  <div class="panel-header">
+    <span class="panel-id" id="panelId"></span>
+    <button class="panel-close" id="panelClose">&times;</button>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+  <div class="panel-review" id="panelReview">
+    <div class="panel-review-label">Review</div>
+    <div class="panel-review-btns">
+      <button class="panel-review-btn" id="btnApprove">Approve</button>
+      <button class="panel-review-btn" id="btnReject">Reject</button>
+    </div>
+  </div>
+</div>
+
+<!-- Keyboard hint -->
+<div class="kbd-hint"><kbd>/</kbd> to search &middot; <kbd>Esc</kbd> to close</div>
+
+<script>
+(function() {
+
+  // ── Data ──────────────────────────────────────────────────────────────────
+
+  var requirements = [
+    {
+      id: "REQ-6.1.2",
+      title: "Risk Assessment Process",
+      clause: "Clause 6.1",
+      clauseNum: "6",
+      status: "fail",
+      confidence: "medium",
+      evidence: "The organization shall ensure information security risks are managed appropriately. Reference to risk management found in Section 4.2, but limited to a general policy statement without procedural detail.",
+      gap: "No documented risk assessment methodology found. The policy references risk management in general terms but lacks a specific, repeatable process for identifying, analyzing, and evaluating information security risks as required by ISO 27001 Clause 6.1.2.",
+      recommendation: "Develop and document a formal risk assessment methodology including criteria for risk acceptance, risk evaluation criteria, and assessment frequency. Ensure the methodology produces consistent, valid, and comparable results.",
+      confidenceExplanation: "Medium confidence: The policy mentions risk management but the absence of a detailed methodology is clear. Some ambiguity exists around whether supplementary documents may contain the methodology."
+    },
+    {
+      id: "REQ-8.1.1",
+      title: "Operational Planning and Control",
+      clause: "Clause 8.1",
+      clauseNum: "8",
+      status: "fail",
+      confidence: "high",
+      evidence: "Security controls shall be implemented as deemed necessary by management. Section 7.1 outlines control categories but does not define operational procedures or implementation criteria.",
+      gap: "Missing documented operational procedures for planning, implementing, and controlling security processes. No criteria for process control or evidence of planned changes management.",
+      recommendation: "Create detailed operational procedures for each security control, including implementation steps, responsible parties, timelines, and criteria for determining when controls are operating effectively.",
+      confidenceExplanation: "High confidence: Clear absence of operational procedures throughout the reviewed policy document. The gap is well-defined and unambiguous."
+    },
+    {
+      id: "REQ-6.2.1",
+      title: "Information Security Objectives",
+      clause: "Clause 6.2",
+      clauseNum: "6",
+      status: "fail",
+      confidence: "high",
+      evidence: "The organization is committed to maintaining a high level of information security. Section 1.3 provides a broad commitment statement but does not articulate specific, measurable objectives.",
+      gap: "No measurable information security objectives defined. The policy contains aspirational language but lacks specific targets, timeframes, responsible parties, or methods for evaluating achievement of objectives.",
+      recommendation: "Define SMART (Specific, Measurable, Achievable, Relevant, Time-bound) information security objectives at relevant functions and levels. Document what will be done, resources required, responsible parties, completion timelines, and evaluation methods.",
+      confidenceExplanation: "High confidence: The policy clearly lacks measurable objectives. The commitment statement in Section 1.3 does not satisfy the requirements of Clause 6.2."
+    },
+    {
+      id: "REQ-7.2.1",
+      title: "Competence Requirements",
+      clause: "Clause 7.2",
+      clauseNum: "7",
+      status: "flagged",
+      confidence: "low",
+      evidence: "Staff shall receive appropriate information security training upon joining and annually thereafter. Section 5.4 describes training provisions but does not fully address competence determination or evaluation.",
+      gap: "Partial competence framework found but missing evidence of implementation. Training provisions exist but no mechanism for determining required competence levels per role or evaluating effectiveness of training actions.",
+      recommendation: "Implement a competence tracking system that defines required competence per role, evaluates current competence, identifies gaps, and tracks actions taken to acquire necessary competence. Retain documented evidence.",
+      confidenceExplanation: "Low confidence: Training provisions are mentioned but the document may reference external HR procedures not included in this review. Further verification needed with HR documentation."
+    },
+    {
+      id: "REQ-9.1.1",
+      title: "Monitoring and Measurement",
+      clause: "Clause 9.1",
+      clauseNum: "9",
+      status: "flagged",
+      confidence: "medium",
+      evidence: "Information security performance shall be monitored and reported to management quarterly. Section 8.2 establishes reporting cadence but does not specify what is monitored or how measurement validity is ensured.",
+      gap: "Monitoring requirements mentioned but no specific metrics or KPIs defined. Missing details on what to monitor, methods of measurement, when to analyze results, and who is responsible for the analysis.",
+      recommendation: "Define specific security metrics and KPIs aligned with information security objectives. Document monitoring methods, measurement frequency, analysis responsibilities, and criteria for evaluating results.",
+      confidenceExplanation: "Medium confidence: Monitoring is referenced in the policy but lacks the specificity required by Clause 9.1. The quarterly reporting cadence is a positive indicator but insufficient alone."
+    },
+    {
+      id: "REQ-9.3.1",
+      title: "Management Review Inputs",
+      clause: "Clause 9.3",
+      clauseNum: "9",
+      status: "flagged",
+      confidence: "medium",
+      evidence: "Management shall review the ISMS at planned intervals to ensure its continuing suitability, adequacy, and effectiveness. Section 9.1 describes the review process at a high level.",
+      gap: "Management review process exists but input requirements are incomplete. Missing explicit reference to several required inputs including: status of actions from previous reviews, changes in external/internal issues, nonconformities and corrective actions, audit results, and feedback from interested parties.",
+      recommendation: "Update management review procedure to include all required inputs per ISO 27001 Clause 9.3: previous action status, changes affecting ISMS, nonconformities, monitoring results, audit results, fulfillment of objectives, and interested party feedback.",
+      confidenceExplanation: "Medium confidence: A management review process exists but the documented inputs do not fully satisfy Clause 9.3 requirements. The process may be more complete in practice than documented."
+    },
+    {
+      id: "REQ-5.1.1",
+      title: "Leadership Commitment",
+      clause: "Clause 5.1",
+      clauseNum: "5",
+      status: "pass",
+      confidence: "high",
+      evidence: "The Board of Directors and Senior Management are committed to supporting information security across the organization. Section 2.1 explicitly assigns accountability to top management and references integration of ISMS requirements into business processes.",
+      gap: null,
+      recommendation: null,
+      confidenceExplanation: "High confidence: Strong, explicit leadership commitment statements found with clear accountability assignment. Fully satisfies Clause 5.1 requirements."
+    },
+    {
+      id: "REQ-5.2.1",
+      title: "Information Security Policy",
+      clause: "Clause 5.2",
+      clauseNum: "5",
+      status: "pass",
+      confidence: "high",
+      evidence: "This Information Security Policy establishes the framework for managing information security risks across all organizational operations. Section 1.1 defines scope, purpose, and applicability consistent with Clause 5.2 requirements.",
+      gap: null,
+      recommendation: null,
+      confidenceExplanation: "High confidence: The policy document itself satisfies the requirement for an information security policy. It includes purpose, scope, and a framework for setting objectives."
+    },
+    {
+      id: "REQ-5.3.1",
+      title: "Organizational Roles",
+      clause: "Clause 5.3",
+      clauseNum: "5",
+      status: "pass",
+      confidence: "medium",
+      evidence: "The CISO is responsible for the overall ISMS implementation and operation. Department heads are responsible for implementing controls within their areas. Section 3.1 provides a responsibility matrix.",
+      gap: null,
+      recommendation: null,
+      confidenceExplanation: "Medium confidence: Roles and responsibilities are defined but the responsibility matrix in Section 3.1 may not cover all ISMS-related roles comprehensively."
+    },
+    {
+      id: "REQ-7.1.1",
+      title: "Resources",
+      clause: "Clause 7.1",
+      clauseNum: "7",
+      status: "pass",
+      confidence: "high",
+      evidence: "The organization shall provide resources needed for the establishment, implementation, maintenance, and continual improvement of the ISMS, including annual budget allocation. Section 5.1 details resource commitment.",
+      gap: null,
+      recommendation: null,
+      confidenceExplanation: "High confidence: Clear resource commitment with specific reference to budget allocation. Satisfies Clause 7.1 requirements."
+    },
+    {
+      id: "REQ-7.3.1",
+      title: "Awareness",
+      clause: "Clause 7.3",
+      clauseNum: "7",
+      status: "pass",
+      confidence: "high",
+      evidence: "All employees shall be made aware of the information security policy, their contribution to ISMS effectiveness, and implications of nonconformity. Section 5.5 outlines the awareness program.",
+      gap: null,
+      recommendation: null,
+      confidenceExplanation: "High confidence: Awareness requirements are well-documented covering all three aspects required by Clause 7.3: policy awareness, contribution to effectiveness, and implications of nonconformity."
+    },
+    {
+      id: "REQ-7.4.1",
+      title: "Communication",
+      clause: "Clause 7.4",
+      clauseNum: "7",
+      status: "pass",
+      confidence: "medium",
+      evidence: "Communications regarding information security shall follow the defined communication plan, including internal and external stakeholder communications. Section 5.6 describes the communication framework.",
+      gap: null,
+      recommendation: null,
+      confidenceExplanation: "Medium confidence: Communication plan exists but does not explicitly address all elements required by Clause 7.4 (what, when, with whom, who communicates, and processes)."
+    },
+    {
+      id: "REQ-9.2.1",
+      title: "Internal Audit",
+      clause: "Clause 9.2",
+      clauseNum: "9",
+      status: "pass",
+      confidence: "high",
+      evidence: "Internal audits of the ISMS shall be conducted at planned intervals, at least annually, to verify conformity with requirements and effective implementation. Section 8.3 details audit planning and execution requirements.",
+      gap: null,
+      recommendation: null,
+      confidenceExplanation: "High confidence: Comprehensive internal audit provisions found including frequency, scope, methodology, and reporting requirements. Fully satisfies Clause 9.2."
+    },
+    {
+      id: "REQ-7.5.1",
+      title: "Documented Information",
+      clause: "Clause 7.5",
+      clauseNum: "7",
+      status: "pass",
+      confidence: "high",
+      evidence: "All ISMS documentation shall be controlled, versioned, and properly maintained with appropriate approval, review, and distribution controls. Section 5.7 defines the document control process.",
+      gap: null,
+      recommendation: null,
+      confidenceExplanation: "High confidence: Document control procedures are well-defined covering creation, updating, control, and retention of documented information as required by Clause 7.5."
+    },
+    {
+      id: "REQ-8.2.1",
+      title: "Risk Assessment (Separate)",
+      clause: "Clause 8.2",
+      clauseNum: "8",
+      status: "na",
+      confidence: "high",
+      evidence: "This requirement is assessed under REQ-6.1.2 as the risk assessment process is evaluated holistically. Clause 8.2 requires performing risk assessments at planned intervals or when significant changes occur, which is covered by the risk assessment process evaluation.",
+      gap: null,
+      recommendation: null,
+      confidenceExplanation: "High confidence: Correctly identified as a duplicate assessment item. The substance of this requirement is fully addressed under REQ-6.1.2."
+    }
+  ];
+
+  // Sort: fail > flagged > pass > na
+  var statusOrder = { fail: 0, flagged: 1, pass: 2, na: 3 };
+  requirements.sort(function(a, b) {
+    return statusOrder[a.status] - statusOrder[b.status];
+  });
+
+  // ── State ─────────────────────────────────────────────────────────────────
+
+  var reviewStates = {};         // { "REQ-X.X.X": "approved"|"rejected" }
+  var activeFilters = {
+    status: [],                  // e.g. ["fail","flagged"]
+    clause: [],                  // e.g. ["5","6"]
+    confidence: []               // e.g. ["high"]
+  };
+  var searchQuery = "";
+  var openPanelId = null;
+
+  // ── DOM refs ──────────────────────────────────────────────────────────────
+
+  var searchInput    = document.getElementById("searchInput");
+  var searchCount    = document.getElementById("searchCount");
+  var resultsMeta    = document.getElementById("resultsMeta");
+  var resultsList    = document.getElementById("resultsList");
+  var footerText     = document.getElementById("footerText");
+  var exportBtn      = document.getElementById("exportBtn");
+  var panelOverlay   = document.getElementById("panelOverlay");
+  var detailPanel    = document.getElementById("detailPanel");
+  var panelId        = document.getElementById("panelId");
+  var panelBody      = document.getElementById("panelBody");
+  var panelClose     = document.getElementById("panelClose");
+  var btnApprove     = document.getElementById("btnApprove");
+  var btnReject      = document.getElementById("btnReject");
+
+  // ── Search icon ───────────────────────────────────────────────────────────
+
+  var searchIcon = document.querySelector(".search-icon");
+  searchIcon.innerHTML = "&#8984;";
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  function escHtml(s) {
+    if (!s) return "";
+    var d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function statusSymbol(s) {
+    switch (s) {
+      case "fail":    return "\u25CF";   // ●
+      case "flagged": return "\u25CB";   // ○
+      case "pass":    return "\u2713";   // ✓
+      case "na":      return "\u2014";   // —
+      default:        return "";
+    }
+  }
+
+  function statusLabel(s) {
+    switch (s) {
+      case "fail":    return "Failed";
+      case "flagged": return "Flagged";
+      case "pass":    return "Passed";
+      case "na":      return "N/A";
+      default:        return s;
+    }
+  }
+
+  function reviewBadge(reqId) {
+    var state = reviewStates[reqId];
+    if (state === "approved") return "approved";
+    if (state === "rejected") return "rejected";
+    return "pending";
+  }
+
+  // ── Filtering ─────────────────────────────────────────────────────────────
+
+  function matchesSearch(req, q) {
+    if (!q) return true;
+    var lower = q.toLowerCase();
+    var fields = [
+      req.id,
+      req.title,
+      req.clause,
+      req.status,
+      statusLabel(req.status),
+      req.confidence || "",
+      req.evidence || "",
+      req.gap || "",
+      req.recommendation || ""
+    ];
+    for (var i = 0; i < fields.length; i++) {
+      if (fields[i].toLowerCase().indexOf(lower) !== -1) return true;
+    }
+    return false;
+  }
+
+  function matchesFilters(req) {
+    // Status filter: if any active, req must match one
+    if (activeFilters.status.length > 0) {
+      if (activeFilters.status.indexOf(req.status) === -1) return false;
+    }
+    // Clause filter
+    if (activeFilters.clause.length > 0) {
+      if (activeFilters.clause.indexOf(req.clauseNum) === -1) return false;
+    }
+    // Confidence filter
+    if (activeFilters.confidence.length > 0) {
+      if (!req.confidence || activeFilters.confidence.indexOf(req.confidence) === -1) return false;
+    }
+    return true;
+  }
+
+  function getFilteredResults() {
+    return requirements.filter(function(r) {
+      return matchesSearch(r, searchQuery) && matchesFilters(r);
+    });
+  }
+
+  // ── Render results ────────────────────────────────────────────────────────
+
+  function renderResults() {
+    var filtered = getFilteredResults();
+
+    // Update counts
+    searchCount.textContent = filtered.length + " result" + (filtered.length !== 1 ? "s" : "");
+    resultsMeta.textContent = filtered.length + " result" + (filtered.length !== 1 ? "s" : "");
+
+    resultsList.innerHTML = "";
+
+    if (filtered.length === 0) {
+      resultsList.innerHTML = '<div class="no-results">No requirements match your search</div>';
+      return;
+    }
+
+    filtered.forEach(function(req) {
+      var row = document.createElement("div");
+      row.className = "result-row" + (openPanelId === req.id ? " selected" : "");
+      row.setAttribute("data-id", req.id);
+
+      // Status
+      var statusEl = document.createElement("span");
+      statusEl.className = "result-status " + req.status;
+      statusEl.textContent = statusSymbol(req.status);
+
+      // ID
+      var idEl = document.createElement("span");
+      idEl.className = "result-id";
+      idEl.textContent = req.id;
+
+      // Title
+      var titleEl = document.createElement("span");
+      titleEl.className = "result-title";
+      titleEl.textContent = req.title;
+
+      // Clause
+      var clauseEl = document.createElement("span");
+      clauseEl.className = "result-clause";
+      clauseEl.textContent = req.clause;
+
+      // Confidence
+      var confEl = document.createElement("span");
+      confEl.className = "result-confidence";
+      confEl.textContent = req.confidence || "";
+
+      // Review badge
+      var badge = document.createElement("span");
+      var badgeState = reviewBadge(req.id);
+      badge.className = "result-review-badge " + badgeState;
+      badge.textContent = badgeState;
+
+      row.appendChild(statusEl);
+      row.appendChild(idEl);
+      row.appendChild(titleEl);
+      row.appendChild(clauseEl);
+      row.appendChild(confEl);
+      row.appendChild(badge);
+
+      row.addEventListener("click", function() {
+        openPanel(req.id);
+      });
+
+      resultsList.appendChild(row);
+    });
+  }
+
+  // ── Detail panel ──────────────────────────────────────────────────────────
+
+  function findReq(id) {
+    for (var i = 0; i < requirements.length; i++) {
+      if (requirements[i].id === id) return requirements[i];
+    }
+    return null;
+  }
+
+  function openPanel(id) {
+    var req = findReq(id);
+    if (!req) return;
+
+    openPanelId = id;
+    panelId.textContent = req.id + " \u00B7 " + req.clause;
+
+    var html = "";
+    html += '<div class="panel-title">' + escHtml(req.title) + '</div>';
+
+    // Status + confidence meta
+    html += '<div class="panel-meta-row">';
+    html += '<span class="panel-status-badge ' + req.status + '">' + statusLabel(req.status) + '</span>';
+    if (req.confidence) {
+      html += '<span class="panel-meta-item"><strong>' + escHtml(req.confidence) + '</strong> confidence</span>';
+    }
+    html += '</div>';
+
+    // Evidence
+    if (req.evidence) {
+      html += '<div class="panel-section">';
+      html += '<div class="panel-section-label">Evidence</div>';
+      html += '<div class="panel-evidence">\u201C' + escHtml(req.evidence) + '\u201D</div>';
+      html += '</div>';
+    }
+
+    // Gap
+    if (req.gap) {
+      html += '<div class="panel-section">';
+      html += '<div class="panel-section-label">Gap</div>';
+      html += '<div class="panel-text">' + escHtml(req.gap) + '</div>';
+      html += '</div>';
+    }
+
+    // Recommendation
+    if (req.recommendation) {
+      html += '<div class="panel-section">';
+      html += '<div class="panel-section-label">Recommendation</div>';
+      html += '<div class="panel-text">' + escHtml(req.recommendation) + '</div>';
+      html += '</div>';
+    }
+
+    // Confidence explanation
+    if (req.confidenceExplanation) {
+      html += '<div class="panel-section">';
+      html += '<div class="panel-section-label">Confidence Explanation</div>';
+      html += '<div class="panel-confidence-note">' + escHtml(req.confidenceExplanation) + '</div>';
+      html += '</div>';
+    }
+
+    panelBody.innerHTML = html;
+
+    // Update review buttons
+    updatePanelReviewButtons();
+
+    // Show panel
+    detailPanel.classList.add("open");
+    panelOverlay.classList.add("open");
+
+    // Highlight selected row
+    renderResults();
+  }
+
+  function closePanel() {
+    openPanelId = null;
+    detailPanel.classList.remove("open");
+    panelOverlay.classList.remove("open");
+    renderResults();
+  }
+
+  function updatePanelReviewButtons() {
+    if (!openPanelId) return;
+    var state = reviewStates[openPanelId] || null;
+
+    btnApprove.className = "panel-review-btn" + (state === "approved" ? " selected-approve" : "");
+    btnReject.className = "panel-review-btn" + (state === "rejected" ? " selected-reject" : "");
+  }
+
+  // ── Footer ────────────────────────────────────────────────────────────────
+
+  function updateFooter() {
+    var count = 0;
+    for (var key in reviewStates) {
+      if (reviewStates.hasOwnProperty(key) && reviewStates[key]) count++;
+    }
+    footerText.textContent = count + " of " + requirements.length + " reviewed";
+  }
+
+  // ── Chip toggling ─────────────────────────────────────────────────────────
+
+  function setupChips() {
+    var allChips = document.querySelectorAll(".chip");
+    allChips.forEach(function(chip) {
+      chip.addEventListener("click", function() {
+        var filterType = chip.getAttribute("data-filter");
+        var value = chip.getAttribute("data-value");
+
+        var arr = activeFilters[filterType];
+        var idx = arr.indexOf(value);
+        if (idx === -1) {
+          arr.push(value);
+          chip.classList.add("active");
+        } else {
+          arr.splice(idx, 1);
+          chip.classList.remove("active");
+        }
+
+        renderResults();
+      });
+    });
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+
+  // Search input
+  searchInput.addEventListener("input", function() {
+    searchQuery = searchInput.value.trim();
+    renderResults();
+  });
+
+  // Close panel
+  panelClose.addEventListener("click", closePanel);
+  panelOverlay.addEventListener("click", closePanel);
+
+  // Review buttons
+  btnApprove.addEventListener("click", function() {
+    if (!openPanelId) return;
+    if (reviewStates[openPanelId] === "approved") {
+      delete reviewStates[openPanelId];
+    } else {
+      reviewStates[openPanelId] = "approved";
+    }
+    updatePanelReviewButtons();
+    updateFooter();
+    renderResults();
+  });
+
+  btnReject.addEventListener("click", function() {
+    if (!openPanelId) return;
+    if (reviewStates[openPanelId] === "rejected") {
+      delete reviewStates[openPanelId];
+    } else {
+      reviewStates[openPanelId] = "rejected";
+    }
+    updatePanelReviewButtons();
+    updateFooter();
+    renderResults();
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener("keydown", function(e) {
+    // "/" focuses search (unless already in input)
+    if (e.key === "/" && document.activeElement !== searchInput) {
+      e.preventDefault();
+      searchInput.focus();
+      return;
+    }
+
+    // Escape: close panel or blur search
+    if (e.key === "Escape") {
+      if (detailPanel.classList.contains("open")) {
+        closePanel();
+      } else if (document.activeElement === searchInput) {
+        searchInput.blur();
+      }
+      return;
+    }
+
+    // Arrow keys to navigate results when search is focused
+    if (document.activeElement === searchInput) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigateResults(e.key === "ArrowDown" ? 1 : -1);
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        var filtered = getFilteredResults();
+        if (filtered.length > 0) {
+          var targetId = highlightedIndex >= 0 && highlightedIndex < filtered.length
+            ? filtered[highlightedIndex].id
+            : filtered[0].id;
+          openPanel(targetId);
+        }
+        return;
+      }
+    }
+  });
+
+  var highlightedIndex = -1;
+
+  function navigateResults(dir) {
+    var filtered = getFilteredResults();
+    if (filtered.length === 0) return;
+
+    highlightedIndex += dir;
+    if (highlightedIndex < 0) highlightedIndex = 0;
+    if (highlightedIndex >= filtered.length) highlightedIndex = filtered.length - 1;
+
+    // Highlight in list
+    var rows = resultsList.querySelectorAll(".result-row");
+    rows.forEach(function(r, i) {
+      r.classList.toggle("selected", i === highlightedIndex);
+    });
+
+    // Scroll into view
+    if (rows[highlightedIndex]) {
+      rows[highlightedIndex].scrollIntoView({ block: "nearest" });
+    }
+  }
+
+  // Reset highlighted index on search/filter change
+  var origRender = renderResults;
+  renderResults = function() {
+    highlightedIndex = -1;
+    origRender();
+  };
+
+  // Export
+  exportBtn.addEventListener("click", function() {
+    var lines = [
+      "Compliance Report",
+      "Information Security Management Policy v3.2 | ISO 27001:2022 | 73%",
+      ""
+    ];
+    requirements.forEach(function(req) {
+      var state = reviewStates[req.id] ? " [" + reviewStates[req.id].toUpperCase() + "]" : "";
+      lines.push(req.id + " | " + req.title + " | " + statusLabel(req.status) + " | " + (req.confidence || "n/a") + state);
+      if (req.gap) lines.push("  Gap: " + req.gap);
+      if (req.recommendation) lines.push("  Recommendation: " + req.recommendation);
+    });
+    var reviewed = 0;
+    for (var key in reviewStates) {
+      if (reviewStates.hasOwnProperty(key) && reviewStates[key]) reviewed++;
+    }
+    lines.push("");
+    lines.push(reviewed + " of " + requirements.length + " reviewed");
+
+    var blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "compliance-report.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+
+  setupChips();
+  renderResults();
+  updateFooter();
+
+  // Focus search on load
+  setTimeout(function() {
+    searchInput.focus();
+  }, 100);
+
+})();
+</script>
+
+</body>
+</html>

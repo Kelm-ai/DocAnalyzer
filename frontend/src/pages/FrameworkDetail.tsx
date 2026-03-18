@@ -61,33 +61,33 @@ function RequirementRowActions({ requirement, onEdit, onDuplicate, onDelete }: R
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+        className="rounded-full p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
       >
         <MoreHorizontal className="h-4 w-4" />
       </button>
       {open && (
         <div
           ref={menuRef}
-          className="absolute right-0 z-20 mt-2 w-40 rounded-md border border-gray-100 bg-white py-1 text-sm shadow-lg"
+          className="absolute right-0 z-20 mt-2 w-40 rounded-md border border-border bg-background py-1 text-sm shadow-lg"
           role="menu"
         >
           <button
             type="button"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-100"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-foreground hover:bg-accent"
             onClick={() => { setOpen(false); onEdit(requirement); }}
           >
             <Pencil className="h-4 w-4" /> Edit
           </button>
           <button
             type="button"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-100"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-foreground hover:bg-accent"
             onClick={() => { setOpen(false); onDuplicate(requirement); }}
           >
             <Copy className="h-4 w-4" /> Duplicate
           </button>
           <button
             type="button"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-red-600 hover:bg-red-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-destructive hover:bg-status-fail-bg"
             onClick={() => { setOpen(false); onDelete(requirement); }}
           >
             <Trash2 className="h-4 w-4" /> Delete
@@ -107,21 +107,21 @@ const columnsFactory = (
     accessorKey: "clause",
     header: "Clause",
     cell: ({ row }) => (
-      <span className="font-medium text-gray-900">{row.original.clause}</span>
+      <span className="font-medium text-foreground">{row.original.clause}</span>
     ),
   },
   {
     accessorKey: "title",
     header: "Title",
     cell: ({ row }) => (
-      <div className="font-medium text-gray-900">{row.original.title}</div>
+      <div className="font-medium text-foreground">{row.original.title}</div>
     ),
   },
   {
     accessorKey: "display_order",
     header: "Order",
     cell: ({ row }) => (
-      <span className="text-sm text-gray-700">
+      <span className="text-sm text-foreground">
         {Number.isFinite(row.original.display_order) ? row.original.display_order : "—"}
       </span>
     ),
@@ -374,10 +374,10 @@ export function FrameworkDetail() {
   if (error && !framework) {
     return (
       <div className="space-y-4">
-        <Link to="/frameworks" className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
+        <Link to="/frameworks" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-4 w-4" /> Back to Frameworks
         </Link>
-        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
+        <div className="rounded-md border border-destructive/20 bg-status-fail-bg p-4 text-destructive">{error}</div>
       </div>
     )
   }
@@ -385,10 +385,10 @@ export function FrameworkDetail() {
   if (!framework) {
     return (
       <div className="space-y-4">
-        <Link to="/frameworks" className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
+        <Link to="/frameworks" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-4 w-4" /> Back to Frameworks
         </Link>
-        <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4 text-yellow-700">Framework not found</div>
+        <div className="rounded-md border border-sc-gold/30 bg-sc-gold-light p-4 text-sc-gold-dark">Framework not found</div>
       </div>
     )
   }
@@ -396,7 +396,7 @@ export function FrameworkDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link to="/frameworks" className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
+        <Link to="/frameworks" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-4 w-4" /> Back
         </Link>
       </div>
@@ -412,38 +412,38 @@ export function FrameworkDetail() {
       </div>
 
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
+        <div className="rounded-md border border-destructive/20 bg-status-fail-bg p-4 text-destructive">{error}</div>
       )}
 
       {successMessage && (
-        <div className="rounded-md border border-green-200 bg-green-50 p-4 text-green-700">{successMessage}</div>
+        <div className="rounded-md border border-status-pass/20 bg-status-pass-bg p-4 text-status-pass">{successMessage}</div>
       )}
 
       {/* System Prompt Section */}
-      <div className="rounded-lg border border-gray-200 bg-white">
+      <div className="rounded-lg border border-border bg-background">
         <button
           type="button"
           onClick={() => setPromptExpanded(!promptExpanded)}
-          className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-gray-50"
+          className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-accent"
         >
-          <span className="font-medium text-gray-900">System Prompt</span>
-          {promptExpanded ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+          <span className="font-medium text-foreground">System Prompt</span>
+          {promptExpanded ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
         </button>
         {promptExpanded && (
-          <div className="border-t border-gray-200 p-4 space-y-3">
+          <div className="border-t border-border p-4 space-y-3">
             <textarea
               value={editedPrompt}
               onChange={(e) => ADMIN_MODE && setEditedPrompt(e.target.value)}
               readOnly={!ADMIN_MODE}
-              className={`w-full min-h-[300px] rounded-md border border-gray-200 px-3 py-2 text-sm font-mono shadow-sm transition ${
+              className={`w-full min-h-[300px] rounded-md border border-border px-3 py-2 text-sm font-mono shadow-sm transition ${
                 ADMIN_MODE
-                  ? "bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                  : "bg-gray-50 text-gray-700 cursor-default"
+                  ? "bg-background focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  : "bg-muted text-foreground cursor-default"
               }`}
               placeholder="Enter the system prompt that will instruct the AI during evaluations..."
             />
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted-foreground">
                 This prompt instructs the AI how to evaluate documents against this framework's requirements.
               </span>
               {ADMIN_MODE && (
@@ -498,7 +498,7 @@ export function FrameworkDetail() {
         <form id="requirement-form" onSubmit={handleModalSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-900" htmlFor="clause">Clause *</label>
+              <label className="text-sm font-medium text-foreground" htmlFor="clause">Clause *</label>
               <Input
                 id="clause"
                 value={formState.clause}
@@ -507,7 +507,7 @@ export function FrameworkDetail() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-900" htmlFor="display_order">Order</label>
+              <label className="text-sm font-medium text-foreground" htmlFor="display_order">Order</label>
               <Input
                 id="display_order"
                 type="number"
@@ -519,7 +519,7 @@ export function FrameworkDetail() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-900" htmlFor="title">Title *</label>
+            <label className="text-sm font-medium text-foreground" htmlFor="title">Title *</label>
             <Input
               id="title"
               value={formState.title}
@@ -529,18 +529,18 @@ export function FrameworkDetail() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-900" htmlFor="requirement_text">Requirement Text</label>
+            <label className="text-sm font-medium text-foreground" htmlFor="requirement_text">Requirement Text</label>
             <textarea
               id="requirement_text"
               value={formState.requirement_text}
               onChange={(e) => handleFieldChange("requirement_text", e.target.value)}
               placeholder="Detailed description of the requirement"
-              className="min-h-[120px] rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="min-h-[120px] rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
           {formError && (
-            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{formError}</div>
+            <div className="rounded-md border border-destructive/20 bg-status-fail-bg p-3 text-sm text-destructive">{formError}</div>
           )}
         </form>
       </Modal>
@@ -560,11 +560,11 @@ export function FrameworkDetail() {
           </>
         }
       >
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-foreground">
           Are you sure you want to delete "{deleteConfirm?.title}"? This action cannot be undone.
         </p>
         {deleteError && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{deleteError}</div>
+          <div className="mt-4 rounded-md border border-destructive/20 bg-status-fail-bg p-3 text-sm text-destructive">{deleteError}</div>
         )}
       </Modal>
 
@@ -583,25 +583,25 @@ export function FrameworkDetail() {
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <div className="text-sm font-medium text-gray-500">Clause</div>
-                <div className="mt-1 text-sm text-gray-900">{viewingRequirement.clause}</div>
+                <div className="text-sm font-medium text-muted-foreground">Clause</div>
+                <div className="mt-1 text-sm text-foreground">{viewingRequirement.clause}</div>
               </div>
               <div>
-                <div className="text-sm font-medium text-gray-500">Order</div>
-                <div className="mt-1 text-sm text-gray-900">
+                <div className="text-sm font-medium text-muted-foreground">Order</div>
+                <div className="mt-1 text-sm text-foreground">
                   {Number.isFinite(viewingRequirement.display_order) ? viewingRequirement.display_order : "—"}
                 </div>
               </div>
             </div>
             {viewingRequirement.evaluation_type && (
               <div>
-                <div className="text-sm font-medium text-gray-500">Evaluation Type</div>
-                <div className="mt-1 text-sm text-gray-900">{viewingRequirement.evaluation_type}</div>
+                <div className="text-sm font-medium text-muted-foreground">Evaluation Type</div>
+                <div className="mt-1 text-sm text-foreground">{viewingRequirement.evaluation_type}</div>
               </div>
             )}
             <div>
-              <div className="text-sm font-medium text-gray-500">Requirement Text</div>
-              <div className="mt-1 whitespace-pre-wrap rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900">
+              <div className="text-sm font-medium text-muted-foreground">Requirement Text</div>
+              <div className="mt-1 whitespace-pre-wrap rounded-md border border-border bg-muted p-3 text-sm text-foreground">
                 {viewingRequirement.requirement_text || "No requirement text provided."}
               </div>
             </div>

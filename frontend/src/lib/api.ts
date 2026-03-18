@@ -57,16 +57,16 @@ export interface EvaluationStatus {
   // Multi-document support fields
   supporting_docs_count?: number;
   summaries_status?: 'pending' | 'generating' | 'completed' | 'failed' | 'not_required';
+  summaries_completed?: number;
+  summaries_total?: number;
   metadata?: {
+    phase?: string;
     progress_percent?: number;
     completed_requirements?: number;
     total_requirements?: number;
     status_message?: string;
+    estimated_seconds_remaining?: number;
     last_updated?: string;
-    batch_number?: number;
-    batch_total?: number;
-    batch_size?: number;
-    last_requirement_id?: string;
   };
 }
 
@@ -102,6 +102,7 @@ export interface RequirementResult {
   confidence_level: 'low' | 'medium' | 'high';
   confidence_score?: number | null;
   evidence_snippets: string[];
+  structured_evidence?: RequirementStructuredEvidenceItem[];
   evaluation_rationale: string;
   gaps_identified: string[];
   recommendations: string[];
@@ -110,6 +111,14 @@ export interface RequirementResult {
   evaluation_duration_ms?: number;
   search_results?: Record<string, unknown>[];
   created_at?: string;
+}
+
+export interface RequirementStructuredEvidenceItem {
+  page_number?: number | null;
+  section_title?: string | null;
+  quote: string;
+  supports: string;
+  document_name?: string | null;
 }
 
 export interface RequirementFeedbackRecord {
@@ -135,6 +144,65 @@ export interface ExecutiveSummary {
   generated_at: string;
 }
 
+export interface RequirementPresentationCitation {
+  label: string;
+  location: string;
+  excerpt: string;
+  provider?: string | null;
+  file_id?: string | null;
+  page_number?: number | null;
+  section_title?: string | null;
+  document_name?: string | null;
+  supports?: string | null;
+}
+
+export interface RequirementPresentationTextBlock {
+  id?: string | null;
+  text: string;
+  citations?: RequirementPresentationCitation[] | null;
+}
+
+export interface RequirementPresentationEvidenceItem {
+  label: 'Document evidence' | 'Observed limitation' | 'Needs verification';
+  text: string;
+  citations: RequirementPresentationCitation[];
+}
+
+export interface RequirementPresentationEvidenceGroup {
+  claim_id: string;
+  label: 'Document evidence' | 'Observed limitation' | 'Needs verification';
+  text: string;
+  citations: RequirementPresentationCitation[];
+}
+
+export interface RequirementPresentationClaim {
+  text: string;
+  kind: 'assessment' | 'supporting' | 'gap' | 'verification' | 'ofi';
+  citations: RequirementPresentationCitation[];
+}
+
+export interface RequirementPresentationAnalysisBlock {
+  label: string;
+  body: string;
+  citations: RequirementPresentationCitation[];
+}
+
+export interface RequirementPresentationSummary {
+  status: 'PASS' | 'FAIL' | 'FLAGGED' | 'PARTIAL' | 'NOT_APPLICABLE' | 'ERROR';
+  confidence_level: 'low' | 'medium' | 'high';
+  inline_finding?: RequirementPresentationTextBlock | null;
+  inline_evidence?: RequirementPresentationTextBlock | null;
+  inline_caveat?: RequirementPresentationTextBlock | null;
+  modal_summary?: string | null;
+  modal_evidence?: RequirementPresentationEvidenceItem[] | null;
+  evidence_groups?: RequirementPresentationEvidenceGroup[] | null;
+  inline_claims?: RequirementPresentationClaim[] | null;
+  modal_claims?: RequirementPresentationClaim[] | null;
+  full_analysis?: RequirementPresentationAnalysisBlock[] | null;
+  generated_at?: string;
+  presentation_version?: string;
+}
+
 export interface ComplianceReport {
   evaluation_id: string;
   document_name: string;
@@ -152,6 +220,7 @@ export interface ComplianceReport {
   high_risk_findings: string[];
   key_gaps: string[];
   executive_summary?: ExecutiveSummary;
+  requirement_presentations?: Record<string, RequirementPresentationSummary>;
 }
 
 export interface RequirementCreatePayload {
@@ -317,6 +386,7 @@ export const api = {
     evaluation_id: string;
     filename: string;
     status: string;
+    queue_position: number;
     message: string;
   }> {
     const formData = new FormData();
@@ -332,6 +402,61 @@ export const api = {
     });
 
     return handleResponse(response);
+  },
+
+  /**
+   * Upload a document with real upload progress tracking via XHR
+   */
+  uploadDocumentWithProgress(
+    file: File,
+    frameworkId: string,
+    onProgress?: (percent: number) => void
+  ): Promise<{
+    evaluation_id: string;
+    filename: string;
+    status: string;
+    queue_position: number;
+    message: string;
+  }> {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const url = new URL(`${API_BASE_URL}/upload`);
+      url.searchParams.set('framework_id', frameworkId);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url.toString());
+
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable && onProgress) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          onProgress(percent);
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(data);
+          } else {
+            reject(new APIError(
+              data.detail || data.message || `HTTP ${xhr.status}`,
+              xhr.status,
+            ));
+          }
+        } catch {
+          reject(new APIError(`HTTP ${xhr.status}: ${xhr.statusText}`, xhr.status));
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new APIError('Network error during upload'));
+      });
+
+      xhr.send(formData);
+    });
   },
 
   /**
@@ -510,6 +635,20 @@ export const api = {
   async deleteEvaluation(evaluationId: string): Promise<{ message: string }> {
     const response = await fetch(`${API_BASE_URL}/evaluations/${evaluationId}`, {
       method: 'DELETE',
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Get queue position for a specific evaluation
+   */
+  async getQueuePosition(evaluationId: string): Promise<{
+    evaluation_id: string;
+    status: string;
+    queue_position: number | null;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/queue/position/${evaluationId}`, {
+      cache: 'no-store',
     });
     return handleResponse(response);
   },

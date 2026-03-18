@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warm Card Grid — Compliance Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #5a4a3f;
+    background: #faf7f2;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: #fffdf9;
+    border-bottom: 1px solid #ebe4da;
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px 32px;
+  }
+
+  .header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .header-doc-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: #3d2e23;
+    letter-spacing: -0.02em;
+  }
+
+  .header-framework {
+    font-size: 14px;
+    color: #8a7a6e;
+    font-weight: 500;
+  }
+
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .header-meta-item {
+    font-size: 12px;
+    color: #a89888;
+  }
+
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #a89888;
+    border: 1px solid #e0d6ca;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    user-select: none;
+  }
+
+  .ai-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #da7756;
+    flex-shrink: 0;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  /* Circular Score Badge */
+  .score-badge {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+  }
+
+  .score-badge svg {
+    width: 80px;
+    height: 80px;
+    transform: rotate(-90deg);
+  }
+
+  .score-badge .bg-ring {
+    fill: none;
+    stroke: #ebe4da;
+    stroke-width: 6;
+  }
+
+  .score-badge .fg-ring {
+    fill: none;
+    stroke: #da7756;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 207;
+    stroke-dashoffset: 55.9;
+    transition: stroke-dashoffset 1s ease;
+  }
+
+  .score-badge .score-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #3d2e23;
+    letter-spacing: -0.02em;
+  }
+
+  .score-badge .score-text span {
+    font-size: 12px;
+    font-weight: 500;
+    color: #a89888;
+  }
+
+  /* ── Filter Tabs ── */
+  .filter-bar {
+    padding: 20px 40px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: #faf7f2;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid #ebe4da;
+  }
+
+  .filter-tab {
+    padding: 8px 20px;
+    border-radius: 24px;
+    border: 1.5px solid #e0d6ca;
+    background: #fffdf9;
+    color: #8a7a6e;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+
+  .filter-tab:hover {
+    border-color: #da7756;
+    color: #da7756;
+    background: #fef5f0;
+  }
+
+  .filter-tab.active {
+    background: #da7756;
+    color: #fff;
+    border-color: #da7756;
+  }
+
+  .filter-tab .count {
+    display: inline-block;
+    margin-left: 4px;
+    opacity: 0.8;
+  }
+
+  /* ── Card Grid ── */
+  .card-grid-container {
+    padding: 24px 40px 100px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  @media (max-width: 1100px) {
+    .card-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 700px) {
+    .card-grid { grid-template-columns: 1fr; }
+    .header { padding: 20px 20px; }
+    .filter-bar { padding: 16px 20px; }
+    .card-grid-container { padding: 16px 20px 100px; }
+  }
+
+  /* ── Card ── */
+  .card {
+    background: #fffdf9;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(90, 74, 63, 0.06), 0 4px 12px rgba(90, 74, 63, 0.04);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    border: 1.5px solid transparent;
+  }
+
+  .card:hover {
+    box-shadow: 0 2px 8px rgba(90, 74, 63, 0.1), 0 8px 24px rgba(90, 74, 63, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .card.expanded {
+    grid-column: 1 / -1;
+    cursor: default;
+    transform: none;
+    border-color: #e0d6ca;
+  }
+
+  .card.hidden {
+    display: none;
+  }
+
+  .card.reviewed {
+    opacity: 0.7;
+  }
+
+  .card.reviewed:hover {
+    opacity: 1;
+  }
+
+  /* Top color bar */
+  .card-color-bar {
+    height: 4px;
+    width: 100%;
+  }
+
+  .card-color-bar.fail { background: #c44; }
+  .card-color-bar.flagged { background: #d4912a; }
+  .card-color-bar.pass { background: #5a9a6a; }
+  .card-color-bar.na { background: #b5a99a; }
+
+  .card-body {
+    padding: 20px;
+  }
+
+  .card-top-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .card-req-id {
+    font-size: 11px;
+    color: #a89888;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .card-status {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .card-status.fail {
+    background: #fdecea;
+    color: #b33;
+  }
+
+  .card-status.flagged {
+    background: #fef4e6;
+    color: #b07a1a;
+  }
+
+  .card-status.pass {
+    background: #edf5ef;
+    color: #3d7a4d;
+  }
+
+  .card-status.na {
+    background: #f0ece6;
+    color: #8a7a6e;
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #3d2e23;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .card-clause {
+    display: inline-block;
+    font-size: 11px;
+    color: #8a7a6e;
+    background: #f0ece6;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  /* Confidence bar */
+  .confidence-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .confidence-label {
+    font-size: 11px;
+    color: #a89888;
+    font-weight: 600;
+    white-space: nowrap;
+    min-width: 70px;
+  }
+
+  .confidence-bar-track {
+    flex: 1;
+    height: 6px;
+    background: #ebe4da;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .confidence-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  .confidence-bar-fill.high {
+    background: linear-gradient(90deg, #5a9a6a, #6aaf7a);
+    width: 90%;
+  }
+
+  .confidence-bar-fill.medium {
+    background: linear-gradient(90deg, #d4912a, #e0a844);
+    width: 60%;
+  }
+
+  .confidence-bar-fill.low {
+    background: linear-gradient(90deg, #c44, #d66);
+    width: 30%;
+  }
+
+  .confidence-value {
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 48px;
+    text-align: right;
+  }
+
+  .confidence-value.high { color: #3d7a4d; }
+  .confidence-value.medium { color: #b07a1a; }
+  .confidence-value.low { color: #b33; }
+
+  /* Preview text */
+  .card-preview {
+    font-size: 13px;
+    color: #8a7a6e;
+    line-height: 1.5;
+    margin-bottom: 14px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #da7756;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s ease;
+  }
+
+  .card-view-btn:hover {
+    color: #c0623f;
+  }
+
+  .card-view-btn svg {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.2s ease;
+  }
+
+  .card-view-btn:hover svg {
+    transform: translateX(2px);
+  }
+
+  /* ── Expanded Card Detail ── */
+  .card-detail {
+    display: none;
+    border-top: 1px solid #ebe4da;
+    padding: 24px 20px;
+    background: #faf7f2;
+  }
+
+  .card.expanded .card-detail {
+    display: block;
+  }
+
+  .card.expanded .card-view-btn {
+    display: none;
+  }
+
+  .card.expanded .card-preview {
+    -webkit-line-clamp: unset;
+    display: block;
+    margin-bottom: 0;
+  }
+
+  .detail-section {
+    margin-bottom: 20px;
+  }
+
+  .detail-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .detail-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #a89888;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+
+  .detail-evidence {
+    background: #fffdf9;
+    border-left: 3px solid #da7756;
+    padding: 14px 18px;
+    border-radius: 0 10px 10px 0;
+    font-size: 13px;
+    color: #5a4a3f;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  .detail-gap {
+    background: #fef5f0;
+    border-left: 3px solid #c44;
+    padding: 14px 18px;
+    border-radius: 0 10px 10px 0;
+    font-size: 13px;
+    color: #5a4a3f;
+    line-height: 1.6;
+  }
+
+  .detail-recommendation {
+    background: #f0ece6;
+    border-left: 3px solid #d4912a;
+    padding: 14px 18px;
+    border-radius: 0 10px 10px 0;
+    font-size: 13px;
+    color: #5a4a3f;
+    line-height: 1.6;
+  }
+
+  .detail-confidence-explain {
+    font-size: 13px;
+    color: #8a7a6e;
+    line-height: 1.6;
+  }
+
+  /* Review actions */
+  .detail-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #ebe4da;
+  }
+
+  .action-btn {
+    padding: 8px 20px;
+    border-radius: 10px;
+    border: 1.5px solid #e0d6ca;
+    background: #fffdf9;
+    color: #5a4a3f;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .action-btn:hover {
+    border-color: #c4b8a8;
+    background: #f5f0e8;
+  }
+
+  .action-btn.approve {
+    background: #5a9a6a;
+    color: #fff;
+    border-color: #5a9a6a;
+  }
+
+  .action-btn.approve:hover {
+    background: #4d8a5c;
+  }
+
+  .action-btn.reject {
+    background: #c44;
+    color: #fff;
+    border-color: #c44;
+  }
+
+  .action-btn.reject:hover {
+    background: #a33;
+  }
+
+  .action-btn.flag-review {
+    background: #d4912a;
+    color: #fff;
+    border-color: #d4912a;
+  }
+
+  .action-btn.flag-review:hover {
+    background: #bb7d1e;
+  }
+
+  .action-btn.active-action {
+    box-shadow: 0 0 0 3px rgba(218, 119, 86, 0.25);
+  }
+
+  .collapse-btn {
+    padding: 8px 20px;
+    border-radius: 10px;
+    border: 1.5px solid #e0d6ca;
+    background: #fffdf9;
+    color: #8a7a6e;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: auto;
+    transition: all 0.2s ease;
+  }
+
+  .collapse-btn:hover {
+    border-color: #c4b8a8;
+    color: #5a4a3f;
+  }
+
+  .review-badge {
+    display: none;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    position: absolute;
+    bottom: 12px;
+    right: 16px;
+  }
+
+  .card.reviewed .review-badge {
+    display: inline-block;
+  }
+
+  .review-badge.approved {
+    background: #edf5ef;
+    color: #3d7a4d;
+  }
+
+  .review-badge.rejected {
+    background: #fdecea;
+    color: #b33;
+  }
+
+  .review-badge.flagged-for-review {
+    background: #fef4e6;
+    color: #b07a1a;
+  }
+
+  /* ── Bottom Summary Bar ── */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fffdf9;
+    border-top: 1px solid #ebe4da;
+    padding: 14px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+    box-shadow: 0 -2px 12px rgba(90, 74, 63, 0.06);
+  }
+
+  .progress-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .progress-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #5a4a3f;
+  }
+
+  .progress-bar-track {
+    width: 200px;
+    height: 8px;
+    background: #ebe4da;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #da7756, #e09070);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .export-btn {
+    padding: 10px 28px;
+    border-radius: 12px;
+    border: none;
+    background: #da7756;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .export-btn:hover {
+    background: #c0623f;
+  }
+
+  /* Responsive bottom bar */
+  @media (max-width: 700px) {
+    .bottom-bar { padding: 12px 20px; }
+    .progress-bar-track { width: 120px; }
+  }
+
+  /* Smooth scrolling */
+  html { scroll-behavior: smooth; }
+
+  /* Card entrance animation */
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card {
+    animation: cardIn 0.3s ease forwards;
+  }
+
+  .card:nth-child(1) { animation-delay: 0.02s; }
+  .card:nth-child(2) { animation-delay: 0.04s; }
+  .card:nth-child(3) { animation-delay: 0.06s; }
+  .card:nth-child(4) { animation-delay: 0.08s; }
+  .card:nth-child(5) { animation-delay: 0.10s; }
+  .card:nth-child(6) { animation-delay: 0.12s; }
+  .card:nth-child(7) { animation-delay: 0.14s; }
+  .card:nth-child(8) { animation-delay: 0.16s; }
+  .card:nth-child(9) { animation-delay: 0.18s; }
+  .card:nth-child(10) { animation-delay: 0.20s; }
+  .card:nth-child(11) { animation-delay: 0.22s; }
+  .card:nth-child(12) { animation-delay: 0.24s; }
+  .card:nth-child(13) { animation-delay: 0.26s; }
+  .card:nth-child(14) { animation-delay: 0.28s; }
+  .card:nth-child(15) { animation-delay: 0.30s; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-doc-name">Cloud Security Policy v2.3</div>
+    <div class="header-framework">ISO 27001:2022 Compliance Assessment</div>
+    <div class="header-meta">
+      <span class="header-meta-item">Assessed: Feb 24, 2026</span>
+      <span class="ai-badge">AI Assessment — Human verification required</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="score-badge">
+      <svg viewBox="0 0 80 80">
+        <circle class="bg-ring" cx="40" cy="40" r="33" />
+        <circle class="fg-ring" cx="40" cy="40" r="33" />
+      </svg>
+      <div class="score-text">73<span>%</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- Filter Tabs -->
+<nav class="filter-bar">
+  <button class="filter-tab active" data-filter="all">All <span class="count">(15)</span></button>
+  <button class="filter-tab" data-filter="attention">Needs Attention <span class="count">(6)</span></button>
+  <button class="filter-tab" data-filter="pass">Passed <span class="count">(8)</span></button>
+  <button class="filter-tab" data-filter="na">N/A <span class="count">(1)</span></button>
+</nav>
+
+<!-- Card Grid -->
+<main class="card-grid-container">
+  <div class="card-grid" id="cardGrid"></div>
+</main>
+
+<!-- Bottom Summary Bar -->
+<footer class="bottom-bar">
+  <div class="progress-section">
+    <span class="progress-text" id="progressText">0 of 15 reviewed</span>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+  </div>
+  <button class="export-btn" onclick="handleExport()">Export Report</button>
+</footer>
+
+<script>
+// ── Mock Data ──
+const requirements = [
+  {
+    id: 'REQ-5.1.1',
+    title: 'Information Security Policy',
+    clause: 'Clause 5.1',
+    status: 'pass',
+    confidence: 'high',
+    evidence: 'The document includes a comprehensive information security policy statement signed by the CISO, dated January 2026. The policy explicitly states the organization\'s commitment to protecting information assets and outlines objectives for confidentiality, integrity, and availability. It references alignment with ISO 27001:2022 and is scheduled for annual review.',
+    gap: '',
+    recommendation: '',
+    confidenceExplain: 'High confidence: The policy statement is clearly present, properly signed, dated, and references the applicable standard. All required elements are explicitly documented.'
+  },
+  {
+    id: 'REQ-5.2.1',
+    title: 'Organizational Roles and Responsibilities',
+    clause: 'Clause 5.2',
+    status: 'pass',
+    confidence: 'high',
+    evidence: 'Section 3 of the document defines a clear RACI matrix for information security roles. The CISO, IT Security Manager, Data Protection Officer, and department heads are explicitly named with their responsibilities. Reporting lines are documented and an organizational chart for the security function is provided in Appendix B.',
+    gap: '',
+    recommendation: '',
+    confidenceExplain: 'High confidence: Roles are clearly defined with a RACI matrix, named individuals, and an organizational chart. All indicators of compliance are present.'
+  },
+  {
+    id: 'REQ-5.3.1',
+    title: 'Management Commitment',
+    clause: 'Clause 5.3',
+    status: 'pass',
+    confidence: 'medium',
+    evidence: 'The policy includes a management commitment statement in Section 1.2. The board of directors is referenced as having approved the security budget allocation. Meeting minutes from Q4 2025 board meeting are referenced as evidence of management review, though the minutes themselves are not included in this document.',
+    gap: '',
+    recommendation: '',
+    confidenceExplain: 'Medium confidence: The commitment statement exists and references board approval, but the actual board meeting minutes are referenced externally rather than included. A secondary document review would strengthen this assessment.'
+  },
+  {
+    id: 'REQ-6.1.2',
+    title: 'Risk Assessment Process',
+    clause: 'Clause 6.1',
+    status: 'fail',
+    confidence: 'high',
+    evidence: 'Section 4 mentions that risk assessments are conducted but does not define the risk assessment methodology, criteria for risk acceptance, or frequency of assessments.',
+    gap: 'The document lacks a defined risk assessment methodology. No risk criteria or risk acceptance thresholds are specified. There is no schedule or trigger conditions for when risk assessments should be performed. ISO 27001:2022 Clause 6.1.2 requires organizations to define and apply an information security risk assessment process.',
+    recommendation: 'Define a formal risk assessment methodology (e.g., qualitative, quantitative, or hybrid approach). Establish risk acceptance criteria with clear thresholds approved by management. Document the frequency of regular assessments and conditions that trigger ad-hoc assessments. Consider adopting ISO 27005 as a supporting framework.',
+    confidenceExplain: 'High confidence: The absence of a risk assessment methodology is clear and unambiguous. The document explicitly lacks the required elements defined in Clause 6.1.2.'
+  },
+  {
+    id: 'REQ-6.2.1',
+    title: 'Information Security Objectives',
+    clause: 'Clause 6.2',
+    status: 'fail',
+    confidence: 'medium',
+    evidence: 'Section 2.1 lists three high-level security objectives but they are not measurable, do not have assigned owners, and lack target dates for achievement.',
+    gap: 'The security objectives listed are vague and aspirational rather than specific and measurable. For example, "improve security posture" has no defined metric or target. No responsible owners are assigned to each objective. There are no timelines, milestones, or KPIs. ISO 27001:2022 Clause 6.2 requires objectives to be measurable, monitored, communicated, and updated.',
+    recommendation: 'Rewrite each security objective using SMART criteria (Specific, Measurable, Achievable, Relevant, Time-bound). Assign an accountable owner to each objective. Define KPIs and monitoring frequency. Example: "Reduce mean time to patch critical vulnerabilities to under 72 hours by Q3 2026, owned by IT Security Manager."',
+    confidenceExplain: 'Medium confidence: While objectives are present, the assessment that they fail to meet measurability requirements involves some judgment. The objectives could potentially be argued as sufficient at a high level, though they clearly lack specificity.'
+  },
+  {
+    id: 'REQ-7.1.1',
+    title: 'Resources',
+    clause: 'Clause 7.1',
+    status: 'pass',
+    confidence: 'high',
+    evidence: 'Section 5 details the security team structure with 12 FTE positions, an annual security budget of $2.4M, and allocated tools and technology resources. Training budget is separately itemized. The resource plan is tied to the security objectives and reviewed quarterly.',
+    gap: '',
+    recommendation: '',
+    confidenceExplain: 'High confidence: Resource allocation is thoroughly documented with specific numbers, budget lines, and a clear link to security objectives.'
+  },
+  {
+    id: 'REQ-7.2.1',
+    title: 'Competence Requirements',
+    clause: 'Clause 7.2',
+    status: 'flagged',
+    confidence: 'medium',
+    evidence: 'Section 5.2 outlines required certifications for security roles (CISSP, CISM, CEH) and mentions a competence assessment process. However, the frequency of competence reviews and the process for addressing competence gaps are not clearly defined.',
+    gap: 'While competence requirements are listed, the document does not specify how often competence is reassessed or what remediation steps are taken when gaps are identified. The link between role changes and competence re-evaluation is unclear.',
+    recommendation: 'Add a competence review cycle (e.g., annual) tied to performance reviews. Define a clear process for addressing identified competence gaps, including training plans, mentoring, or role reassignment. Document how competence requirements are updated when roles change.',
+    confidenceExplain: 'Medium confidence: The core competence requirements are present, but the gaps identified relate to process completeness rather than total absence. This could be addressed through supplementary HR documentation not included in this review.'
+  },
+  {
+    id: 'REQ-7.3.1',
+    title: 'Awareness Program',
+    clause: 'Clause 7.3',
+    status: 'pass',
+    confidence: 'high',
+    evidence: 'Section 6 describes a comprehensive security awareness program including mandatory annual training for all employees, monthly phishing simulations, quarterly security newsletters, and new-hire security onboarding. Completion tracking is managed through the LMS with automated escalation for non-compliance.',
+    gap: '',
+    recommendation: '',
+    confidenceExplain: 'High confidence: The awareness program is well-documented with multiple channels, mandatory participation, tracking mechanisms, and enforcement procedures.'
+  },
+  {
+    id: 'REQ-7.4.1',
+    title: 'Communication Plan',
+    clause: 'Clause 7.4',
+    status: 'pass',
+    confidence: 'medium',
+    evidence: 'Section 6.3 defines internal communication channels for security matters including a dedicated Slack channel, monthly security committee meetings, and an incident notification chain. External communication procedures for breach notification are referenced in the Incident Response Plan appendix.',
+    gap: '',
+    recommendation: '',
+    confidenceExplain: 'Medium confidence: Communication channels are documented, but the external communication procedures are referenced in a separate document rather than fully detailed here. The internal communication plan is thorough.'
+  },
+  {
+    id: 'REQ-7.5.1',
+    title: 'Documented Information Control',
+    clause: 'Clause 7.5',
+    status: 'pass',
+    confidence: 'high',
+    evidence: 'Section 7 establishes document control procedures including version control, approval workflows, classification labels, retention schedules, and access controls for documented information. A document management system (SharePoint) is specified with detailed configuration requirements for security-related documentation.',
+    gap: '',
+    recommendation: '',
+    confidenceExplain: 'High confidence: Document control procedures are comprehensive, specifying both the processes and the technology platform used for management. All elements required by Clause 7.5 are addressed.'
+  },
+  {
+    id: 'REQ-8.1.1',
+    title: 'Operational Planning and Control',
+    clause: 'Clause 8.1',
+    status: 'fail',
+    confidence: 'high',
+    evidence: 'The document references operational procedures in Section 8 but provides only a high-level overview. Specific operational controls, change management procedures, and capacity management processes are not documented.',
+    gap: 'Section 8 is largely a placeholder with headings but minimal content. There are no documented change management procedures, no capacity planning processes, and no operational control descriptions. Outsourced process controls are not addressed. This represents a significant gap against Clause 8.1 requirements for operational planning and control.',
+    recommendation: 'Develop detailed operational procedures for each security control area. Implement a formal change management process covering request, assessment, approval, implementation, and review stages. Add capacity management procedures. Document controls for outsourced processes and third-party service management. Consider ITIL framework alignment for operational processes.',
+    confidenceExplain: 'High confidence: The absence of operational control detail is clear. Section 8 contains headings without substantive content, making this a definitive gap.'
+  },
+  {
+    id: 'REQ-8.2.1',
+    title: 'Information Security Risk Assessment Execution',
+    clause: 'Clause 8.2',
+    status: 'na',
+    confidence: 'high',
+    evidence: 'This requirement relates to the execution of risk assessments per the defined process. Since the risk assessment process itself is not defined (see REQ-6.1.2), the execution cannot be evaluated against a defined methodology.',
+    gap: '',
+    recommendation: '',
+    confidenceExplain: 'High confidence: This requirement is not applicable for assessment because it depends on REQ-6.1.2 (risk assessment process), which was found to be non-compliant. The execution cannot be evaluated without a defined process.'
+  },
+  {
+    id: 'REQ-9.1.1',
+    title: 'Monitoring and Measurement',
+    clause: 'Clause 9.1',
+    status: 'flagged',
+    confidence: 'medium',
+    evidence: 'Section 9 mentions key security metrics including incident count, mean time to resolve, patch compliance percentage, and training completion rates. However, measurement methods, evaluation frequency, and the process for analyzing results are only partially defined.',
+    gap: 'While metrics are identified, the document does not fully specify who performs the measurements, the exact measurement methods, when measurements are taken, or how results are analyzed and reported to management. The link between measurement results and management review is unclear.',
+    recommendation: 'For each metric, document: the measurement method, data source, responsible party, frequency, analysis process, and reporting format. Establish a security metrics dashboard with automated data collection where possible. Define thresholds that trigger management escalation.',
+    confidenceExplain: 'Medium confidence: Metrics exist but their supporting processes are incomplete. The gap assessment involves judgment about the level of detail required, as some organizations operate with less formal measurement processes.'
+  },
+  {
+    id: 'REQ-9.2.1',
+    title: 'Internal Audit Program',
+    clause: 'Clause 9.2',
+    status: 'pass',
+    confidence: 'high',
+    evidence: 'Section 9.2 defines a comprehensive internal audit program with an annual audit schedule, qualified auditor requirements (ISO 27001 Lead Auditor certification), audit methodology, reporting templates, and non-conformity tracking procedures. The audit program covers all ISMS processes on a rolling three-year cycle with high-risk areas audited annually.',
+    gap: '',
+    recommendation: '',
+    confidenceExplain: 'High confidence: The internal audit program is thoroughly documented with all required elements: planning, execution methodology, competence requirements, reporting, and follow-up procedures.'
+  },
+  {
+    id: 'REQ-9.3.1',
+    title: 'Management Review Process',
+    clause: 'Clause 9.3',
+    status: 'flagged',
+    confidence: 'low',
+    evidence: 'Section 9.3 references a management review meeting but the inputs, outputs, and required attendees are not fully specified. It states reviews occur "periodically" without defining the frequency. A template agenda is mentioned but not included.',
+    gap: 'The management review process lacks specificity on required inputs (as defined in ISO 27001 Clause 9.3), does not commit to a specific review frequency, and the required outputs (decisions and actions) are not documented. The template agenda referenced is not included in the document.',
+    recommendation: 'Define management review frequency (at minimum annually, recommended semi-annually). List all required inputs per Clause 9.3: audit results, status of actions, changes affecting ISMS, feedback, risk assessment results, and opportunities for improvement. Document required outputs including decisions on improvement opportunities, ISMS changes, and resource needs. Include the meeting template as an appendix.',
+    confidenceExplain: 'Low confidence: Some management review elements exist but are vague. The assessment depends on interpretation of "periodically" and whether referenced but unincluded templates would satisfy requirements if reviewed separately.'
+  }
+];
+
+// ── State ──
+let activeFilter = 'all';
+let expandedCardId = null;
+let reviewStates = {}; // { reqId: 'approved' | 'rejected' | 'flagged-for-review' }
+
+// ── Render ──
+function getStatusClass(status) {
+  if (status === 'fail') return 'fail';
+  if (status === 'flagged') return 'flagged';
+  if (status === 'pass') return 'pass';
+  return 'na';
+}
+
+function getStatusLabel(status) {
+  if (status === 'fail') return 'Fail';
+  if (status === 'flagged') return 'Flagged';
+  if (status === 'pass') return 'Pass';
+  return 'N/A';
+}
+
+function getPreviewText(req) {
+  if (req.status === 'fail' || req.status === 'flagged') {
+    return req.gap || req.evidence;
+  }
+  return req.evidence;
+}
+
+function isVisible(req) {
+  if (activeFilter === 'all') return true;
+  if (activeFilter === 'attention') return req.status === 'fail' || req.status === 'flagged';
+  if (activeFilter === 'pass') return req.status === 'pass';
+  if (activeFilter === 'na') return req.status === 'na';
+  return true;
+}
+
+function renderCards() {
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = '';
+
+  requirements.forEach(req => {
+    const visible = isVisible(req);
+    const isExpanded = expandedCardId === req.id;
+    const reviewState = reviewStates[req.id] || null;
+    const statusClass = getStatusClass(req.status);
+
+    const card = document.createElement('div');
+    card.className = 'card' + (isExpanded ? ' expanded' : '') + (!visible ? ' hidden' : '') + (reviewState ? ' reviewed' : '');
+    card.dataset.id = req.id;
+
+    let detailHTML = '';
+    if (isExpanded) {
+      detailHTML = `
+        <div class="card-detail">
+          <div class="detail-section">
+            <div class="detail-section-label">Evidence</div>
+            <div class="detail-evidence">${req.evidence}</div>
+          </div>
+          ${req.gap ? `
+          <div class="detail-section">
+            <div class="detail-section-label">Gap Description</div>
+            <div class="detail-gap">${req.gap}</div>
+          </div>
+          ` : ''}
+          ${req.recommendation ? `
+          <div class="detail-section">
+            <div class="detail-section-label">Recommendation</div>
+            <div class="detail-recommendation">${req.recommendation}</div>
+          </div>
+          ` : ''}
+          <div class="detail-section">
+            <div class="detail-section-label">Confidence Assessment</div>
+            <div class="detail-confidence-explain">${req.confidenceExplain}</div>
+          </div>
+          <div class="detail-actions">
+            <button class="action-btn approve${reviewState === 'approved' ? ' active-action' : ''}" onclick="event.stopPropagation(); reviewCard('${req.id}', 'approved')">Approve</button>
+            <button class="action-btn reject${reviewState === 'rejected' ? ' active-action' : ''}" onclick="event.stopPropagation(); reviewCard('${req.id}', 'rejected')">Reject</button>
+            <button class="action-btn flag-review${reviewState === 'flagged-for-review' ? ' active-action' : ''}" onclick="event.stopPropagation(); reviewCard('${req.id}', 'flagged-for-review')">Flag for Review</button>
+            <button class="collapse-btn" onclick="event.stopPropagation(); collapseCard()">Collapse</button>
+          </div>
+        </div>
+      `;
+    }
+
+    let reviewBadgeHTML = '';
+    if (reviewState) {
+      const badgeLabels = { approved: 'Approved', rejected: 'Rejected', 'flagged-for-review': 'Flagged' };
+      reviewBadgeHTML = `<span class="review-badge ${reviewState}">${badgeLabels[reviewState]}</span>`;
+    }
+
+    card.innerHTML = `
+      <div class="card-color-bar ${statusClass}"></div>
+      <div class="card-body">
+        <div class="card-top-row">
+          <span class="card-req-id">${req.id}</span>
+          <span class="card-status ${statusClass}">${getStatusLabel(req.status)}</span>
+        </div>
+        <div class="card-title">${req.title}</div>
+        <span class="card-clause">${req.clause}</span>
+        <div class="confidence-row">
+          <span class="confidence-label">Confidence</span>
+          <div class="confidence-bar-track">
+            <div class="confidence-bar-fill ${req.confidence}"></div>
+          </div>
+          <span class="confidence-value ${req.confidence}">${req.confidence.charAt(0).toUpperCase() + req.confidence.slice(1)}</span>
+        </div>
+        <div class="card-preview">${getPreviewText(req)}</div>
+        <button class="card-view-btn">
+          View Details
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>
+        </button>
+        ${reviewBadgeHTML}
+      </div>
+      ${detailHTML}
+    `;
+
+    if (!isExpanded) {
+      card.addEventListener('click', () => expandCard(req.id));
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+function expandCard(id) {
+  expandedCardId = id;
+  renderCards();
+  // Scroll to expanded card
+  setTimeout(() => {
+    const expanded = document.querySelector('.card.expanded');
+    if (expanded) {
+      expanded.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, 50);
+}
+
+function collapseCard() {
+  expandedCardId = null;
+  renderCards();
+}
+
+function reviewCard(id, action) {
+  if (reviewStates[id] === action) {
+    // Toggle off if same action clicked
+    delete reviewStates[id];
+  } else {
+    reviewStates[id] = action;
+  }
+  renderCards();
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = requirements.length;
+  const reviewed = Object.keys(reviewStates).length;
+  document.getElementById('progressText').textContent = `${reviewed} of ${total} reviewed`;
+  const pct = (reviewed / total) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function handleExport() {
+  const reviewed = Object.keys(reviewStates).length;
+  const total = requirements.length;
+  if (reviewed === 0) {
+    alert('No items reviewed yet. Please review at least one requirement before exporting.');
+    return;
+  }
+  const summary = requirements.map(r => {
+    const state = reviewStates[r.id] || 'not reviewed';
+    return `${r.id}: ${r.title} — ${getStatusLabel(r.status)} — Review: ${state}`;
+  }).join('\n');
+  alert(`Export Report\n\nReviewed: ${reviewed}/${total}\n\n${summary}`);
+}
+
+// ── Filter Tab Handling ──
+document.querySelectorAll('.filter-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    activeFilter = tab.dataset.filter;
+    expandedCardId = null;
+    renderCards();
+  });
+});
+
+// ── Initial Render ──
+renderCards();
+updateProgress();
+</script>
+</body>
+</html>

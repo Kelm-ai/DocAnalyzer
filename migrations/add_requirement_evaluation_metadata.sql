@@ -1,0 +1,2 @@
+ALTER TABLE requirement_evaluations
+ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT NULL;
