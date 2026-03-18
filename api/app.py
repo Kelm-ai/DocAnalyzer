@@ -9,9 +9,11 @@ import json
 import uuid
 import asyncio
 import tempfile
+import mimetypes
 from datetime import datetime
 from typing import List, Dict, Optional, Any, Literal
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,7 +22,7 @@ from pydantic import BaseModel
 import logging
 from dotenv import load_dotenv
 
-from evidence_utils import evidence_item_to_legacy_snippet, normalize_evidence_items
+from .evidence_utils import evidence_item_to_legacy_snippet, normalize_evidence_items
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,14 +30,14 @@ logger = logging.getLogger(__name__)
 
 # Import summary generator
 try:
-    from api.summary_generator import generate_executive_summary_sync
+    from api.summary_generator import generate_executive_summary_sync, generate_executive_summary
 except ImportError:
-    from summary_generator import generate_executive_summary_sync
+    from summary_generator import generate_executive_summary_sync, generate_executive_summary
 
 try:
-    from api.requirement_presentation_generator import generate_requirement_presentations_sync
+    from api.requirement_presentation_generator import generate_requirement_presentations_sync, generate_requirement_presentations
 except ImportError:
-    from requirement_presentation_generator import generate_requirement_presentations_sync
+    from .requirement_presentation_generator import generate_requirement_presentations_sync, generate_requirement_presentations
 
 # Import document summarizer for multi-doc support
 try:
@@ -447,8 +449,10 @@ def _insert_requirement_records(
             pending_records = fallback_records
 
 
-def persist_vision_results(evaluation_id: str, summary: Dict[str, Any]) -> None:
+async def persist_vision_results(evaluation_id: str, summary: Dict[str, Any], tracker: Optional[ProgressTracker] = None) -> None:
     supabase = get_supabase_client()
+    if tracker is not None:
+        await tracker.set_phase("generating_report", "Generating compliance report...")
     evaluation_summary = summary.get('evaluation_summary', {})
     status_counts = evaluation_summary.get('status_counts', {})
     total_requirements = evaluation_summary.get('total_requirements', 0)
@@ -548,7 +552,7 @@ def persist_vision_results(evaluation_id: str, summary: Dict[str, Any]) -> None:
                     'recommendations': _ensure_list(result.get('recommendations')),
                 })
 
-            executive_summary = generate_executive_summary_sync(
+            executive_summary = await generate_executive_summary(
                 document_name=document_name,
                 requirements_results=requirements_for_summary,
                 overall_score=float(compliance_score or 0)
@@ -561,7 +565,7 @@ def persist_vision_results(evaluation_id: str, summary: Dict[str, Any]) -> None:
             logger.error(f"Failed to generate executive summary: {summary_error}")
 
         try:
-            requirement_presentations = generate_requirement_presentations_sync(
+            requirement_presentations = await generate_requirement_presentations(
                 evaluation_id=evaluation_id,
                 summary=summary,
                 supabase_client=supabase,
@@ -588,6 +592,9 @@ def persist_vision_results(evaluation_id: str, summary: Dict[str, Any]) -> None:
             'compliance_score': compliance_score,
             'agreement_by_requirement': agreement_map,
         }, executive_summary=executive_summary, requirement_presentations=requirement_presentations)
+
+        if tracker is not None:
+            await tracker.close(flush=True)
     except Exception:
         logger.exception("Failed to persist requirement/report data for evaluation %s; restoring previous rows", evaluation_id)
 
@@ -832,6 +839,7 @@ class EvaluationDocumentResponse(BaseModel):
     summary_generated_at: Optional[str] = None
     display_order: int = 0
     created_at: str
+    storage_deleted_at: Optional[str] = None
 
 
 class MultiDocumentUploadResponse(BaseModel):
@@ -912,19 +920,23 @@ async def startup_event():
 
         # Initialize storage cleanup scheduler
         global storage_cleanup
-        cleanup_config = CleanupConfig(
-            max_age_hours=float(os.getenv("STORAGE_CLEANUP_MAX_AGE_HOURS", "48")),
-            check_interval_seconds=float(os.getenv("STORAGE_CLEANUP_INTERVAL_SECONDS", "3600")),
-            batch_size=int(os.getenv("STORAGE_CLEANUP_BATCH_SIZE", "25")),
-        )
-        storage_cleanup = get_storage_cleanup_scheduler(cleanup_config)
-        storage_cleanup.set_supabase_getter(get_supabase_client)
-        await storage_cleanup.start()
-        logger.info(
-            "Storage cleanup scheduler initialized: max_age=%.0fh, interval=%.0fs",
-            cleanup_config.max_age_hours,
-            cleanup_config.check_interval_seconds,
-        )
+        cleanup_enabled = os.getenv("STORAGE_CLEANUP_ENABLED", "false").lower() in {"1", "true", "yes"}
+        if cleanup_enabled:
+            cleanup_config = CleanupConfig(
+                max_age_hours=float(os.getenv("STORAGE_CLEANUP_MAX_AGE_HOURS", "48")),
+                check_interval_seconds=float(os.getenv("STORAGE_CLEANUP_INTERVAL_SECONDS", "3600")),
+                batch_size=int(os.getenv("STORAGE_CLEANUP_BATCH_SIZE", "25")),
+            )
+            storage_cleanup = get_storage_cleanup_scheduler(cleanup_config)
+            storage_cleanup.set_supabase_getter(get_supabase_client)
+            await storage_cleanup.start()
+            logger.info(
+                "Storage cleanup scheduler initialized: max_age=%.0fh, interval=%.0fs",
+                cleanup_config.max_age_hours,
+                cleanup_config.check_interval_seconds,
+            )
+        else:
+            logger.info("Storage cleanup scheduler disabled; uploaded PDFs will be retained for citation preview")
 
     except Exception as e:
         logger.error(f"Failed to initialize evaluators: {e}")
@@ -1465,13 +1477,80 @@ async def get_evaluation_documents(evaluation_id: str):
                 summary_text=doc.get('summary_text'),
                 summary_generated_at=doc.get('summary_generated_at'),
                 display_order=doc.get('display_order', 0),
-                created_at=doc['created_at']
+                created_at=doc['created_at'],
+                storage_deleted_at=doc.get('storage_deleted_at'),
             )
             for doc in response.data
         ]
 
     except Exception as e:
         logger.error(f"Failed to get evaluation documents: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/evaluations/{evaluation_id}/documents/{document_id}/content")
+async def get_evaluation_document_content(evaluation_id: str, document_id: str):
+    """Stream a stored evaluation document back to the client for in-browser preview."""
+    try:
+        supabase = get_supabase_client()
+
+        response = (
+            supabase.table('evaluation_documents')
+            .select('id, evaluation_id, file_name, storage_path, storage_deleted_at')
+            .eq('evaluation_id', evaluation_id)
+            .eq('id', document_id)
+            .single()
+            .execute()
+        )
+        document = getattr(response, 'data', None)
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        storage_path = document.get('storage_path')
+        if not storage_path:
+            raise HTTPException(status_code=404, detail="Document has no stored file")
+        if document.get('storage_deleted_at'):
+            raise HTTPException(status_code=410, detail="Document file is no longer available in storage")
+
+        download_errors: List[str] = []
+        candidate_paths = [storage_path]
+        if storage_path.startswith("documents/"):
+            candidate_paths.append(storage_path[len("documents/"):])
+
+        file_bytes: Optional[bytes] = None
+        for candidate in candidate_paths:
+            try:
+                file_bytes = supabase.storage.from_("documents").download(candidate)
+                if file_bytes:
+                    break
+            except Exception as download_error:
+                download_errors.append(f"{candidate}: {download_error}")
+
+        if not file_bytes:
+            logger.error(
+                "Failed to download stored document %s for evaluation %s. Attempts: %s",
+                document_id,
+                evaluation_id,
+                "; ".join(download_errors) or "none",
+            )
+            raise HTTPException(status_code=404, detail="Stored document could not be downloaded")
+
+        file_name = document.get('file_name') or 'document.pdf'
+        media_type = mimetypes.guess_type(file_name)[0] or "application/pdf"
+        content_disposition = f'inline; filename="{quote(file_name)}"'
+
+        return Response(
+            content=file_bytes,
+            media_type=media_type,
+            headers={
+                "Content-Disposition": content_disposition,
+                "Cache-Control": "private, max-age=300",
+            },
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to stream evaluation document {document_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1549,9 +1628,7 @@ async def run_evaluation(evaluation_id: str, file_path: str, original_filename: 
                 progress_tracker=tracker,
             )
         summary = await framework_evaluator.evaluate_document(file_path)
-        if tracker is not None:
-            await tracker.close(flush=True)
-        persist_vision_results(evaluation_id, summary)
+        await persist_vision_results(evaluation_id, summary, tracker=tracker)
 
         logger.info(f"Evaluation completed for {display_name}")
 
