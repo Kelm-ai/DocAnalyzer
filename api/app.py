@@ -1149,6 +1149,41 @@ async def upload_document(
 
         evaluation_id = result.data[0]['id']
 
+        # Persist the primary document in Supabase Storage so citation preview can
+        # resolve it through evaluation_documents (same pattern as /api/upload-multi).
+        file_hash = compute_file_hash(content)
+        file_size = len(content)
+        storage_relative_path = f"evaluations/{evaluation_id}/primary/{file_hash}_{processing_filename}"
+        storage_path = f"documents/{storage_relative_path}"
+
+        try:
+            supabase.storage.from_("documents").upload(
+                path=storage_relative_path,
+                file=content,
+                file_options={"content-type": "application/pdf"},
+            )
+        except Exception as storage_error:
+            logger.error(f"Failed to upload {original_filename} to storage: {storage_error}")
+            raise HTTPException(status_code=500, detail=f"Failed to upload {original_filename}")
+
+        doc_record = {
+            'id': str(uuid.uuid4()),
+            'evaluation_id': evaluation_id,
+            'document_role': 'primary',
+            'file_name': original_filename,
+            'file_hash': file_hash,
+            'storage_path': storage_path,
+            'file_size_bytes': file_size,
+            'display_order': 0,
+            'created_at': datetime.utcnow().isoformat(),
+        }
+
+        try:
+            supabase.table('evaluation_documents').insert(doc_record).execute()
+        except Exception as doc_error:
+            logger.error(f"Failed to create document record for {original_filename}: {doc_error}")
+            raise HTTPException(status_code=500, detail="Failed to save document record")
+
         # Add to evaluation queue instead of BackgroundTasks
         if evaluation_queue is None:
             raise HTTPException(status_code=503, detail="Evaluation queue not initialized")
