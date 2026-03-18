@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple
 
-from evidence_utils import normalize_evidence_items
+from .evidence_utils import normalize_evidence_items
 from openai import OpenAI
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
