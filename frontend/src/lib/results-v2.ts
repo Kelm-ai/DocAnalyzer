@@ -90,8 +90,10 @@ function cleanSourceText(value: string, limit = 300): string {
   const stripped = value
     .trim()
     .replace(/^\[[^\]]+\]\s*/, "")
+    .replace(/\[E\d+\]/gi, "")
     .replace(/^["']+|["']+$/g, "")
     .replace(/\s+/g, " ")
+    .trim()
 
   if (stripped.length <= limit) {
     return stripped
@@ -320,7 +322,7 @@ function fallbackInlineEvidence(status: ResultsV2Status, evidence: string[]): Na
 function fallbackInlineCaveat(status: ResultsV2Status, gaps: string[]): NarrativeItem | null {
   if (status === "FLAGGED") {
     const text = gaps[0]
-      ? firstSentence(gaps[0], 220)
+      ? cleanSourceText(gaps[0], 600)
       : "Human review is still needed to confirm whether this requirement is met."
 
     return makeNarrativeItem(
@@ -338,7 +340,7 @@ function fallbackInlineCaveat(status: ResultsV2Status, gaps: string[]): Narrativ
 
   return makeNarrativeItem(
     "fallback-inline-caveat",
-    firstSentence(gaps[0], 220),
+    cleanSourceText(gaps[0], 600),
     getEvidenceTone(getInlineCaveatLabel(status), status),
     [],
     getInlineCaveatLabel(status)
@@ -471,7 +473,7 @@ function buildFallbackPresentation(
   const inlineCaveat = fallbackInlineCaveat(status, gaps)
   const inlineFinding = makeNarrativeItem(
     "fallback-inline-finding",
-    firstSentence(rationale || getFallbackAssessment(status), 220),
+    cleanSourceText(rationale || getFallbackAssessment(status), 600),
     getFindingTone(status),
     inlineEvidence?.citations ?? [],
     "Finding"
@@ -509,7 +511,7 @@ function buildFallbackPresentation(
     inlineFinding,
     inlineEvidence,
     inlineCaveat,
-    modalSummary: cleanSourceText(rationale || inlineFinding.text, 420),
+    modalSummary: cleanSourceText(rationale || inlineFinding.text, 300),
     modalEvidence,
     sourceGroups,
     totalSources: countSources(sourceGroups),
@@ -941,7 +943,15 @@ export function mapRequirementToResultsV2ViewModel(
     }
   }
 
-  const tableFinding = inlineFinding.text
+  // If finding text was truncated by the backend, restore full text from rationale
+  if (inlineFinding.text.endsWith("...") && rationale.length > inlineFinding.text.length) {
+    inlineFinding = { ...inlineFinding, text: cleanSourceText(rationale, 600) }
+  }
+  if (inlineCaveat?.text.endsWith("...") && gaps[0] && gaps[0].length > inlineCaveat.text.length) {
+    inlineCaveat = { ...inlineCaveat, text: cleanSourceText(gaps[0], 600) }
+  }
+
+  const tableFinding = firstSentence(inlineFinding.text, 220)
 
   const searchText = [
     requirement.requirement_id,

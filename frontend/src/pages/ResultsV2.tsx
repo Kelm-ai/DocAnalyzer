@@ -57,7 +57,7 @@ function formatSourceLabel(source: CitationReference, index: number): string {
   if (source.page_number != null) {
     return `p.${source.page_number}`
   }
-  return `Source ${index + 1}`
+  return `Evidence ${index + 1}`
 }
 
 function SourceChip({
@@ -255,7 +255,7 @@ function SourcesSection({
   return (
     <section ref={sectionRef} className="space-y-4">
       <h3 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        Source Citations ({totalSources})
+        Supporting Evidence ({totalSources})
       </h3>
       <div className="space-y-3">
         {groups.map((group) => (
@@ -1132,10 +1132,17 @@ export function ResultsV2() {
             <div className="grid min-h-0 flex-1 gap-0 lg:grid-cols-[minmax(0,1fr)_300px]">
               <div className="rv2-scroll min-h-0 overflow-y-auto px-8 py-6">
                 <div className="space-y-6">
+                  {activeRow.modalSummary !== activeRow.inlineFinding.text ? (
+                    <section className="space-y-3">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                        Summary
+                      </h3>
+                      <div className="rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground">
+                        {activeRow.modalSummary}
+                      </div>
+                    </section>
+                  ) : null}
                   <section className="space-y-3">
-                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-                      Finding
-                    </h3>
                     <div className="space-y-3">
                       <NarrativeItemView
                         item={activeRow.inlineFinding}
@@ -1152,11 +1159,6 @@ export function ResultsV2() {
                           onHideTooltip={hideCitationTooltip}
                           onOpenModal={() => sourcesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
                         />
-                      ) : null}
-                      {activeRow.modalSummary !== activeRow.inlineFinding.text ? (
-                        <div className="rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground">
-                          {activeRow.modalSummary}
-                        </div>
                       ) : null}
                     </div>
                   </section>

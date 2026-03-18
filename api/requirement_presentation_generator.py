@@ -103,7 +103,7 @@ Rules:
 2. Write plain-language reviewer-facing statements. Do not lead with raw quotes or page references.
 3. Keep the inline finding short and scannable. It should communicate the gist of what is present, missing, or uncertain.
 4. The optional inline caveat should describe the limitation or verification need in neutral language.
-5. The modal summary should explain why the status was assigned in 1-2 concise sentences.
+5. The modal summary should explain why the status was assigned in plain language. Be direct and brief — e.g. "Passed because the procedure clearly establishes a lifecycle-wide risk management process." Avoid jargon, listing sub-processes, or restating the requirement title.
 6. Distinguish FAIL from FLAGGED:
    - FAIL means the requirement is not adequately met.
    - FLAGGED means evidence is incomplete, indirect, or needs human verification.
@@ -113,7 +113,7 @@ Rules:
 10. Keep output compact:
    - inline_finding: 1 sentence
    - inline_caveat: 1 sentence when needed, else omit
-   - modal_summary: 1-2 sentences
+   - modal_summary: 1 plain-language sentence
 """
 
 
@@ -222,15 +222,13 @@ def _format_citation_label(
     document_name: Optional[str] = None,
     evidence_type: Optional[str] = None,
 ) -> str:
-    if evidence_type == "cross_reference":
-        return "xref"
     if page_number is not None:
         return f"p.{page_number}"
     if isinstance(section_title, str) and section_title.strip():
         return section_title.strip()[:24]
     if isinstance(document_name, str) and document_name.strip():
         return document_name.strip()[:24]
-    return "Source"
+    return "Evidence"
 
 
 def _format_citation_location(
@@ -240,15 +238,13 @@ def _format_citation_location(
     evidence_type: Optional[str] = None,
 ) -> str:
     parts: List[str] = []
-    if evidence_type == "cross_reference":
-        parts.append("Cross-reference")
     if isinstance(document_name, str) and document_name.strip():
         parts.append(document_name.strip())
     if isinstance(section_title, str) and section_title.strip():
         parts.append(section_title.strip())
     if page_number is not None:
         parts.append(f"Page {page_number}")
-    return " • ".join(parts) if parts else "Source"
+    return " • ".join(parts) if parts else "Evidence"
 
 
 def _citation_sort_score(citation: CitationPill) -> int:
@@ -257,47 +253,91 @@ def _citation_sort_score(citation: CitationPill) -> int:
         score += 4
     if citation.section_title:
         score += 2
-    if citation.label != "Source":
+    if citation.label != "Evidence":
         score += 1
-    if citation.location != "Source":
+    if citation.location != "Evidence":
         score += 1
     return score
 
 
-def _extract_citations_from_raw_item(text: str) -> List[CitationPill]:
-    cleaned = _strip_source_prefix(text)
-    if not cleaned:
+def _normalize_match_text(text: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", text.lower())).strip()
+
+
+def _extract_reference_tokens(text: str) -> set[str]:
+    tokens = {
+        token
+        for token in re.findall(r"[a-z0-9]+", text.lower())
+        if len(token) >= 4
+    }
+    for pattern in (
+        r"\b(?:figure|fig\.?|table|appendix|section)\s+\d+(?:\.\d+)*\b",
+        r"\b[A-Z]{2,}-\d+(?:\.\d+)*\b",
+        r"\b[A-Z]{2,}\d{2,}\b",
+    ):
+        for match in re.findall(pattern, text, flags=re.IGNORECASE):
+            tokens.add(match.lower())
+    return tokens
+
+
+def _gap_evidence_score(gap_text: str, item: StructuredEvidenceItem) -> int:
+    gap_clean = gap_text.strip()
+    if not gap_clean:
+        return 0
+
+    combined = " ".join(
+        part for part in (item.section_title, item.quote, item.supports, item.document_name) if part
+    )
+    if not combined:
+        return 0
+
+    gap_lower = gap_clean.lower()
+    combined_lower = combined.lower()
+    score = 0
+
+    if item.section_title and item.section_title.lower() in gap_lower:
+        score += 8
+    if item.document_name and item.document_name.lower() in gap_lower:
+        score += 6
+
+    gap_refs = _extract_reference_tokens(gap_clean)
+    combined_refs = _extract_reference_tokens(combined)
+    score += 5 * len(gap_refs & combined_refs)
+
+    gap_tokens = set(_normalize_match_text(gap_clean).split())
+    combined_tokens = set(_normalize_match_text(combined).split())
+    overlap = {
+        token for token in (gap_tokens & combined_tokens)
+        if len(token) >= 5
+    }
+    score += min(len(overlap), 4)
+
+    return score
+
+
+def _link_gap_to_evidence(gap_text: str, evidence: List[StructuredEvidenceItem], limit: int = 2) -> List[CitationPill]:
+    if not gap_text.strip() or not evidence:
         return []
 
-    page_number = _extract_page_number(cleaned)
-    section_title = _extract_section_title(cleaned)
-    label = _format_citation_label(page_number, section_title)
-    location = _format_citation_location(page_number, section_title)
+    ranked: List[Tuple[int, CitationPill]] = []
+    for item in evidence:
+        score = _gap_evidence_score(gap_text, item)
+        if score <= 0:
+            continue
+        ranked.append((score, _citation_from_structured_evidence(item)))
 
-    quote_matches = re.findall(r"[\"“](.*?)[\"”]", cleaned)
-    excerpts = [_truncate_sentence(match, 220) for match in quote_matches if _truncate_sentence(match, 220)]
-    if not excerpts:
-        excerpts = [_truncate_sentence(cleaned, 220)]
+    ranked.sort(key=lambda pair: (pair[0], _citation_sort_score(pair[1])), reverse=True)
 
     citations: List[CitationPill] = []
     seen: set[Tuple[str, str]] = set()
-    for excerpt in excerpts:
-        key = (location, excerpt)
+    for _, citation in ranked:
+        key = (citation.location, citation.excerpt)
         if key in seen:
             continue
         seen.add(key)
-        citations.append(
-            CitationPill(
-                label=label,
-                location=location,
-                excerpt=excerpt,
-                provider="raw_evaluator",
-                page_number=page_number,
-                section_title=section_title,
-            )
-        )
-
-    citations.sort(key=_citation_sort_score, reverse=True)
+        citations.append(citation)
+        if len(citations) >= limit:
+            break
     return citations
 
 
@@ -414,7 +454,7 @@ def _build_evidence_groups(
         label = _candidate_label(status, is_gap=True)
         if label is None:
             continue
-        citations = _extract_citations_from_raw_item(item)
+        citations = _link_gap_to_evidence(item, evidence)
         raw_groups.append(
             (
                 group_index,
@@ -469,7 +509,7 @@ def _build_evidence_groups(
     )
 
     built_groups: List[EvidenceGroup] = []
-    seen_citations: set[Tuple[str, str]] = set()
+    seen_citations: set[Tuple[str, str, str]] = set()
     total_citations = 0
     seen_group_keys: set[Tuple[str, str, str]] = set()
 
@@ -489,7 +529,7 @@ def _build_evidence_groups(
         for citation in citations:
             if len(allowed_citations) >= per_group_limit:
                 break
-            key = (citation.location, citation.excerpt)
+            key = (group.claim_id, citation.location, citation.excerpt)
             if key in seen_citations:
                 continue
             seen_citations.add(key)
@@ -523,7 +563,7 @@ def _default_presentation(
         confidence_level=confidence,
         inline_finding=_text_block("finding", _make_finding_text(status, rationale)),
         inline_caveat=_make_inline_caveat(status, gaps),
-        modal_summary=_truncate_sentence(rationale or _make_finding_text(status, rationale), 420),
+        modal_summary=_truncate_sentence(rationale or _make_finding_text(status, rationale), 300),
         evidence_groups=_build_evidence_groups(
             status=status,
             evidence=evidence,
@@ -542,15 +582,15 @@ def _apply_synthesis(
 ) -> RequirementPresentationSummary:
     summary = baseline.model_copy(deep=True)
 
-    finding_text = _first_sentence(payload.inline_finding, 160)
+    finding_text = _truncate_sentence(payload.inline_finding, 500)
     if finding_text:
         summary.inline_finding.text = finding_text
 
-    caveat_text = _first_sentence(payload.inline_caveat or "", 160)
+    caveat_text = _truncate_sentence(payload.inline_caveat or "", 500)
     if caveat_text:
         summary.inline_caveat = _text_block("caveat", caveat_text)
 
-    modal_summary = _truncate_sentence(payload.modal_summary, 420)
+    modal_summary = _truncate_sentence(payload.modal_summary, 300)
     if modal_summary:
         summary.modal_summary = modal_summary
 
@@ -596,7 +636,7 @@ Gaps or OFIs:
 Return compact JSON for the UI:
 - inline_finding: one short sentence
 - inline_caveat: optional one-sentence limitation or verification note
-- modal_summary: one or two concise sentences
+- modal_summary: one plain-language sentence explaining why this status was assigned (e.g. "Passed because X is clearly documented.")
 
 Do not return citations, evidence blocks, or evidence groups.
 """

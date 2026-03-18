@@ -90,6 +90,7 @@ def test_v3_fail_yields_multiple_observed_limitation_groups():
     assert summary.inline_caveat.id == "caveat"
     assert len(limitation_groups) == 3
     assert all(group.claim_id == "caveat" for group in limitation_groups)
+    assert any(group.citations and group.citations[0].label == "p.2" for group in limitation_groups)
 
 
 def test_v3_flagged_uses_needs_verification_groups():
@@ -114,7 +115,7 @@ def test_v3_flagged_uses_needs_verification_groups():
     assert verification_groups[0].claim_id == "caveat"
 
 
-def test_v3_deduplicates_repeated_citations_by_location_and_excerpt():
+def test_v3_deduplicates_repeated_citations_within_each_claim():
     repeated = 'Section 4.1: "Risk management activities shall be planned and maintained." (page 2).'
     summary = _make_summary(
         _base_requirement(
@@ -123,12 +124,22 @@ def test_v3_deduplicates_repeated_citations_by_location_and_excerpt():
         )
     )
 
-    citations = [
+    finding_groups = [group for group in summary.evidence_groups if group.claim_id == "finding"]
+    caveat_groups = [group for group in summary.evidence_groups if group.claim_id == "caveat"]
+
+    finding_citations = [
         (citation.location, citation.excerpt)
-        for group in summary.evidence_groups
+        for group in finding_groups
         for citation in group.citations
     ]
-    assert len(citations) == len(set(citations))
+    caveat_citations = [
+        (citation.location, citation.excerpt)
+        for group in caveat_groups
+        for citation in group.citations
+    ]
+
+    assert len(finding_citations) == len(set(finding_citations))
+    assert len(caveat_citations) == len(set(caveat_citations))
 
 
 def test_v3_configurable_ceilings_clamp_groups_and_citations():
@@ -253,5 +264,55 @@ def test_v3_cross_reference_evidence_is_labeled_as_cross_reference():
         )
     )
 
-    assert summary.evidence_groups[0].citations[0].label == "xref"
-    assert summary.evidence_groups[0].citations[0].location.startswith("Cross-reference")
+    assert summary.evidence_groups[0].citations[0].label == "5.1 Training"
+    assert summary.evidence_groups[0].citations[0].location == "5.1 Training"
+
+
+def test_v3_pass_gap_links_to_related_figure_evidence():
+    summary = _make_summary(
+        _base_requirement(
+            evidence_snippets=[],
+            structured_evidence=[
+                {
+                    "page_number": 11,
+                    "section_title": "Figure 1 - Schematic Representation of the Risk Management Process",
+                    "quote": "Figure 1 - Schematic Representation of the Risk Management Process",
+                    "supports": "The figure depicts the end-to-end process flow.",
+                    "document_name": "PD-002 Risk Management Procedure for Combination Products",
+                    "evidence_type": "visual_or_table",
+                }
+            ],
+            gaps_identified=[
+                "The flowchart in Figure 1 could be enhanced to show explicit touchpoints with other QMS processes like change control and CAPA."
+            ],
+        )
+    )
+
+    limitation_groups = [group for group in summary.evidence_groups if group.label == "Observed limitation"]
+    assert len(limitation_groups) == 1
+    assert len(limitation_groups[0].citations) == 1
+    assert limitation_groups[0].citations[0].label == "p.11"
+    assert limitation_groups[0].citations[0].location.endswith("Page 11")
+
+
+def test_v3_pass_gap_without_matching_evidence_does_not_create_synthetic_source_citation():
+    summary = _make_summary(
+        _base_requirement(
+            evidence_snippets=[],
+            structured_evidence=[
+                {
+                    "page_number": 3,
+                    "section_title": "4.1 Process Scope",
+                    "quote": "The process applies across the lifecycle.",
+                    "supports": "Shows lifecycle coverage.",
+                }
+            ],
+            gaps_identified=[
+                "A glossary for uncommon acronyms could improve readability."
+            ],
+        )
+    )
+
+    limitation_groups = [group for group in summary.evidence_groups if group.label == "Observed limitation"]
+    assert len(limitation_groups) == 1
+    assert limitation_groups[0].citations == []
