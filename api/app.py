@@ -486,29 +486,13 @@ async def persist_vision_results(evaluation_id: str, summary: Dict[str, Any], tr
     document_update = {
         'status': 'completed',
         'error_message': None,
-        'completed_at': datetime.utcnow().isoformat(),
         'total_requirements': total_requirements,
         'requirements_passed': status_counts.get('PASS', 0),
         'requirements_failed': status_counts.get('FAIL', 0),
         'requirements_flagged': status_counts.get('FLAGGED', 0),
         'requirements_na': status_counts.get('NOT_APPLICABLE', 0),
         'overall_compliance_score': round(float(compliance_score or 0), 2),
-        'updated_at': datetime.utcnow().isoformat(),
     }
-
-    try:
-        supabase.table('document_evaluations').update(document_update).eq('id', evaluation_id).execute()
-    except Exception as update_error:
-        message = str(update_error)
-        retried = False
-        if 'requirements_flagged' in message:
-            document_update.pop('requirements_flagged', None)
-            document_update['requirements_partial'] = status_counts.get('FLAGGED', 0)
-            retried = True
-        if retried:
-            supabase.table('document_evaluations').update(document_update).eq('id', evaluation_id).execute()
-        else:
-            raise
 
     requirement_records: List[Dict[str, Any]] = []
     for result in summary.get('requirements_results', []):
@@ -592,6 +576,23 @@ async def persist_vision_results(evaluation_id: str, summary: Dict[str, Any], tr
             'compliance_score': compliance_score,
             'agreement_by_requirement': agreement_map,
         }, executive_summary=executive_summary, requirement_presentations=requirement_presentations)
+
+        # Mark evaluation complete only after requirements and report rows are persisted.
+        document_update['completed_at'] = datetime.utcnow().isoformat()
+        document_update['updated_at'] = datetime.utcnow().isoformat()
+        try:
+            supabase.table('document_evaluations').update(document_update).eq('id', evaluation_id).execute()
+        except Exception as update_error:
+            message = str(update_error)
+            retried = False
+            if 'requirements_flagged' in message:
+                document_update.pop('requirements_flagged', None)
+                document_update['requirements_partial'] = status_counts.get('FLAGGED', 0)
+                retried = True
+            if retried:
+                supabase.table('document_evaluations').update(document_update).eq('id', evaluation_id).execute()
+            else:
+                raise
 
         if tracker is not None:
             await tracker.close(flush=True)
@@ -2363,31 +2364,36 @@ async def get_evaluation_results(evaluation_id: str):
 async def get_compliance_report(evaluation_id: str):
     """Get comprehensive compliance report"""
     try:
+        supabase = get_supabase_client()
+
         # Get evaluation summary
-        eval_result = get_supabase_client().table('document_evaluations') \
+        eval_result = supabase.table('document_evaluations') \
             .select("*") \
             .eq('id', evaluation_id) \
-            .single() \
+            .limit(1) \
             .execute()
-        
-        if not eval_result.data:
+
+        eval_rows = getattr(eval_result, "data", None) or []
+        if not eval_rows:
             raise HTTPException(status_code=404, detail="Evaluation not found")
-        
+
         # Get compliance report
-        report_result = get_supabase_client().table('compliance_reports') \
+        report_result = supabase.table('compliance_reports') \
             .select("*") \
             .eq('document_evaluation_id', evaluation_id) \
-            .single() \
+            .limit(1) \
             .execute()
-        
+
         # Get requirement results
-        req_result = get_supabase_client().table('requirement_evaluations') \
+        req_result = supabase.table('requirement_evaluations') \
             .select("*, iso_requirements(title, clause)") \
             .eq('document_evaluation_id', evaluation_id) \
             .execute()
-        
-        eval_data = eval_result.data
-        report_data = report_result.data if report_result.data else {}
+
+        eval_data = eval_rows[0]
+        report_rows = getattr(report_result, "data", None) or []
+        report_data = report_rows[0] if report_rows else {}
+        req_rows = getattr(req_result, "data", None) or []
         
         summary_stats_map = {}
         if isinstance(report_data.get('summary_stats'), dict):
@@ -2395,7 +2401,7 @@ async def get_compliance_report(evaluation_id: str):
         agreement_map = summary_stats_map.get('agreement_by_requirement', {})
 
         requirements = []
-        for row in req_result.data:
+        for row in req_rows:
             iso_requirement = row.get('iso_requirements') or {}
             level = _confidence_level_from_row(row)
             score_value = row.get('confidence_score')
@@ -2432,7 +2438,9 @@ async def get_compliance_report(evaluation_id: str):
             executive_summary=report_data.get('executive_summary'),
             requirement_presentations=report_data.get('requirement_presentations'),
         )
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Get report error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
