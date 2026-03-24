@@ -11,6 +11,7 @@ import {
   Loader2,
   MessageSquare,
   Search,
+  Square,
   ThumbsDown,
   ThumbsUp,
   X,
@@ -260,41 +261,62 @@ function SourcesSection({
         Supporting Evidence ({totalSources})
       </h3>
       <div className="space-y-3">
-        {groups.map((group) => (
-          <section
-            key={group.id}
-            className={cn(
-              "rv2-modal-citations-block",
-              focusedStatementId && group.statementId === focusedStatementId
-                ? "ring-1 ring-sc/20"
-                : ""
-            )}
-          >
-            <h4 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-              {group.label}
-            </h4>
-            <div className="rv2-modal-citations-grid">
-              {group.sources.map((source, index) => (
-                <div key={`${group.id}-source-${index}`} className="rv2-modal-cite-card">
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="rv2-modal-cite-ref">
-                      {formatSourceLabel(source, index)}
-                    </span>
-                    {source.page_number != null ? (
-                      <span className="rv2-modal-cite-page">p. {source.page_number}</span>
-                    ) : source.location ? (
-                      <span className="rv2-modal-cite-page">{source.location}</span>
-                    ) : null}
-                  </div>
-                  {source.document_name ? (
-                    <div className="text-[10px] text-muted-foreground mt-1">{source.document_name}</div>
-                  ) : null}
-                  <p className="rv2-modal-cite-text">{source.excerpt}</p>
+        {groups.map((group) => {
+          const isActionItem = group.label === "Needs verification"
+            || group.label === "Observed limitation"
+            || group.label === "Opportunity for improvement"
+
+          return (
+            <section
+              key={group.id}
+              className={cn(
+                isActionItem
+                  ? "rounded-xl border border-status-flagged/20 bg-status-flagged-bg/30 px-5 py-4"
+                  : "rv2-modal-citations-block",
+                focusedStatementId && group.statementId === focusedStatementId
+                  ? "ring-1 ring-sc/20"
+                  : ""
+              )}
+            >
+              <h4 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                {group.label}
+              </h4>
+              {isActionItem ? (
+                <ul className="mt-2 space-y-2">
+                  {group.sources.map((source, index) => (
+                    <li key={`${group.id}-source-${index}`} className="flex items-start gap-2.5">
+                      <Square className="mt-0.5 h-4 w-4 flex-shrink-0 text-status-flagged/60" />
+                      <span className="text-sm leading-relaxed text-foreground">
+                        {source.excerpt}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="rv2-modal-citations-grid">
+                  {group.sources.map((source, index) => (
+                    <div key={`${group.id}-source-${index}`} className="rv2-modal-cite-card">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <span className="rv2-modal-cite-ref">
+                          {formatSourceLabel(source, index)}
+                        </span>
+                        {source.page_number != null ? (
+                          <span className="rv2-modal-cite-page">p. {source.page_number}</span>
+                        ) : source.location ? (
+                          <span className="rv2-modal-cite-page">{source.location}</span>
+                        ) : null}
+                      </div>
+                      {source.document_name ? (
+                        <div className="text-[10px] text-muted-foreground mt-1">{source.document_name}</div>
+                      ) : null}
+                      <p className="rv2-modal-cite-text">{source.excerpt}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
-        ))}
+              )}
+            </section>
+          )
+        })}
       </div>
     </section>
   )
@@ -697,6 +719,7 @@ export function ResultsV2() {
       filename: `evaluation-v2-${evaluationId}-${timestamp}.xlsx`,
       statusKey: "status",
       columns: [
+        { header: "Requirement ID", key: "requirementId", width: 18 },
         { header: "Clause", key: "clause", width: 10 },
         { header: "Title", key: "title", width: 30 },
         { header: "Status", key: "status", width: 16 },
@@ -712,6 +735,7 @@ export function ResultsV2() {
         { header: "Sources", key: "sources", width: 10 },
       ],
       rows: rows.map((row) => ({
+        requirementId: row.requirementId,
         clause: row.clause ?? "",
         title: row.title,
         status: row.status,
