@@ -92,6 +92,7 @@ export interface EvaluationDocument {
   summary_generated_at?: string;
   display_order: number;
   created_at: string;
+  storage_deleted_at?: string | null;
 }
 
 export interface RequirementResult {
@@ -154,6 +155,8 @@ export interface RequirementPresentationCitation {
   section_title?: string | null;
   document_name?: string | null;
   supports?: string | null;
+  evidence_id?: string | null;
+  evidence_type?: 'direct_quote' | 'cross_reference' | 'visual_or_table' | null;
 }
 
 export interface RequirementPresentationTextBlock {
@@ -504,6 +507,40 @@ export const api = {
       { cache: "no-store" }
     );
     return handleResponse(response);
+  },
+
+  getEvaluationDocumentContentUrl(
+    evaluationId: string,
+    documentId: string,
+    options?: { page?: number | null; search?: string | null; highlightText?: string | null }
+  ): string {
+    const url = new URL(`${API_BASE_URL}/evaluations/${evaluationId}/documents/${documentId}/content`, window.location.origin);
+    const fragments: string[] = [];
+    const normalizedPage =
+      options?.page && Number.isFinite(options.page) && options.page > 0
+        ? Math.floor(options.page)
+        : null;
+
+    if (normalizedPage) {
+      fragments.push(`page=${normalizedPage}`);
+      url.searchParams.set("page", String(normalizedPage));
+    }
+
+    if (options?.highlightText && options.highlightText.trim().length > 0) {
+      const normalizedHighlightText = options.highlightText.replace(/\s+/g, " ").trim();
+      if (normalizedHighlightText.length > 0) {
+        url.searchParams.set("highlight_text", normalizedHighlightText);
+      }
+    }
+
+    if (options?.search && options.search.trim().length > 0) {
+      fragments.push(`search=${encodeURIComponent(options.search.trim())}`);
+    }
+    if (fragments.length > 0) {
+      url.hash = fragments.join("&");
+    }
+
+    return url.toString();
   },
 
   /**
