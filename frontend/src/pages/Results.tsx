@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useParams } from "react-router-dom"
 import type { ColumnDef, Row } from "@tanstack/react-table"
-import * as XLSX from "xlsx"
+import { exportToExcel } from "@/lib/excel-export"
 
 import { DataTable } from "@/components/data-table"
 import { Badge } from "@/components/ui/badge"
@@ -522,26 +522,35 @@ export function Results() {
       return
     }
 
-    const exportRows = report.requirements.map((req) => ({
-      "Requirement ID": req.requirement_id || "",
-      "Clause": req.requirement_clause || "",
-      "Title": req.title || "",
-      "Status": (req.status || "PENDING").toUpperCase(),
-      "Confidence Level": formatConfidenceLabel(req.confidence_level),
-      "Agreement": req.agreement_status ? req.agreement_status.toUpperCase() : "UNKNOWN",
-      "Evaluation Rationale": req.evaluation_rationale || "",
-      "Evidence Snippets": req.evidence_snippets?.filter(Boolean).join(" | ") || "",
-      "Gaps Identified": req.gaps_identified?.filter(Boolean).join(" | ") || "",
-      "Recommendations": req.recommendations?.filter(Boolean).join(" | ") || "",
-    }))
-
-    const worksheet = XLSX.utils.json_to_sheet(exportRows)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Evaluation Results")
-
     const timestamp = new Date().toISOString().split("T")[0]
-    const filename = `evaluation-${evaluationId}-${timestamp}.xlsx`
-    XLSX.writeFile(workbook, filename)
+
+    exportToExcel({
+      sheetName: "Evaluation Results",
+      filename: `evaluation-${evaluationId}-${timestamp}.xlsx`,
+      statusKey: "status",
+      columns: [
+        { header: "Clause", key: "clause", width: 10 },
+        { header: "Title", key: "title", width: 30 },
+        { header: "Status", key: "status", width: 16 },
+        { header: "Confidence", key: "confidence", width: 14 },
+        { header: "Agreement", key: "agreement", width: 14 },
+        { header: "Evaluation Rationale", key: "rationale", width: 50, wrap: true },
+        { header: "Evidence Snippets", key: "evidence", width: 50, wrap: true },
+        { header: "Gaps Identified", key: "gaps", width: 40, wrap: true },
+        { header: "Recommendations", key: "recommendations", width: 40, wrap: true },
+      ],
+      rows: report.requirements.map((req) => ({
+        clause: req.requirement_clause || "",
+        title: req.title || "",
+        status: (req.status || "PENDING").toUpperCase(),
+        confidence: formatConfidenceLabel(req.confidence_level),
+        agreement: req.agreement_status ? req.agreement_status.toUpperCase() : "UNKNOWN",
+        rationale: req.evaluation_rationale || "",
+        evidence: req.evidence_snippets?.filter(Boolean).join("\n\n") || "",
+        gaps: req.gaps_identified?.filter(Boolean).join("\n\n") || "",
+        recommendations: req.recommendations?.filter(Boolean).join("\n\n") || "",
+      })),
+    })
   }, [report, evaluationId])
 
   const columns: ColumnDef<RequirementResult>[] = useMemo(

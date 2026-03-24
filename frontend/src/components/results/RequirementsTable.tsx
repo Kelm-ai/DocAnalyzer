@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react"
-import * as XLSX from "xlsx"
+import { exportToExcel } from "@/lib/excel-export"
 import { ChevronDown, ChevronRight, Search, Download, ExternalLink } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -75,18 +75,20 @@ export function RequirementsTable() {
   }, [requirements])
 
   const filteredRequirements = useMemo(() => {
-    return requirements.filter((req) => {
-      const search = searchTerm.toLowerCase()
-      const matchesSearch = search === "" || 
-        req.title.toLowerCase().includes(search) ||
-        req.id.toLowerCase().includes(search) ||
-        (req.evaluation_type ?? "").toLowerCase().includes(search)
-      
-      const matchesStatus = statusFilter === "all" || req.status === statusFilter
-      const matchesClause = clauseFilter === "all" || req.clause === clauseFilter
-      
-      return matchesSearch && matchesStatus && matchesClause
-    })
+    return requirements
+      .filter((req) => {
+        const search = searchTerm.toLowerCase()
+        const matchesSearch = search === "" ||
+          req.title.toLowerCase().includes(search) ||
+          req.id.toLowerCase().includes(search) ||
+          (req.evaluation_type ?? "").toLowerCase().includes(search)
+
+        const matchesStatus = statusFilter === "all" || req.status === statusFilter
+        const matchesClause = clauseFilter === "all" || req.clause === clauseFilter
+
+        return matchesSearch && matchesStatus && matchesClause
+      })
+      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
   }, [requirements, searchTerm, statusFilter, clauseFilter])
 
   const groupedByClause = useMemo(() => {
@@ -105,29 +107,35 @@ export function RequirementsTable() {
       return
     }
 
-    const exportRows = filteredRequirements.map((req) => {
-      return {
-        ID: req.id,
-        Clause: req.clause,
-        Order: req.display_order ?? "",
-        Title: req.title,
-        "Evaluation Type": req.evaluation_type ?? "",
-        Status: req.status ?? "PENDING",
-        "Confidence Level": getConfidenceLabel(req.confidence_level),
-        Rationale: req.evaluation_rationale ?? "",
-        "Evidence Snippets": req.evidence_snippets?.join("\n") ?? "",
-        Gaps: req.gaps?.join("\n") ?? "",
-        Recommendations: req.recommendations?.join("\n") ?? ""
-      }
-    })
-
-    const worksheet = XLSX.utils.json_to_sheet(exportRows)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Evaluation")
-
     const timestamp = new Date().toISOString().split("T")[0]
-    const filename = `compliance-evaluation-${timestamp}.xlsx`
-    XLSX.writeFile(workbook, filename)
+
+    exportToExcel({
+      sheetName: "Evaluation",
+      filename: `compliance-evaluation-${timestamp}.xlsx`,
+      statusKey: "status",
+      columns: [
+        { header: "Clause", key: "clause", width: 10 },
+        { header: "Title", key: "title", width: 30 },
+        { header: "Type", key: "type", width: 16 },
+        { header: "Status", key: "status", width: 16 },
+        { header: "Confidence", key: "confidence", width: 14 },
+        { header: "Rationale", key: "rationale", width: 50, wrap: true },
+        { header: "Evidence Snippets", key: "evidence", width: 50, wrap: true },
+        { header: "Gaps", key: "gaps", width: 40, wrap: true },
+        { header: "Recommendations", key: "recommendations", width: 40, wrap: true },
+      ],
+      rows: filteredRequirements.map((req) => ({
+        clause: req.clause,
+        title: req.title,
+        type: req.evaluation_type ?? "",
+        status: req.status ?? "PENDING",
+        confidence: getConfidenceLabel(req.confidence_level),
+        rationale: req.evaluation_rationale ?? "",
+        evidence: req.evidence_snippets?.join("\n\n") ?? "",
+        gaps: req.gaps?.join("\n\n") ?? "",
+        recommendations: req.recommendations?.join("\n\n") ?? "",
+      })),
+    })
   }, [filteredRequirements])
 
   return (

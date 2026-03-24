@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { useParams } from "react-router-dom"
-import * as XLSX from "xlsx"
+import { exportToExcel } from "@/lib/excel-export"
 import {
   AlertCircle,
   ArrowLeft,
@@ -33,6 +33,8 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { ExecutiveSummaryView } from "@/components/results/ExecutiveSummaryView"
 
 type FeedbackEntry = {
   isHelpful: boolean | null
@@ -312,6 +314,7 @@ export function ResultsV2() {
   const [confidenceFilter, setConfidenceFilter] = useState<"all" | "low" | "medium" | "high">("all")
   const [clauseFilter, setClauseFilter] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
+  const [activeTab, setActiveTab] = useState<"summary" | "details">("details")
   const [expandedRequirementId, setExpandedRequirementId] = useState<string | null>(null)
   const [activeRequirementId, setActiveRequirementId] = useState<string | null>(null)
   const [focusedSourceTarget, setFocusedSourceTarget] = useState<{ requirementId: string; statementId: string } | null>(null)
@@ -687,28 +690,45 @@ export function ResultsV2() {
       return
     }
 
-    const exportRows = rows.map((row) => ({
-      "Requirement ID": row.requirementId,
-      Clause: row.clause ?? "",
-      Title: row.title,
-      Status: row.status,
-      Confidence: row.confidenceLevel,
-      Review: row.reviewLabel,
-      "Assessment Summary": row.rationale,
-      "Inline Finding": row.inlineFinding.text,
-      "Inline Evidence": row.inlineEvidence?.text ?? "",
-      "Inline Caveat": row.inlineCaveat?.text ?? "",
-      "Modal Summary": row.modalSummary,
-      "Modal Evidence": row.modalEvidence.map((item) => `${item.label ?? "Detail"}: ${item.text}`).join(" | "),
-      "Total Sources": row.totalSources,
-    }))
-
-    const worksheet = XLSX.utils.json_to_sheet(exportRows)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Evaluation Results V2")
-
     const timestamp = new Date().toISOString().split("T")[0]
-    XLSX.writeFile(workbook, `evaluation-v2-${evaluationId}-${timestamp}.xlsx`)
+
+    exportToExcel({
+      sheetName: "Evaluation Results",
+      filename: `evaluation-v2-${evaluationId}-${timestamp}.xlsx`,
+      statusKey: "status",
+      columns: [
+        { header: "Clause", key: "clause", width: 10 },
+        { header: "Title", key: "title", width: 30 },
+        { header: "Status", key: "status", width: 16 },
+        { header: "Confidence", key: "confidence", width: 14 },
+        { header: "Review", key: "review", width: 12 },
+        { header: "Reviewer Notes", key: "reviewerNotes", width: 40, wrap: true },
+        { header: "Assessment Summary", key: "assessment", width: 50, wrap: true },
+        { header: "Finding", key: "finding", width: 50, wrap: true },
+        { header: "Evidence", key: "evidence", width: 40, wrap: true },
+        { header: "Caveat", key: "caveat", width: 40, wrap: true },
+        { header: "Detailed Summary", key: "modalSummary", width: 50, wrap: true },
+        { header: "Detailed Evidence", key: "modalEvidence", width: 50, wrap: true },
+        { header: "Sources", key: "sources", width: 10 },
+      ],
+      rows: rows.map((row) => ({
+        clause: row.clause ?? "",
+        title: row.title,
+        status: row.status,
+        confidence: row.confidenceLevel,
+        review: row.reviewLabel,
+        reviewerNotes: feedbackMap[row.requirementId]?.comment ?? "",
+        assessment: row.rationale,
+        finding: row.inlineFinding.text,
+        evidence: row.inlineEvidence?.text ?? "",
+        caveat: row.inlineCaveat?.text ?? "",
+        modalSummary: row.modalSummary,
+        modalEvidence: row.modalEvidence
+          .map((item) => `${item.label ?? "Detail"}: ${item.text}`)
+          .join("\n\n"),
+        sources: row.totalSources,
+      })),
+    })
   }, [evaluationId, report, rows])
 
   if (loading) {
@@ -829,6 +849,18 @@ export function ResultsV2() {
         </div>
       </div>
 
+      {/* ── Tabs ── */}
+      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as "summary" | "details"); setActiveRequirementId(null) }}>
+        <TabsList>
+          <TabsTrigger value="summary">Executive Summary</TabsTrigger>
+          <TabsTrigger value="details">Detailed Results</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="summary">
+          <ExecutiveSummaryView executiveSummary={report.executive_summary} />
+        </TabsContent>
+
+        <TabsContent value="details" className="space-y-6">
       {/* ── DIV 2: Filter bar ── */}
       <div className="rounded-xl border border-border/60 bg-background p-5" style={{ boxShadow: '0 1px 4px rgba(90, 74, 63, 0.08)' }}>
         <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center">
@@ -1070,6 +1102,9 @@ export function ResultsV2() {
           </Button>
         </div>
       </div>
+
+        </TabsContent>
+      </Tabs>
 
       {/* ── Detail modal ── */}
       {activeRow ? (
