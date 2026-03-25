@@ -360,6 +360,8 @@ function isDocumentPreviewAvailable(document: EvaluationDocument | null): boolea
   return Boolean(document && !document.storage_deleted_at)
 }
 
+const PDF_PAGE_WINDOW_RADIUS = 5
+
 function SourceViewerModal({
   evaluationId,
   source,
@@ -514,10 +516,13 @@ function SourceViewerModal({
   const canGoToNextPage = totalPages != null && currentDisplayPage < totalPages
   const pagesToRender = useMemo(() => {
     if (totalPages && totalPages > 0) {
-      return Array.from({ length: totalPages }, (_, index) => index + 1)
+      const centerPage = Math.min(Math.max(1, currentDisplayPage), totalPages)
+      const startPage = Math.max(1, centerPage - PDF_PAGE_WINDOW_RADIUS)
+      const endPage = Math.min(totalPages, centerPage + PDF_PAGE_WINDOW_RADIUS)
+      return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index)
     }
     return [clampedPage]
-  }, [clampedPage, totalPages])
+  }, [clampedPage, currentDisplayPage, totalPages])
 
   const scrollToPage = useCallback((pageNumber: number, behavior: ScrollBehavior) => {
     const container = pdfScrollRef.current
@@ -1124,14 +1129,21 @@ export function ResultsV2() {
     const loadReport = async () => {
       try {
         setLoading(true)
-        const [reportData, evaluationStatus, documentsData] = await Promise.all([
+        setDocuments([])
+        const [reportData, evaluationStatus] = await Promise.all([
           api.getComplianceReport(evaluationId),
           api.getEvaluationStatus(evaluationId),
-          api.getEvaluationDocuments(evaluationId),
         ])
         setReport(reportData)
-        setDocuments(documentsData)
         setError(null)
+
+        try {
+          const documentsData = await api.getEvaluationDocuments(evaluationId)
+          setDocuments(documentsData)
+        } catch (documentsError) {
+          console.error("Failed to load evaluation documents", documentsError)
+          setDocuments([])
+        }
 
         if (evaluationStatus.framework_id) {
           try {
