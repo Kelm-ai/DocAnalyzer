@@ -1563,16 +1563,26 @@ Vision handling:
         citation_retry: bool = False,
     ) -> Tuple[str, str]:
         description = requirement.get("title") or requirement.get("requirement_text") or ""
-        requirement_details = "\n".join(
-            [
-                f"- ID: {requirement.get('id')}",
-                f"- Clause: {requirement.get('clause', '')}",
-                f"- Title: {description}",
-                f"- Order: {requirement.get('display_order') if requirement.get('display_order') is not None else requirement.get('sort_order')}" if requirement.get("display_order") is not None or requirement.get("sort_order") is not None else "",
-                f"- Evaluation Type: {requirement.get('evaluation_type')}" if requirement.get("evaluation_type") else "",
-                f"- Additional Context: {requirement.get('requirement_text')}" if requirement.get("requirement_text") and requirement.get("requirement_text") != description else "",
-            ]
-        ).strip()
+        requirement_details_lines: List[str] = [
+            f"- ID: {requirement.get('id')}",
+            f"- Clause: {requirement.get('clause', '')}",
+            f"- Title: {description}",
+        ]
+        if requirement.get("display_order") is not None or requirement.get("sort_order") is not None:
+            requirement_details_lines.append(
+                f"- Order: {requirement.get('display_order') if requirement.get('display_order') is not None else requirement.get('sort_order')}"
+            )
+        if requirement.get("evaluation_type"):
+            requirement_details_lines.append(f"- Evaluation Type: {requirement.get('evaluation_type')}")
+        if requirement.get("requirement_text") and requirement.get("requirement_text") != description:
+            requirement_details_lines.append(f"- Additional Context: {requirement.get('requirement_text')}")
+        if requirement.get("acceptance_criteria"):
+            requirement_details_lines.append(f"- Acceptance Criteria: {requirement.get('acceptance_criteria')}")
+        if requirement.get("expected_artifacts"):
+            requirement_details_lines.append(f"- Expected Artifacts (examples, not mandatory list): {requirement.get('expected_artifacts')}")
+        if requirement.get("guidance_notes"):
+            requirement_details_lines.append(f"- Guidance Notes: {requirement.get('guidance_notes')}")
+        requirement_details = "\n".join(requirement_details_lines).strip()
 
         # Build document hierarchy instructions if supporting docs are present
         if self._supporting_doc_names:
@@ -1580,10 +1590,12 @@ Vision handling:
             document_hierarchy_instruction = (
                 "DOCUMENT HIERARCHY:\n"
                 "Multiple documents are attached. The FIRST document is the PRIMARY document being evaluated.\n"
-                "Supporting documents are ONLY to be consulted when the primary document explicitly references them.\n"
+                "Supporting documents are secondary evidence.\n"
                 f"Supporting documents available:\n{doc_list}\n\n"
-                "IMPORTANT: Your evaluation should focus on the PRIMARY document. Only look at supporting documents\n"
-                "if the primary document mentions them by name or reference (e.g., 'see Training Policy', 'per SOP-XXX').\n"
+                "IMPORTANT: Focus on the PRIMARY document first. Then consult supporting documents when either:\n"
+                "- the primary document references them explicitly; OR\n"
+                "- the requirement expects records/artifacts commonly maintained outside a procedure (for example: minutes, logs, matrices, plans).\n"
+                "Do not invent evidence and do not assume external records exist without citation.\n"
                 "When citing evidence, clearly indicate which document it came from.\n\n"
             )
         else:
@@ -1602,9 +1614,10 @@ Vision handling:
             "MANDATORY METHOD:\n"
             "1. Review the PRIMARY document (first attached PDF) for visuals (tables, charts, signatures) whenever the text layer is insufficient.\n"
             "2. Evaluate ONLY the requested clause; cite page or section references for evidence. Treat clear cross-references to other SOPs/records as evidence that those processes/records exist.\n"
-            "3. If the primary document references a supporting document by name, you may consult that supporting document to verify the cross-reference.\n"
-            "4. Decision logic: PASS if the requirement is clearly addressed and practicable; FAIL if the process/records are missing/contradicted; FLAGGED when evidence is incomplete or genuinely uncertain; NOT_APPLICABLE only when the clause truly does not apply.\n"
-            "5. Before finalising, confirm the chosen status best matches the evidence; do not default to FLAGGED when PASS or FAIL is supported.\n"
+            "3. Expected artifacts are examples of strong evidence, not a strict checklist. For policy/procedure documents, treat clearly defined process statements and controlled cross-references as sufficient for PASS unless the clause explicitly requires execution records in the current document set.\n"
+            "4. If the primary document references a supporting document by name or type, you may consult supporting documents to verify the reference.\n"
+            "5. Decision logic: PASS if the requirement is clearly addressed and practicable; FAIL if the process/records are missing/contradicted; FLAGGED when evidence is incomplete or genuinely uncertain; NOT_APPLICABLE only when the clause truly does not apply.\n"
+            "6. Before finalising, confirm the chosen status best matches the evidence; do not default to FLAGGED when PASS or FAIL is supported.\n"
             "Respond strictly with JSON using this schema:\n"
             "{\n"
             "  \"status\": \"PASS|FAIL|FLAGGED|NOT_APPLICABLE\",\n"

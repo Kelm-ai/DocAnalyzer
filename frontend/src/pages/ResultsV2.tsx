@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { useParams } from "react-router-dom"
 import * as XLSX from "xlsx"
+import { Document, Page, pdfjs } from "react-pdf"
 import {
   AlertCircle,
   ArrowLeft,
@@ -15,9 +16,11 @@ import {
   ThumbsUp,
   X,
 } from "lucide-react"
+import "react-pdf/dist/Page/AnnotationLayer.css"
+import "react-pdf/dist/Page/TextLayer.css"
 
 import { api } from "@/lib/api"
-import type { ComplianceReport, Framework } from "@/lib/api"
+import type { ComplianceReport, EvaluationDocument, Framework } from "@/lib/api"
 import {
   CONFIDENCE_NOTES,
   feedbackToReviewState,
@@ -34,11 +37,19 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
+pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString()
+
 type FeedbackEntry = {
   isHelpful: boolean | null
   comment: string
   isSaving: boolean
   error: string | null
+}
+
+type ActiveCitationState = {
+  source: CitationReference
+  sources: CitationReference[]
+  index: number
 }
 
 function createDefaultFeedbackEntry(): FeedbackEntry {
@@ -54,10 +65,746 @@ function formatSourceLabel(source: CitationReference, index: number): string {
   if (typeof source.label === "string" && source.label.trim().length > 0) {
     return source.label.trim()
   }
-  if (source.page_number != null) {
-    return `p.${source.page_number}`
+  const pageNumber = parseCitationPageNumber(source.page_number)
+  if (pageNumber != null) {
+    return `p.${pageNumber}`
   }
   return `Evidence ${index + 1}`
+}
+
+function parseCitationPageNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return Math.floor(value)
+  }
+  if (typeof value === "string") {
+    const match = value.match(/\d+/)
+    if (!match) {
+      return null
+    }
+    const parsed = Number.parseInt(match[0], 10)
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed
+    }
+  }
+  return null
+}
+
+function normalizeDocumentName(value?: string | null): string {
+  return (value ?? "").trim().toLowerCase()
+}
+
+function normalizeCitationText(value?: string | null): string | null {
+  if (typeof value !== "string") {
+    return null
+  }
+  const normalized = value.replace(/\s+/g, " ").trim()
+  return normalized.length > 0 ? normalized : null
+}
+
+function getCitationHighlightText(source: CitationReference): string | null {
+  const excerpt = normalizeCitationText(source.excerpt)
+  if (excerpt) {
+    return excerpt
+  }
+
+  const supports = normalizeCitationText(source.supports)
+  if (supports) {
+    return supports
+  }
+
+  const section = normalizeCitationText(source.section_title)
+  if (section) {
+    return section
+  }
+
+  return normalizeCitationText(source.location)
+}
+
+function getCitationSearchText(source: CitationReference): string | null {
+  const highlightText = getCitationHighlightText(source)
+  if (!highlightText) {
+    return null
+  }
+  return highlightText.length > 180 ? `${highlightText.slice(0, 177)}...` : highlightText
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}
+
+const HIGHLIGHT_STOP_WORDS = new Set([
+  "about", "after", "again", "along", "also", "although", "among", "because", "before", "being",
+  "below", "between", "document", "during", "every", "first", "found", "from", "further", "having",
+  "highlight", "however", "including", "into", "location", "page", "section", "should", "since",
+  "source", "supports", "than", "that", "their", "there", "these", "this", "those", "through",
+  "under", "using", "where", "which", "while", "with", "within",
+])
+
+function tokenizeForPassageMatch(text: string | null): string[] {
+  if (!text) {
+    return []
+  }
+  return text
+    .toLowerCase()
+    .replace(/[“”]/g, "\"")
+    .replace(/[‘’]/g, "'")
+    .split(/[^a-z0-9]+/g)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2)
+}
+
+function getHighlightPhrases(text: string | null): string[] {
+  if (!text) {
+    return []
+  }
+
+  const normalized = text
+    .replace(/[“”]/g, "\"")
+    .replace(/[‘’]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim()
+
+  if (normalized.length < 12) {
+    return []
+  }
+
+  const candidates: string[] = []
+  if (normalized.length <= 180) {
+    candidates.push(normalized)
+  }
+
+  const sentenceMatch = normalized.match(/^(.{20,240}?[.!?;:])(?:\s|$)/)
+  if (sentenceMatch?.[1]) {
+    candidates.push(sentenceMatch[1].trim())
+  }
+
+  const quotedPhrases = Array.from(normalized.matchAll(/["']([^"']{12,200})["']/g))
+    .map((match) => match[1].trim())
+    .slice(0, 2)
+  candidates.push(...quotedPhrases)
+
+  const seen = new Set<string>()
+  const phrases: string[] = []
+  for (const candidate of candidates) {
+    const compact = candidate.replace(/\s+/g, " ").trim()
+    const key = compact.toLowerCase()
+    if (!compact || seen.has(key)) {
+      continue
+    }
+    if (compact.length < 12 || compact.split(" ").length < 2) {
+      continue
+    }
+    seen.add(key)
+    phrases.push(compact)
+    if (phrases.length >= 3) {
+      break
+    }
+  }
+
+  return phrases
+}
+
+function getHeadingHighlightPhrases(sectionTitle: string | null): string[] {
+  if (!sectionTitle) {
+    return []
+  }
+
+  const normalized = sectionTitle
+    .replace(/[“”]/g, "\"")
+    .replace(/[‘’]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim()
+
+  if (normalized.length < 3) {
+    return []
+  }
+
+  const candidates = [normalized]
+  const splitByColon = normalized.split(/[:\-–—]/).map((part) => part.trim()).filter(Boolean)
+  candidates.push(...splitByColon)
+  const withoutSectionLabel = normalized.replace(/^(section|clause|sec)\s+/i, "").trim()
+  if (withoutSectionLabel && withoutSectionLabel !== normalized) {
+    candidates.push(withoutSectionLabel)
+  }
+  const withoutLeadingNumber = withoutSectionLabel
+    .replace(/^\d+(?:\.\d+)*[a-z]?\s*[:.)-]?\s*/i, "")
+    .trim()
+  if (withoutLeadingNumber && withoutLeadingNumber !== withoutSectionLabel) {
+    candidates.push(withoutLeadingNumber)
+  }
+  const sectionIdMatches = normalized.match(/\b\d+(?:\.\d+){1,5}[a-z]?\b/gi) ?? []
+  candidates.push(...sectionIdMatches)
+
+  const seen = new Set<string>()
+  const phrases: string[] = []
+  for (const candidate of candidates) {
+    const compact = candidate.replace(/\s+/g, " ").trim()
+    const key = compact.toLowerCase()
+    if (seen.has(key)) {
+      continue
+    }
+    seen.add(key)
+
+    const tokenCount = tokenizeForPassageMatch(compact).length
+    const isSectionId = /^\d+(?:\.\d+){1,5}[a-z]?$/i.test(compact)
+    if (isSectionId || (compact.length >= 6 && tokenCount >= 1)) {
+      phrases.push(compact)
+    }
+    if (phrases.length >= 6) {
+      break
+    }
+  }
+
+  return phrases
+}
+
+function getPassageChunks(text: string | null): { chunks: string[]; tokenSet: Set<string> } | null {
+  if (!text) {
+    return null
+  }
+
+  const tokens = tokenizeForPassageMatch(text)
+  if (tokens.length < 3) {
+    return null
+  }
+
+  const chunkLengths = tokens.length >= 14
+    ? [6, 5, 4]
+    : tokens.length >= 10
+      ? [5, 4, 3]
+      : tokens.length >= 7
+        ? [4, 3]
+        : [3]
+
+  const chunks: string[] = []
+  const seenChunks = new Set<string>()
+
+  for (const chunkLength of chunkLengths) {
+    if (chunkLength > tokens.length) {
+      continue
+    }
+    for (let index = 0; index <= tokens.length - chunkLength; index += 1) {
+      const slice = tokens.slice(index, index + chunkLength)
+      const meaningfulTokens = slice.filter((token) => !HIGHLIGHT_STOP_WORDS.has(token))
+      if (meaningfulTokens.length < Math.max(2, Math.ceil(chunkLength * 0.5))) {
+        continue
+      }
+
+      const chunk = slice.join(" ")
+      if (seenChunks.has(chunk)) {
+        continue
+      }
+      seenChunks.add(chunk)
+      chunks.push(chunk)
+
+      if (chunks.length >= 28) {
+        break
+      }
+    }
+    if (chunks.length >= 28) {
+      break
+    }
+  }
+
+  if (chunks.length === 0) {
+    return null
+  }
+
+  const tokenSet = new Set(
+    tokens.filter((token) => token.length >= 4 && !HIGHLIGHT_STOP_WORDS.has(token))
+  )
+  return { chunks, tokenSet }
+}
+
+function resolveCitationDocument(
+  source: CitationReference,
+  documents: EvaluationDocument[]
+): EvaluationDocument | null {
+  if (documents.length === 0) {
+    return null
+  }
+
+  const citationName = normalizeDocumentName(source.document_name)
+  if (citationName) {
+    const exactMatch = documents.find((document) => normalizeDocumentName(document.file_name) === citationName)
+    if (exactMatch) {
+      return exactMatch
+    }
+
+    const looseMatch = documents.find((document) => {
+      const fileName = normalizeDocumentName(document.file_name)
+      return fileName.includes(citationName) || citationName.includes(fileName)
+    })
+    if (looseMatch) {
+      return looseMatch
+    }
+  }
+
+  if (documents.length === 1) {
+    return documents[0]
+  }
+
+  return documents.find((document) => document.document_role === "primary") ?? documents[0]
+}
+
+function isDocumentPreviewAvailable(document: EvaluationDocument | null): boolean {
+  return Boolean(document && !document.storage_deleted_at)
+}
+
+const PDF_PAGE_WINDOW_RADIUS = 5
+
+function SourceViewerModal({
+  evaluationId,
+  source,
+  document,
+  citationIndex,
+  citationCount,
+  canGoToPrevCitation,
+  canGoToNextCitation,
+  onPrevCitation,
+  onNextCitation,
+  onClose,
+}: {
+  evaluationId: string
+  source: CitationReference
+  document: EvaluationDocument | null
+  citationIndex: number
+  citationCount: number
+  canGoToPrevCitation: boolean
+  canGoToNextCitation: boolean
+  onPrevCitation: () => void
+  onNextCitation: () => void
+  onClose: () => void
+}) {
+  const previewAvailable = isDocumentPreviewAvailable(document)
+  const highlightText = getCitationHighlightText(source)
+  const searchHint = getCitationSearchText(source)
+  const citationPageNumber = parseCitationPageNumber(source.page_number)
+  const pdfUrl = previewAvailable && document
+    ? api.getEvaluationDocumentContentUrl(evaluationId, document.id)
+    : null
+  const initialPage = citationPageNumber ?? 1
+  const [activePage, setActivePage] = useState(initialPage)
+  const [visiblePage, setVisiblePage] = useState(initialPage)
+  const [totalPages, setTotalPages] = useState<number | null>(null)
+  const [pdfError, setPdfError] = useState<string | null>(null)
+  const lastStrongMatchIndexRef = useRef<number | null>(null)
+  const pdfScrollRef = useRef<HTMLDivElement | null>(null)
+  const pageAnchorsRef = useRef<Record<number, HTMLDivElement | null>>({})
+  const nextScrollBehaviorRef = useRef<ScrollBehavior>("auto")
+
+  useEffect(() => {
+    pageAnchorsRef.current = {}
+    setTotalPages(null)
+    setPdfError(null)
+  }, [document?.id])
+
+  useEffect(() => {
+    nextScrollBehaviorRef.current = "auto"
+    setActivePage(initialPage)
+    setVisiblePage(initialPage)
+  }, [highlightText, initialPage])
+
+  const clampedPage = useMemo(() => {
+    if (!totalPages) {
+      return Math.max(1, activePage)
+    }
+    return Math.min(Math.max(1, activePage), totalPages)
+  }, [activePage, totalPages])
+  const currentDisplayPage = useMemo(() => {
+    if (!totalPages) {
+      return Math.max(1, visiblePage)
+    }
+    return Math.min(Math.max(1, visiblePage), totalPages)
+  }, [visiblePage, totalPages])
+
+  const highlightPhraseRegexes = useMemo(() => {
+    return getHighlightPhrases(highlightText).map((phrase) => {
+      const escapedPhrase = escapeRegExp(escapeHtml(phrase)).replace(/\s+/g, "\\s+")
+      return new RegExp(`(${escapedPhrase})`, "gi")
+    })
+  }, [highlightText])
+
+  const headingPhraseRegexes = useMemo(() => {
+    return getHeadingHighlightPhrases(normalizeCitationText(source.section_title)).map((phrase) => {
+      if (/^\d+(?:\.\d+){1,5}[a-z]?$/i.test(phrase)) {
+        const parts = phrase.match(/\d+|[a-z]+/gi) ?? [phrase]
+        const flexiblePattern = parts.join("(?:\\s*[.\\-]\\s*|\\s+)")
+        return new RegExp(`(${flexiblePattern})`, "gi")
+      }
+      const escapedPhrase = escapeRegExp(escapeHtml(phrase)).replace(/\s+/g, "\\s+")
+      return new RegExp(`(${escapedPhrase})`, "gi")
+    })
+  }, [source.section_title])
+
+  const passageChunks = useMemo(() => getPassageChunks(highlightText), [highlightText])
+
+  useEffect(() => {
+    lastStrongMatchIndexRef.current = null
+  }, [pdfUrl, clampedPage, highlightText])
+
+  const renderHighlightedText = useCallback(
+    ({ str, itemIndex }: { str: string; itemIndex: number }) => {
+      let rendered = escapeHtml(str ?? "")
+      let headingMatched = false
+      let phraseMatched = false
+
+      for (const headingRegex of headingPhraseRegexes) {
+        const next = rendered.replace(
+          headingRegex,
+          '<mark class="rv2-pdf-highlight rv2-pdf-highlight-heading">$1</mark>'
+        )
+        if (next !== rendered) {
+          headingMatched = true
+          rendered = next
+        }
+      }
+
+      for (const phraseRegex of highlightPhraseRegexes) {
+        const next = rendered.replace(phraseRegex, '<mark class="rv2-pdf-highlight">$1</mark>')
+        if (next !== rendered) {
+          phraseMatched = true
+          rendered = next
+        }
+      }
+
+      if (headingMatched || phraseMatched || !passageChunks) {
+        return rendered
+      }
+
+      const lineTokens = tokenizeForPassageMatch(str)
+      if (lineTokens.length === 0) {
+        return rendered
+      }
+
+      const normalizedLine = ` ${lineTokens.join(" ")} `
+      const strongChunkMatch = passageChunks.chunks.some((chunk) => normalizedLine.includes(` ${chunk} `))
+      const overlapCount = lineTokens.filter((token) => passageChunks.tokenSet.has(token)).length
+      const overlapRatio = overlapCount / lineTokens.length
+
+      const previousStrongIndex = lastStrongMatchIndexRef.current
+      const isNearStrongLine = previousStrongIndex != null && Math.abs(itemIndex - previousStrongIndex) <= 1
+      const nearStrongContinuation = isNearStrongLine && overlapCount >= 2 && overlapRatio >= 0.45
+
+      if (strongChunkMatch || nearStrongContinuation) {
+        lastStrongMatchIndexRef.current = itemIndex
+        return `<mark class="rv2-pdf-highlight">${rendered}</mark>`
+      }
+
+      return rendered
+    },
+    [headingPhraseRegexes, highlightPhraseRegexes, passageChunks]
+  )
+
+  const externalViewerUrl = previewAvailable && document
+    ? api.getEvaluationDocumentContentUrl(evaluationId, document.id, {
+        page: currentDisplayPage,
+        search: searchHint,
+      })
+    : null
+
+  const canGoToPrevPage = currentDisplayPage > 1
+  const canGoToNextPage = totalPages != null && currentDisplayPage < totalPages
+  const pagesToRender = useMemo(() => {
+    if (totalPages && totalPages > 0) {
+      const centerPage = Math.min(Math.max(1, currentDisplayPage), totalPages)
+      const startPage = Math.max(1, centerPage - PDF_PAGE_WINDOW_RADIUS)
+      const endPage = Math.min(totalPages, centerPage + PDF_PAGE_WINDOW_RADIUS)
+      return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index)
+    }
+    return [clampedPage]
+  }, [clampedPage, currentDisplayPage, totalPages])
+
+  const scrollToPage = useCallback((pageNumber: number, behavior: ScrollBehavior) => {
+    const container = pdfScrollRef.current
+    const target = pageAnchorsRef.current[pageNumber]
+    if (!container || !target) {
+      return
+    }
+    const top = Math.max(target.offsetTop - 12, 0)
+    container.scrollTo({ top, behavior })
+  }, [])
+
+  const handlePdfScroll = useCallback(() => {
+    const container = pdfScrollRef.current
+    const pageEntries = Object.entries(pageAnchorsRef.current)
+    if (!container || pageEntries.length === 0) {
+      return
+    }
+
+    const containerTop = container.getBoundingClientRect().top
+    let closestPage = 1
+    let closestDistance = Number.POSITIVE_INFINITY
+
+    for (const [pageValue, node] of pageEntries) {
+      if (!node) {
+        continue
+      }
+      const pageNumber = Number.parseInt(pageValue, 10)
+      if (!Number.isFinite(pageNumber)) {
+        continue
+      }
+      const distance = Math.abs(node.getBoundingClientRect().top - containerTop - 12)
+      if (distance < closestDistance) {
+        closestDistance = distance
+        closestPage = pageNumber
+      }
+    }
+
+    setVisiblePage((prev) => (prev === closestPage ? prev : closestPage))
+  }, [])
+
+  useEffect(() => {
+    if (!pdfUrl || activePage < 1) {
+      return
+    }
+
+    const behavior = nextScrollBehaviorRef.current
+    scrollToPage(activePage, behavior)
+    nextScrollBehaviorRef.current = "smooth"
+    setVisiblePage(activePage)
+  }, [activePage, pdfUrl, scrollToPage, totalPages])
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6" onMouseDown={(event) => event.stopPropagation()}>
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
+        aria-hidden="true"
+        onMouseDown={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+        }}
+        onClick={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          onClose()
+        }}
+      />
+      <div
+        className="relative grid h-[88vh] w-full max-w-[1320px] min-w-0 overflow-hidden rounded-2xl border border-border bg-background shadow-2xl lg:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]"
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close citation preview"
+          className="absolute right-3 top-3 z-20 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-background/95 text-muted-foreground transition-colors hover:bg-border hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <aside className="rv2-scroll border-b border-border bg-[#fcfaf6] px-5 py-5 lg:border-b-0 lg:border-r">
+          <div className="mb-4 pr-10">
+            <div className="space-y-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Citation preview</div>
+              <div className="text-sm font-semibold text-foreground">{source.document_name || document?.file_name || "Source document"}</div>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onPrevCitation}
+                disabled={!canGoToPrevCitation}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Prev citation
+              </button>
+              <span className="text-xs text-muted-foreground">{citationIndex + 1} / {citationCount}</span>
+              <button
+                type="button"
+                onClick={onNextCitation}
+                disabled={!canGoToNextCitation}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next citation
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="rounded-xl border border-[#eadfce] bg-white px-4 py-3">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="rv2-modal-cite-ref">{formatSourceLabel(source, citationIndex)}</span>
+                {citationPageNumber != null ? (
+                  <span className="rv2-modal-cite-page">Page {citationPageNumber}</span>
+                ) : null}
+                {source.evidence_type ? (
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.04em] text-muted-foreground">
+                    {source.evidence_type.replace(/_/g, " ")}
+                  </span>
+                ) : null}
+              </div>
+              {source.section_title ? (
+                <div className="mb-2 text-xs font-medium text-foreground">{source.section_title}</div>
+              ) : null}
+              {source.supports ? (
+                <div className="mb-2 text-[11px] uppercase tracking-[0.05em] text-muted-foreground">
+                  Supports: <span className="normal-case tracking-normal text-foreground">{source.supports}</span>
+                </div>
+              ) : null}
+              {source.excerpt ? <p className="rv2-modal-cite-text">{source.excerpt}</p> : null}
+            </div>
+
+            {!document ? (
+              <div className="rounded-xl border border-status-flagged/20 bg-status-flagged-bg px-4 py-3 text-sm text-status-flagged">
+                The cited document could not be matched to an uploaded PDF for this evaluation.
+              </div>
+            ) : !previewAvailable ? (
+              <div className="rounded-xl border border-status-flagged/20 bg-status-flagged-bg px-4 py-3 text-sm text-status-flagged">
+                This source PDF was cleaned up from storage, so the citation can no longer open its original page preview.
+              </div>
+            ) : null}
+          </div>
+        </aside>
+
+        <section className="flex min-h-0 flex-col bg-[#f3efe8]">
+          <div className="flex items-center justify-between gap-3 border-b border-border bg-background/90 py-3 pl-4 pr-14">
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium text-foreground">{document?.file_name || "Document preview unavailable"}</div>
+              <div className="text-xs text-muted-foreground">
+                {citationPageNumber != null ? `Page ${currentDisplayPage}` : "Referenced section"}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {pdfUrl ? (
+                <div className="flex items-center gap-1.5 rounded-lg border border-border/80 bg-background px-2 py-1.5 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      nextScrollBehaviorRef.current = "smooth"
+                      setActivePage(Math.max(1, currentDisplayPage - 1))
+                    }}
+                    disabled={!canGoToPrevPage}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Previous page"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="min-w-[64px] text-center text-xs text-muted-foreground">
+                    {totalPages ? `${currentDisplayPage} / ${totalPages}` : `${currentDisplayPage}`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      nextScrollBehaviorRef.current = "smooth"
+                      setActivePage(currentDisplayPage + 1)
+                    }}
+                    disabled={!canGoToNextPage}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Next page"
+                  >
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : null}
+              {externalViewerUrl ? (
+                <a
+                  href={externalViewerUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                  aria-label="Open in new tab"
+                  title="Open in new tab"
+                >
+                  Open in new tab
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 p-3">
+            {pdfUrl ? (
+              <div
+                ref={pdfScrollRef}
+                onScroll={handlePdfScroll}
+                className="rv2-pdf-shell relative h-full overflow-auto rounded-xl border border-border bg-white"
+              >
+                <Document
+                  key={pdfUrl}
+                  file={pdfUrl}
+                  loading={
+                    <div className="flex h-full min-h-[220px] items-center justify-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading PDF preview...
+                    </div>
+                  }
+                  onLoadSuccess={(loadedPdf: { numPages: number }) => {
+                    setTotalPages(loadedPdf.numPages)
+                    setActivePage((prev) => Math.min(Math.max(1, prev), loadedPdf.numPages))
+                    setPdfError(null)
+                    if (citationPageNumber == null) {
+                      return
+                    }
+                    nextScrollBehaviorRef.current = "auto"
+                  }}
+                  onLoadError={(error) => {
+                    setPdfError(error instanceof Error ? error.message : "Unable to load PDF preview")
+                  }}
+                  error={
+                    <div className="flex h-full min-h-[220px] items-center justify-center rounded-xl border border-dashed border-border bg-background px-6 text-center text-sm text-muted-foreground">
+                      Unable to render this PDF preview in-app. You can still open it in a new tab.
+                    </div>
+                  }
+                  noData={
+                    <div className="flex h-full min-h-[220px] items-center justify-center rounded-xl border border-dashed border-border bg-background px-6 text-center text-sm text-muted-foreground">
+                      No PDF file is available for preview.
+                    </div>
+                  }
+                  className="rv2-react-pdf"
+                >
+                  <div className="rv2-pdf-pages">
+                    {pagesToRender.map((pageNumber) => (
+                      <div
+                        key={`${pdfUrl}-page-${pageNumber}`}
+                        ref={(node) => {
+                          pageAnchorsRef.current[pageNumber] = node
+                        }}
+                        className="rv2-pdf-page-anchor"
+                      >
+                        <Page
+                          pageNumber={pageNumber}
+                          renderAnnotationLayer
+                          renderTextLayer
+                          customTextRenderer={pageNumber === initialPage ? renderHighlightedText : undefined}
+                          loading={
+                            <div className="flex h-full min-h-[220px] items-center justify-center gap-2 text-sm text-muted-foreground">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Rendering page...
+                            </div>
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </Document>
+                {pdfError ? (
+                  <div className="border-t border-border bg-status-flagged-bg px-4 py-2 text-xs text-status-flagged">
+                    {pdfError}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-border bg-background px-6 text-center text-sm text-muted-foreground">
+                No preview is available for this citation yet.
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    </div>
+  )
 }
 
 function SourceChip({
@@ -90,20 +837,18 @@ function SourceChip({
 
 function StatementContent({
   item,
-  requirementId,
   compact = false,
   maxPills = 2,
   onShowTooltip,
   onHideTooltip,
-  onOpenModal,
+  onOpenSource,
 }: {
   item: NarrativeItem
-  requirementId: string
   compact?: boolean
   maxPills?: number
   onShowTooltip?: (pill: HTMLElement, source: CitationReference) => void
   onHideTooltip?: () => void
-  onOpenModal?: (requirementId: string) => void
+  onOpenSource?: (source: CitationReference, context?: { sources: CitationReference[]; index: number }) => void
 }) {
   const visibleCitations = item.citations.slice(0, maxPills)
   const remainingCount = item.citations.length - visibleCitations.length
@@ -120,7 +865,7 @@ function StatementContent({
               index={index}
               onHover={onShowTooltip}
               onLeave={onHideTooltip}
-              onClick={() => onOpenModal?.(requirementId)}
+              onClick={() => onOpenSource?.(source, { sources: item.citations, index })}
             />
           ))}
           {remainingCount > 0 ? (
@@ -128,7 +873,7 @@ function StatementContent({
               className="rv2-citation-pill rv2-citation-more"
               onClick={(e) => {
                 e.stopPropagation()
-                onOpenModal?.(requirementId)
+                onOpenSource?.(item.citations[0], { sources: item.citations, index: 0 })
               }}
               onMouseEnter={(e) => {
                 onShowTooltip?.(e.currentTarget, {
@@ -205,18 +950,16 @@ function ReviewBadge({ state, label }: { state: ResultsV2ReviewState; label: str
 
 function NarrativeItemView({
   item,
-  requirementId,
   compact = false,
   onShowTooltip,
   onHideTooltip,
-  onOpenModal,
+  onOpenSource,
 }: {
   item: NarrativeItem
-  requirementId: string
   compact?: boolean
   onShowTooltip?: (pill: HTMLElement, source: CitationReference) => void
   onHideTooltip?: () => void
-  onOpenModal?: (requirementId: string) => void
+  onOpenSource?: (source: CitationReference, context?: { sources: CitationReference[]; index: number }) => void
 }) {
   return (
     <div className={cn("space-y-1.5 leading-relaxed", compact ? "text-[13px]" : "text-sm")}>
@@ -227,11 +970,10 @@ function NarrativeItemView({
       ) : null}
       <StatementContent
         item={item}
-        requirementId={requirementId}
         compact={compact}
         onShowTooltip={onShowTooltip}
         onHideTooltip={onHideTooltip}
-        onOpenModal={onOpenModal}
+        onOpenSource={onOpenSource}
       />
     </div>
   )
@@ -242,11 +984,13 @@ function SourcesSection({
   totalSources,
   focusedStatementId,
   sectionRef,
+  onOpenSource,
 }: {
   groups: SourceGroup[]
   totalSources: number
   focusedStatementId: string | null
   sectionRef: { current: HTMLElement | null }
+  onOpenSource?: (source: CitationReference, context?: { sources: CitationReference[]; index: number }) => void
 }) {
   if (groups.length === 0) {
     return null
@@ -273,8 +1017,13 @@ function SourcesSection({
             </h4>
             <div className="rv2-modal-citations-grid">
               {group.sources.map((source, index) => (
-                <div key={`${group.id}-source-${index}`} className="rv2-modal-cite-card">
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                <button
+                  key={`${group.id}-source-${index}`}
+                  type="button"
+                  className="rv2-modal-cite-card text-left"
+                  onClick={() => onOpenSource?.(source, { sources: group.sources, index })}
+                >
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
                     <span className="rv2-modal-cite-ref">
                       {formatSourceLabel(source, index)}
                     </span>
@@ -285,10 +1034,10 @@ function SourcesSection({
                     ) : null}
                   </div>
                   {source.document_name ? (
-                    <div className="text-[10px] text-muted-foreground mt-1">{source.document_name}</div>
+                    <div className="mt-1 text-[10px] text-muted-foreground">{source.document_name}</div>
                   ) : null}
                   <p className="rv2-modal-cite-text">{source.excerpt}</p>
-                </div>
+                </button>
               ))}
             </div>
           </section>
@@ -303,6 +1052,7 @@ export function ResultsV2() {
 
   const [report, setReport] = useState<ComplianceReport | null>(null)
   const [framework, setFramework] = useState<Framework | null>(null)
+  const [documents, setDocuments] = useState<EvaluationDocument[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [feedbackMap, setFeedbackMap] = useState<Record<string, FeedbackEntry>>({})
@@ -314,6 +1064,7 @@ export function ResultsV2() {
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedRequirementId, setExpandedRequirementId] = useState<string | null>(null)
   const [activeRequirementId, setActiveRequirementId] = useState<string | null>(null)
+  const [activeCitationState, setActiveCitationState] = useState<ActiveCitationState | null>(null)
   const [focusedSourceTarget, setFocusedSourceTarget] = useState<{ requirementId: string; statementId: string } | null>(null)
   const [scrollSourcesOnOpen, setScrollSourcesOnOpen] = useState(false)
   const [draftComment, setDraftComment] = useState("")
@@ -330,17 +1081,28 @@ export function ResultsV2() {
     if (tooltipTimeoutRef.current) clearTimeout(tooltipTimeoutRef.current)
     setTooltip({ visible: true, top: -9999, left: -9999, source })
     requestAnimationFrame(() => {
-      const el = tooltipRef.current
-      if (!el) return
-      const rect = pill.getBoundingClientRect()
-      const tw = el.offsetWidth
-      const th = el.offsetHeight
-      let left = rect.left + rect.width / 2 - tw / 2
-      let top = rect.top - th - 10
-      if (top < 8) top = rect.bottom + 10
-      if (left < 8) left = 8
-      if (left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8
-      setTooltip({ visible: true, top, left, source })
+      requestAnimationFrame(() => {
+        const el = tooltipRef.current
+        if (!el) return
+        const rect = pill.getBoundingClientRect()
+        const tw = el.offsetWidth
+        const th = el.offsetHeight
+        const gap = 14
+        const edge = 8
+        const canFitAbove = rect.top >= th + gap + edge
+        const canFitBelow = rect.bottom + th + gap <= window.innerHeight - edge
+
+        let top = canFitAbove ? rect.top - th - gap : rect.bottom + gap
+        if (!canFitAbove && !canFitBelow) {
+          top = Math.max(edge, rect.top - th - gap)
+        }
+
+        let left = rect.left + rect.width / 2 - tw / 2
+        if (left < edge) left = edge
+        if (left + tw > window.innerWidth - edge) left = window.innerWidth - tw - edge
+
+        setTooltip({ visible: true, top, left, source })
+      })
     })
   }, [])
 
@@ -349,6 +1111,13 @@ export function ResultsV2() {
       setTooltip((prev) => ({ ...prev, visible: false }))
     }, 120)
   }, [])
+
+  useEffect(() => {
+    if (!activeCitationState) {
+      return
+    }
+    setTooltip((prev) => ({ ...prev, visible: false }))
+  }, [activeCitationState])
 
   useEffect(() => {
     if (!evaluationId) {
@@ -360,12 +1129,21 @@ export function ResultsV2() {
     const loadReport = async () => {
       try {
         setLoading(true)
+        setDocuments([])
         const [reportData, evaluationStatus] = await Promise.all([
           api.getComplianceReport(evaluationId),
           api.getEvaluationStatus(evaluationId),
         ])
         setReport(reportData)
         setError(null)
+
+        try {
+          const documentsData = await api.getEvaluationDocuments(evaluationId)
+          setDocuments(documentsData)
+        } catch (documentsError) {
+          console.error("Failed to load evaluation documents", documentsError)
+          setDocuments([])
+        }
 
         if (evaluationStatus.framework_id) {
           try {
@@ -378,6 +1156,7 @@ export function ResultsV2() {
       } catch (loadError) {
         console.error("Failed to load compliance report", loadError)
         setError("Failed to load compliance report")
+        setDocuments([])
       } finally {
         setLoading(false)
       }
@@ -539,6 +1318,9 @@ export function ResultsV2() {
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (activeCitationState) {
+        return
+      }
       const currentIndex = filteredRows.findIndex((row) => row.requirementId === activeRow.requirementId)
 
       if (event.key === "Escape") {
@@ -555,7 +1337,7 @@ export function ResultsV2() {
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [activeRow, filteredRows])
+  }, [activeCitationState, activeRow, filteredRows])
 
   const summaryCounts = useMemo(() => {
     return rows.reduce(
@@ -710,6 +1492,95 @@ export function ResultsV2() {
     const timestamp = new Date().toISOString().split("T")[0]
     XLSX.writeFile(workbook, `evaluation-v2-${evaluationId}-${timestamp}.xlsx`)
   }, [evaluationId, report, rows])
+
+  const activeCitation = activeCitationState?.source ?? null
+  const activeCitationDocument = useMemo(
+    () => (activeCitation ? resolveCitationDocument(activeCitation, documents) : null),
+    [activeCitation, documents]
+  )
+
+  const openCitationPreview = useCallback(
+    (source: CitationReference, context?: { sources: CitationReference[]; index: number }) => {
+      const candidates = context?.sources?.length ? context.sources : [source]
+      const sourceIndex = context
+        ? Math.max(0, Math.min(context.index, candidates.length - 1))
+        : candidates.findIndex((candidate) => candidate === source)
+      const index = sourceIndex >= 0 ? sourceIndex : 0
+      setActiveCitationState({
+        source: candidates[index] ?? source,
+        sources: candidates,
+        index,
+      })
+    },
+    []
+  )
+
+  const goToPrevCitation = useCallback(() => {
+    setActiveCitationState((current) => {
+      if (!current || current.index <= 0) {
+        return current
+      }
+      const nextIndex = current.index - 1
+      return {
+        source: current.sources[nextIndex],
+        sources: current.sources,
+        index: nextIndex,
+      }
+    })
+  }, [])
+
+  const goToNextCitation = useCallback(() => {
+    setActiveCitationState((current) => {
+      if (!current || current.index >= current.sources.length - 1) {
+        return current
+      }
+      const nextIndex = current.index + 1
+      return {
+        source: current.sources[nextIndex],
+        sources: current.sources,
+        index: nextIndex,
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!activeCitationState) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveCitationState(null)
+        return
+      }
+      if (event.key === "ArrowUp" || (event.key === "ArrowLeft" && event.altKey)) {
+        goToPrevCitation()
+      }
+      if (event.key === "ArrowDown" || (event.key === "ArrowRight" && event.altKey)) {
+        goToNextCitation()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [activeCitationState, goToNextCitation, goToPrevCitation])
+
+  useEffect(() => {
+    const hasBlockingModal = Boolean(activeRequirementId || activeCitationState)
+    if (!hasBlockingModal) {
+      return
+    }
+
+    const previousOverflow = document.body.style.overflow
+    const previousOverscrollBehavior = document.body.style.overscrollBehavior
+    document.body.style.overflow = "hidden"
+    document.body.style.overscrollBehavior = "none"
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.body.style.overscrollBehavior = previousOverscrollBehavior
+    }
+  }, [activeCitationState, activeRequirementId])
 
   if (loading) {
     return (
@@ -987,20 +1858,18 @@ export function ResultsV2() {
                                   <div className="space-y-3">
                                     <NarrativeItemView
                                       item={row.inlineFinding}
-                                      requirementId={row.requirementId}
                                       compact
                                       onShowTooltip={showCitationTooltip}
                                       onHideTooltip={hideCitationTooltip}
-                                      onOpenModal={(reqId) => setActiveRequirementId(reqId)}
+                                      onOpenSource={openCitationPreview}
                                     />
                                     {row.inlineCaveat ? (
                                       <NarrativeItemView
                                         item={row.inlineCaveat}
-                                        requirementId={row.requirementId}
                                         compact
                                         onShowTooltip={showCitationTooltip}
                                         onHideTooltip={hideCitationTooltip}
-                                        onOpenModal={(reqId) => setActiveRequirementId(reqId)}
+                                        onOpenSource={openCitationPreview}
                                       />
                                     ) : null}
                                   </div>
@@ -1071,9 +1940,24 @@ export function ResultsV2() {
         </div>
       </div>
 
+      {activeCitation && evaluationId ? (
+        <SourceViewerModal
+          evaluationId={evaluationId}
+          source={activeCitation}
+          document={activeCitationDocument}
+          citationIndex={activeCitationState?.index ?? 0}
+          citationCount={activeCitationState?.sources.length ?? 1}
+          canGoToPrevCitation={(activeCitationState?.index ?? 0) > 0}
+          canGoToNextCitation={(activeCitationState?.index ?? 0) < ((activeCitationState?.sources.length ?? 1) - 1)}
+          onPrevCitation={goToPrevCitation}
+          onNextCitation={goToNextCitation}
+          onClose={() => setActiveCitationState(null)}
+        />
+      ) : null}
+
       {/* ── Detail modal ── */}
       {activeRow ? (
-        <div className="rv2-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-6">
+        <div className={cn("rv2-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-6", activeCitationState ? "pointer-events-none" : "")}>
           <div
             className="absolute inset-0"
             aria-hidden="true"
@@ -1146,18 +2030,16 @@ export function ResultsV2() {
                     <div className="space-y-3">
                       <NarrativeItemView
                         item={activeRow.inlineFinding}
-                        requirementId={activeRow.requirementId}
                         onShowTooltip={showCitationTooltip}
                         onHideTooltip={hideCitationTooltip}
-                        onOpenModal={() => sourcesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                        onOpenSource={openCitationPreview}
                       />
                       {activeRow.inlineCaveat ? (
                         <NarrativeItemView
                           item={activeRow.inlineCaveat}
-                          requirementId={activeRow.requirementId}
                           onShowTooltip={showCitationTooltip}
                           onHideTooltip={hideCitationTooltip}
-                          onOpenModal={() => sourcesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                          onOpenSource={openCitationPreview}
                         />
                       ) : null}
                     </div>
@@ -1171,6 +2053,7 @@ export function ResultsV2() {
                         : null
                     }
                     sectionRef={sourcesSectionRef}
+                    onOpenSource={openCitationPreview}
                   />
                 </div>
               </div>
@@ -1306,7 +2189,7 @@ export function ResultsV2() {
               {tooltip.source.excerpt ? (
                 <p className="rv2-cite-tooltip-text">{tooltip.source.excerpt}</p>
               ) : null}
-              <div className="rv2-cite-tooltip-hint">Click to view all details</div>
+              <div className="rv2-cite-tooltip-hint">Click to preview the cited PDF</div>
             </>
           ) : null}
         </div>,

@@ -455,16 +455,18 @@ Vision handling:
             f"- Title: {requirement['title']}",
             f"- Requirement Text: {requirement['requirement_text']}",
             f"- Acceptance Criteria: {requirement['acceptance_criteria']}",
-            f"- Expected Artifacts: {requirement.get('expected_artifacts', 'Not specified')}",
+            f"- Expected Artifacts (examples, not mandatory list): {requirement.get('expected_artifacts', 'Not specified')}",
+            f"- Guidance Notes: {requirement.get('guidance_notes', 'Not specified')}",
         ])
 
         instruction_block = (
             "MANDATORY METHOD:\n"
             "1. Review the attached PDF for visuals (tables, charts, signatures) whenever the text layer is insufficient.\n"
             "2. Evaluate ONLY the requested clause; cite page or section references for evidence. Treat clear cross-references to other SOPs/records as evidence that those processes/records exist.\n"
-            "3. Decision logic: PASS if the requirement is clearly addressed and practicable (minor OFIs allowed); FAIL if the process/records are missing or contradicted; FLAGGED when evidence is incomplete or genuinely uncertain; NOT_APPLICABLE only when the clause truly does not apply.\n"
-            "4. When in doubt between PASS and FLAGGED, choose PASS and note OFIs in the gaps/recommendations fields.\n"
-            "5. Before finalising, confirm the chosen status best matches the evidence; do not default to FLAGGED when PASS or FAIL is supported.\n"
+            "3. Expected artifacts are examples of strong evidence, not a strict checklist. For policy/procedure documents, clearly defined process statements and controlled cross-references can still satisfy PASS unless the clause explicitly requires execution records in the current document set.\n"
+            "4. Decision logic: PASS if the requirement is clearly addressed and practicable (minor OFIs allowed); FAIL if the process/records are missing or contradicted; FLAGGED when evidence is incomplete or genuinely uncertain; NOT_APPLICABLE only when the clause truly does not apply.\n"
+            "5. When in doubt between PASS and FLAGGED, choose PASS and note OFIs in the gaps/recommendations fields.\n"
+            "6. Before finalising, confirm the chosen status best matches the evidence; do not default to FLAGGED when PASS or FAIL is supported.\n"
             "Respond strictly with JSON using this schema:\n"
             "{\n"
             "  \"status\": \"PASS|FAIL|FLAGGED|NOT_APPLICABLE\",\n"

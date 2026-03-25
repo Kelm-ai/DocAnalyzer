@@ -392,8 +392,8 @@ SUPPORTING DOCUMENTATION CONTEXT
 ================================
 The following {len(summaries)} supporting document(s) have been provided as evidence context.
 Review these summaries to understand what additional documentation is available.
-If you need specific details from any supporting document that are not in the summary,
-you can request the full content using the request_document_content function.
+The full supporting documents are also attached for evaluation.
+Use these summaries to prioritize where to look, and cite supporting documents by name when used.
 
 """
 
