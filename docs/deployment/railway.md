@@ -16,7 +16,7 @@ Push the repo to GitHub before linking so Railway can auto-build on commits.
 
 ## Backend Service (root `.`)
 
-Railway detects the Python Railpack from `requirements.txt`. The `Procfile` defines the start command (`uvicorn api.app:app ...`).
+Railway detects the Python Railpack from `requirements.txt`. The start command runs `python -m uvicorn api.app:app ...`.
 
 1. `railway init` in the repo (or create the project in the dashboard and connect GitHub).
 2. Create a service from the repo and set the **Root Directory** to `.` (the default).
@@ -33,7 +33,7 @@ Railway detects the Python Railpack from `requirements.txt`. The `Procfile` defi
    - Gemini tuning (optional): `GEMINI_THINKING_LEVEL=low|high` (defaults to high unless `VISION_REASONING_EFFORT=low`), `GEMINI_MEDIA_RESOLUTION=media_resolution_low|media_resolution_medium|media_resolution_high` (defaults to medium for PDFs)
    - `CORS_ALLOW_ORIGINS` with the public frontend URL(s), e.g. `https://frontend-docanalyzer-production.up.railway.app`
 4. Set the health check path to `/api/health`.
-5. Deploy. The Railpack will install dependencies, run migrations (if defined), and start `uvicorn`. Confirm with `railway logs` and `curl https://<backend-domain>/api/health`.
+5. Deploy. The Railpack will install dependencies, run migrations (if defined), and start `python -m uvicorn`. Confirm with `railway logs` and `curl https://<backend-domain>/api/health`.
 
 ## Frontend Service (root `frontend`)
 
