@@ -5,6 +5,7 @@ Provides REST endpoints for document upload, evaluation, and results
 """
 
 import os
+import sys
 import json
 import uuid
 import asyncio
@@ -79,9 +80,6 @@ try:
     from api.document_converter import ensure_pdf
 except ImportError:
     from document_converter import ensure_pdf
-
-# Local imports
-import sys
 
 BASE_DIR = Path(__file__).resolve().parent
 ROOT_DIR = BASE_DIR.parent
