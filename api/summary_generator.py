@@ -116,8 +116,14 @@ async def generate_executive_summary(
 
         logger.info(f"Generating executive summary for {document_name}")
 
+        model = (
+            os.getenv("OPENAI_SUMMARY_MODEL")
+            or "gpt-5.4-mini"
+        )
+        logger.info(f"Executive summary using model: {model}")
+
         response = client.chat.completions.create(
-            model=os.getenv("OPENAI_SUMMARY_MODEL", "gpt-5-mini"),
+            model=model,
             messages=[
                 {"role": "system", "content": SUMMARY_SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt}

@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple
 
-from .evidence_utils import normalize_evidence_items
+from evidence_utils import normalize_evidence_items
 from openai import OpenAI
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -667,7 +667,7 @@ class OpenAIPdfPresentationGenerator(BaseRequirementPresentationGenerator):
             or os.getenv("OPENAI_PRESENTATION_MODEL")
             or os.getenv("OPENAI_MODEL")
             or os.getenv("OPENAI_VISION_MODEL")
-            or "gpt-5"
+            or "gpt-5.4"
         )
         self.reasoning_effort = os.getenv("OPENAI_PRESENTATION_REASONING_EFFORT", "low")
         self.max_concurrency = max(1, int(os.getenv("OPENAI_PRESENTATION_CONCURRENCY", "2")))
