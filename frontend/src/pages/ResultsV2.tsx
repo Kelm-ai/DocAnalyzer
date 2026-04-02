@@ -7,6 +7,9 @@ import {
   AlertCircle,
   ArrowLeft,
   ArrowRight,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   Download,
   ExternalLink,
   Loader2,
@@ -37,6 +40,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ExecutiveSummaryView } from "@/components/results/ExecutiveSummaryView"
 
@@ -1118,6 +1122,20 @@ export function ResultsV2() {
   const [draftComment, setDraftComment] = useState("")
   const sourcesSectionRef = useRef<HTMLElement | null>(null)
 
+  /* ── Table sort state ────────────────────────── */
+  type SortColumn = "clause" | "status" | "confidence" | "review"
+  const [sortColumn, setSortColumn] = useState<SortColumn>("clause")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+
+  const handleSort = useCallback((column: SortColumn) => {
+    if (column === sortColumn) {
+      setSortDirection((d) => (d === "asc" ? "desc" : "asc"))
+    } else {
+      setSortColumn(column)
+      setSortDirection("asc")
+    }
+  }, [sortColumn])
+
   /* ── Citation tooltip state ───────────────────── */
   const [tooltip, setTooltip] = useState<{ visible: boolean; top: number; left: number; source: CitationReference | null }>({
     visible: false, top: 0, left: 0, source: null,
@@ -1267,24 +1285,28 @@ export function ResultsV2() {
         )
       )
       .sort((left, right) => {
-        const clauseLeft = left.clause ?? ""
-        const clauseRight = right.clause ?? ""
-        const clauseDiff = clauseLeft.localeCompare(clauseRight, undefined, {
-          numeric: true,
-          sensitivity: "base",
-        })
-        if (clauseDiff !== 0) {
-          return clauseDiff
+        const CONFIDENCE_ORDER: Record<string, number> = { low: 0, medium: 1, high: 2 }
+        const REVIEW_ORDER: Record<string, number> = { rejected: 0, pending: 1, approved: 2 }
+
+        const comparators: Record<SortColumn, number> = {
+          clause: (left.clause ?? "").localeCompare(right.clause ?? "", undefined, { numeric: true, sensitivity: "base" }),
+          status: STATUS_ORDER[left.status] - STATUS_ORDER[right.status],
+          confidence: (CONFIDENCE_ORDER[left.confidenceLevel] ?? 1) - (CONFIDENCE_ORDER[right.confidenceLevel] ?? 1),
+          review: (REVIEW_ORDER[left.reviewState] ?? 1) - (REVIEW_ORDER[right.reviewState] ?? 1),
         }
 
-        const statusDiff = STATUS_ORDER[left.status] - STATUS_ORDER[right.status]
-        if (statusDiff !== 0) {
-          return statusDiff
+        const primary = comparators[sortColumn] * (sortDirection === "desc" ? -1 : 1)
+        if (primary !== 0) return primary
+
+        // Secondary: clause asc (unless already sorting by clause)
+        if (sortColumn !== "clause") {
+          const clauseFallback = (left.clause ?? "").localeCompare(right.clause ?? "", undefined, { numeric: true, sensitivity: "base" })
+          if (clauseFallback !== 0) return clauseFallback
         }
 
         return left.title.localeCompare(right.title, undefined, { sensitivity: "base" })
       })
-  }, [feedbackMap, report])
+  }, [feedbackMap, report, sortColumn, sortDirection])
 
   const clauseOptions = useMemo(() => {
     return [...new Set(rows.map((row) => row.clause).filter(Boolean) as string[])].sort((left, right) =>
@@ -1867,70 +1889,85 @@ export function ResultsV2() {
       </div>
 
       {/* ── DIV 3: Table ── */}
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-background" style={{ boxShadow: '0 1px 4px rgba(90, 74, 63, 0.08)' }}>
-        <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse bg-background">
-              <thead className="bg-muted/60">
-                <tr className="text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Title</th>
-                  <th className="px-4 py-3">Clause</th>
-                  <th className="px-4 py-3">Confidence</th>
-                  <th className="px-4 py-3">Review</th>
-                </tr>
-              </thead>
-              <tbody>
+      <div className="overflow-hidden rounded-xl border border-border" style={{ boxShadow: '0 1px 4px rgba(90, 74, 63, 0.08)' }}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {(["clause", "status", "title", "confidence", "review"] as const).map((col) => {
+                const sortable = col !== "title"
+                const labels: Record<string, string> = { clause: "Clause", status: "Status", title: "Title", confidence: "Confidence", review: "Review" }
+                return (
+                  <TableHead
+                    key={col}
+                    className={sortable ? "cursor-pointer select-none" : undefined}
+                    onClick={sortable ? () => handleSort(col as SortColumn) : undefined}
+                  >
+                    <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                      {labels[col]}
+                      {sortable ? (
+                        sortColumn === col ? (
+                          sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                        ) : (
+                          <ArrowUpDown className="h-3 w-3 text-muted-foreground/60" />
+                        )
+                      ) : null}
+                    </span>
+                  </TableHead>
+                )
+              })}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
                 {filteredRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-10 text-center text-[13px] text-muted-foreground">
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center text-[13px] text-muted-foreground">
                       No requirements match the current filters.
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   filteredRows.map((row) => {
                     const feedbackEntry = feedbackMap[row.requirementId] ?? createDefaultFeedbackEntry()
                     const isExpanded = expandedRequirementId === row.requirementId
 
                     return [
-                      <tr
+                      <TableRow
                         key={`${row.requirementId}-row`}
-                        className="cursor-pointer border-t border-border/40 transition-colors hover:bg-accent/50"
+                        className="cursor-pointer"
                         onClick={() =>
                           setExpandedRequirementId((current) =>
                             current === row.requirementId ? null : row.requirementId
                           )
                         }
                       >
-                        <td className="px-4 py-3 align-middle">
+                        <TableCell className="text-[13px] text-foreground">
+                          {row.clause ?? "\u2014"}
+                        </TableCell>
+                        <TableCell>
                           <StatusDot status={row.status} label={row.statusLabel} />
-                        </td>
-                        <td className="px-4 py-3 align-middle">
+                        </TableCell>
+                        <TableCell>
                           <div className="space-y-0.5">
                             <div className="text-[13px] font-medium text-foreground">{row.title}</div>
                             <div className="text-[13px] leading-snug text-muted-foreground">{row.tableFinding}</div>
                           </div>
-                        </td>
-                        <td className="px-4 py-3 align-middle text-[13px] text-foreground">
-                          {row.clause ?? "\u2014"}
-                        </td>
-                        <td className="px-4 py-3 align-middle">
+                        </TableCell>
+                        <TableCell>
                           <ConfidenceBar level={row.confidenceLevel} />
-                        </td>
-                        <td className="px-4 py-3 align-middle">
+                        </TableCell>
+                        <TableCell>
                           <div className="flex items-center gap-2">
                             <ReviewBadge state={row.reviewState} label={row.reviewLabel} />
                             {feedbackEntry.isSaving ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
                             ) : null}
                           </div>
-                        </td>
-                      </tr>,
+                        </TableCell>
+                      </TableRow>,
                       isExpanded ? (
-                        <tr
+                        <TableRow
                           key={`${row.requirementId}-detail`}
-                          className="border-t border-border/40"
                         >
-                          <td colSpan={5} className="p-0">
+                          <TableCell colSpan={5} className="p-0">
                             <div className="rv2-expansion m-4 bg-muted/30 p-5">
                               <div className="space-y-4">
                                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
@@ -1994,15 +2031,14 @@ export function ResultsV2() {
                                 ) : null}
                               </div>
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ) : null,
                     ]
                   })
                 )}
-              </tbody>
-            </table>
-          </div>
+          </TableBody>
+        </Table>
 
         {/* Footer */}
         <div className="px-5 py-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t border-border/40">
