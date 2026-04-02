@@ -86,7 +86,7 @@ async def summarize_document(
     try:
         client = get_openai_client()
 
-        resolved_model = model or os.getenv("OPENAI_SUMMARY_MODEL", "gpt-5-mini")
+        resolved_model = model or os.getenv("OPENAI_SUMMARY_MODEL", "gpt-5.4-mini")
         logger.info(f"Summarizing document: {file_name} with model {resolved_model}")
 
         # Upload the file to OpenAI for processing
@@ -167,7 +167,7 @@ async def summarize_document_from_bytes(
         import base64
 
         client = get_openai_client()
-        resolved_model = model or os.getenv("OPENAI_SUMMARY_MODEL", "gpt-5-mini")
+        resolved_model = model or os.getenv("OPENAI_SUMMARY_MODEL", "gpt-5.4-mini")
         logger.info(f"Summarizing document from bytes: {file_name} with model {resolved_model}")
 
         file_content = base64.standard_b64encode(file_bytes).decode("utf-8")

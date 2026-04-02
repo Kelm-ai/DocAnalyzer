@@ -23,7 +23,7 @@ from pydantic import BaseModel
 import logging
 from dotenv import load_dotenv
 
-from .evidence_utils import evidence_item_to_legacy_snippet, normalize_evidence_items
+from evidence_utils import evidence_item_to_legacy_snippet, normalize_evidence_items
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -38,7 +38,7 @@ except ImportError:
 try:
     from api.requirement_presentation_generator import generate_requirement_presentations_sync, generate_requirement_presentations
 except ImportError:
-    from .requirement_presentation_generator import generate_requirement_presentations_sync, generate_requirement_presentations
+    from requirement_presentation_generator import generate_requirement_presentations_sync, generate_requirement_presentations
 
 # Import document summarizer for multi-doc support
 try:
