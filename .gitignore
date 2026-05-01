@@ -105,3 +105,6 @@ htmlcov/
 
 # Generated output files
 api/output/
+
+# Documentation and evaluation artifacts (not tracked)
+docs/
