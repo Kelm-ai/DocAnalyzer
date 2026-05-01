@@ -191,21 +191,78 @@ def _join_list(value) -> str:
     return str(value).strip()
 
 
+def _build_supabase_client():
+    """Lazily create a Supabase client from .env, or return None if unavailable."""
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(REPO_ROOT / ".env")
+        from supabase import create_client
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_ANON_KEY")
+        if not url or not key:
+            return None
+        return create_client(url, key)
+    except Exception:
+        return None
+
+
+def _resolve_clauses(req_ids: list[str], client) -> dict[str, dict]:
+    """Fetch clause/title for a list of requirement UUIDs from Supabase."""
+    if not req_ids or client is None:
+        return {}
+    rows = (
+        client.table("iso_requirements")
+        .select("id, clause, title")
+        .in_("id", req_ids)
+        .execute()
+        .data
+    )
+    return {r["id"]: r for r in rows}
+
+
 def load_auto_json(path: Path) -> dict[str, AutoEntry]:
     data = json.loads(path.read_text())
+    raw = data.get("requirements_results", [])
+
+    # First pass: collect requirement_ids that lack a clause field so we can resolve them in one batch.
+    missing = [r.get("requirement_id") for r in raw if not (r.get("requirement_clause") or r.get("clause")) and r.get("requirement_id")]
+    resolved: dict[str, dict] = {}
+    if missing:
+        client = _build_supabase_client()
+        if client is not None:
+            try:
+                resolved = _resolve_clauses(list(set(missing)), client)
+            except Exception as e:
+                print(f"warning: failed to resolve {len(set(missing))} clause(s) via Supabase: {e}", file=sys.stderr)
+
     out: dict[str, AutoEntry] = {}
-    for r in data.get("requirements_results", []):
+    skipped_no_clause = 0
+    for r in raw:
         clause = r.get("requirement_clause") or r.get("clause") or ""
+        title = r.get("requirement_title") or r.get("title") or ""
         if not clause:
+            req_id = r.get("requirement_id")
+            lookup = resolved.get(req_id) if req_id else None
+            if lookup:
+                clause = lookup.get("clause") or ""
+                title = title or lookup.get("title") or ""
+        if not clause:
+            skipped_no_clause += 1
             continue
         out[clause] = AutoEntry(
             clause=clause,
-            title=r.get("requirement_title") or r.get("title") or "",
+            title=title,
             status=(r.get("status") or "").upper(),
             confidence=r.get("confidence"),
             rationale=str(r.get("rationale") or "").strip(),
             gaps=_join_list(r.get("gaps") or r.get("gaps_identified")),
             recommendations=_join_list(r.get("recommendations")),
+        )
+    if skipped_no_clause:
+        print(
+            f"warning: skipped {skipped_no_clause} record(s) in {path} with no clause "
+            f"and no Supabase mapping for their requirement_id",
+            file=sys.stderr,
         )
     return out
 
@@ -483,6 +540,20 @@ def write_summary_json(summary: Summary, out: Path) -> None:
 
 # ---------- main --------------------------------------------------------------
 
+def _check_default_input_exists(path: Path, *, flag_pair: str, is_default: bool) -> None:
+    """Raise SystemExit with guidance if a needed input file is missing."""
+    if path is None or path.exists():
+        return
+    if is_default:
+        raise SystemExit(
+            f"Default input not found: {path}\n"
+            f"This script's defaults assume a local workspace under docs/, which is gitignored.\n"
+            f"Pass {flag_pair} to point at a path you have, or use --evaluation-id <uuid> to "
+            f"read automated results from Supabase."
+        )
+    raise SystemExit(f"Input not found: {path}")
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     src = p.add_mutually_exclusive_group()
@@ -500,6 +571,21 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--out-dir", type=Path, default=None,
                    help="Output directory (defaults to docs/docs_for_eval/comparison_<UTC-timestamp>).")
     args = p.parse_args(argv)
+
+    # Preflight: defaults point at gitignored docs/ workspace files. If the user
+    # didn't override and the default file isn't there, fail with actionable help
+    # rather than a bare FileNotFoundError later.
+    _check_default_input_exists(
+        args.manual_xlsx if args.manual_xlsx is not None else args.manual_csv,
+        flag_pair="--manual-csv / --manual-xlsx",
+        is_default=(args.manual_xlsx is None and args.manual_csv == DEFAULT_MANUAL_CSV),
+    )
+    if not args.evaluation_id:
+        _check_default_input_exists(
+            args.evaluation_json,
+            flag_pair="--evaluation-json / --evaluation-id",
+            is_default=(args.evaluation_json == DEFAULT_EVAL_JSON),
+        )
 
     timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     out_dir = args.out_dir or (DEFAULT_OUT_PARENT / f"comparison_{timestamp}")
